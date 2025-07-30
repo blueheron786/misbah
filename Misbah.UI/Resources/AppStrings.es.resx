@@ -9,4 +9,31 @@
   <data name="LoadLibrary" xml:space="preserve">
     <value>Cargar una biblioteca</value>
   </data>
+  <data name="HideFolders" xml:space="preserve">
+    <value>Ocultar carpetas</value>
+  </data>
+  <data name="ShowFolders" xml:space="preserve">
+    <value>Mostrar carpetas</value>
+  </data>
+  <data name="Notes" xml:space="preserve">
+    <value>Notas</value>
+  </data>
+  <data name="NoNotesFound" xml:space="preserve">
+    <value>No se encontraron notas.</value>
+  </data>
+  <data name="Preview" xml:space="preserve">
+    <value>Vista previa</value>
+  </data>
+  <data name="Edit" xml:space="preserve">
+    <value>Editar</value>
+  </data>
+  <data name="Save" xml:space="preserve">
+    <value>Guardar</value>
+  </data>
+  <data name="SelectNoteToViewOrEdit" xml:space="preserve">
+    <value>Seleccione una nota para ver o editar.</value>
+  </data>
+  <data name="NoFoldersFound" xml:space="preserve">
+    <value>No se encontraron carpetas.</value>
+  </data>
 </root>

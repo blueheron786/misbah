@@ -1,4 +1,5 @@
 @using Misbah.Core.Models
+@using Misbah.UI.Resources
 @inject Misbah.Core.Services.INoteService NoteService
 @code {
     [Parameter] public string NoteId { get; set; }
@@ -24,11 +25,11 @@
 {
     <div class="note-editor">
         <h2>@note.Title</h2>
-        <button @onclick="() => editMode = !editMode">@(editMode ? "Preview" : "Edit")</button>
+        <button @onclick="() => editMode = !editMode">@(editMode ? AppStrings.Preview : AppStrings.Edit)</button>
         @if (editMode)
         {
             <textarea @bind="note.Content" rows="20" style="width:100%"></textarea>
-            <button @onclick="Save">Save</button>
+            <button @onclick="Save">@AppStrings.Save</button>
         }
         else
         {
@@ -38,5 +39,5 @@
 }
 else
 {
-    <p>Select a note to view or edit.</p>
+    <p>@AppStrings.SelectNoteToViewOrEdit</p>
 }

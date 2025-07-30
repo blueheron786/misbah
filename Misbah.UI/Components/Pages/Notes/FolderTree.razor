@@ -1,5 +1,6 @@
 @namespace Misbah.UI.Components.Pages.Notes
 @using Misbah.Core.Models
+@using Misbah.UI.Resources
 @inject Misbah.Core.Services.IFolderService FolderService
 
 @code {
@@ -66,5 +67,5 @@
 }
 else
 {
-    <div class="folder-tree"><em>No folders found.</em></div>
+    <div class="folder-tree"><em>@AppStrings.NoFoldersFound</em></div>
 }

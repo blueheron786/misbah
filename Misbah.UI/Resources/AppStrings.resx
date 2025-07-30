@@ -1,12 +1,42 @@
 <?xml version="1.0" encoding="utf-8"?>
 <root>
+  <resheader name="accessModifier">
+    <value>public</value>
+  </resheader>
+  <data name="GitHubRepo" xml:space="preserve">
+    <value>GitHub Repo</value>
+  </data>
   <data name="NoLibraryLoaded" xml:space="preserve">
     <value>No library loaded</value>
   </data>
   <data name="LoadLibrary" xml:space="preserve">
     <value>Load a Library</value>
   </data>
-  <data name="GitHubRepo" xml:space="preserve">
-    <value>GitHub Repo</value>
+  <data name="HideFolders" xml:space="preserve">
+    <value>Hide Folders</value>
+  </data>
+  <data name="ShowFolders" xml:space="preserve">
+    <value>Show Folders</value>
+  </data>
+  <data name="Notes" xml:space="preserve">
+    <value>Notes</value>
+  </data>
+  <data name="NoNotesFound" xml:space="preserve">
+    <value>No notes found.</value>
+  </data>
+  <data name="Preview" xml:space="preserve">
+    <value>Preview</value>
+  </data>
+  <data name="Edit" xml:space="preserve">
+    <value>Edit</value>
+  </data>
+  <data name="Save" xml:space="preserve">
+    <value>Save</value>
+  </data>
+  <data name="SelectNoteToViewOrEdit" xml:space="preserve">
+    <value>Select a note to view or edit.</value>
+  </data>
+  <data name="NoFoldersFound" xml:space="preserve">
+    <value>No folders found.</value>
   </data>
 </root>
