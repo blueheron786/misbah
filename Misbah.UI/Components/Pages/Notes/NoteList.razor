@@ -1,0 +1,35 @@
+@using Misbah.Core.Models
+@inject Misbah.Core.Services.INoteService NoteService
+@inject Misbah.Core.Services.IFolderService FolderService
+@inject NavigationManager Navigation
+
+@code {
+    [Parameter] public string RootPath { get; set; }
+    private List<Note> notes;
+    private FolderNode folderTree;
+    private string selectedNoteId;
+
+    protected override void OnInitialized()
+    {
+        folderTree = FolderService.LoadFolderTree(RootPath);
+        notes = NoteService.GetAllNotes().ToList();
+    }
+
+    void SelectNote(string id)
+    {
+        selectedNoteId = id;
+        Navigation.NavigateTo($"/notes/{Uri.EscapeDataString(id)}");
+    }
+}
+
+<div class="sidebar">
+    <h3>Notes</h3>
+    <ul>
+        @foreach (var note in notes)
+        {
+            <li @onclick="() => SelectNote(note.Id)" class="@(selectedNoteId == note.Id ? "selected" : "")">
+                @note.Title
+            </li>
+        }
+    </ul>
+</div>

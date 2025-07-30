@@ -10,6 +10,11 @@
 
   <ItemGroup>
     <PackageReference Include="BlazorDesktop" Version="8.0.8" />
+    <PackageReference Include="Markdig" Version="0.41.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Misbah.Core\Misbah.Core.csproj" />
   </ItemGroup>
 
 </Project>

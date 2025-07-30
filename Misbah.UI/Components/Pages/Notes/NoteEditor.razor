@@ -1,0 +1,42 @@
+@using Misbah.Core.Models
+@inject Misbah.Core.Services.INoteService NoteService
+@code {
+    [Parameter] public string NoteId { get; set; }
+    private Note note;
+    private bool editMode = false;
+
+    protected override void OnParametersSet()
+    {
+        if (!string.IsNullOrEmpty(NoteId))
+        {
+            note = NoteService.LoadNote(NoteId);
+        }
+    }
+
+    void Save()
+    {
+        NoteService.SaveNote(note);
+        editMode = false;
+    }
+}
+
+@if (note != null)
+{
+    <div class="note-editor">
+        <h2>@note.Title</h2>
+        <button @onclick="() => editMode = !editMode">@(editMode ? "Preview" : "Edit")</button>
+        @if (editMode)
+        {
+            <textarea @bind="note.Content" rows="20" style="width:100%"></textarea>
+            <button @onclick="Save">Save</button>
+        }
+        else
+        {
+            <div class="markdown-body">@((MarkupString)Markdig.Markdown.ToHtml(note.Content))</div>
+        }
+    </div>
+}
+else
+{
+    <p>Select a note to view or edit.</p>
+}
