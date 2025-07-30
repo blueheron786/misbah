@@ -6,13 +6,31 @@
 @code {
     [Parameter] public string NoteId { get; set; }
     private Note note;
+    private bool editMode = false;
+    private string editedContent;
 
     protected override void OnParametersSet()
     {
         if (!string.IsNullOrEmpty(NoteId))
         {
             note = NoteService.LoadNote(NoteId);
+            editedContent = note.Content;
+            editMode = false;
         }
+    }
+
+    void ToggleEdit()
+    {
+        editMode = !editMode;
+        if (editMode)
+            editedContent = note.Content;
+    }
+
+    void Save()
+    {
+        note.Content = editedContent;
+        NoteService.SaveNote(note);
+        editMode = false;
     }
 }
 
@@ -20,7 +38,16 @@
 {
     <div class="note-view">
         <h2>@note.Title</h2>
-        <div class="markdown-body">@((MarkupString)Markdig.Markdown.ToHtml(note.Content))</div>
+        <button @onclick="ToggleEdit">@(editMode ? "Cancel" : AppStrings.Edit)</button>
+        @if (editMode)
+        {
+            <textarea @bind="editedContent" rows="20" style="width:100%"></textarea>
+            <button @onclick="Save">@AppStrings.Save</button>
+        }
+        else
+        {
+            <div class="markdown-body">@((MarkupString)Markdig.Markdown.ToHtml(note.Content))</div>
+        }
     </div>
 }
 else
