@@ -1,17 +1,31 @@
 @using Misbah.UI.Components
 @using Misbah.UI.Components.Pages.Notes
-@using Misbah.UI.Components
 @using Misbah.UI.Resources
+@using Microsoft.JSInterop
 @inherits LayoutComponentBase
+
+@inject Misbah.Core.Services.INoteService NoteService
+@inject IJSRuntime JS
 
 @code {
     private string? _libraryRoot;
     private string? _selectedNoteId;
+    private static MainLayout? _instance;
+
+    protected override void OnInitialized()
+    {
+        _instance = this;
+    }
 
     void OnLibrarySelected(string path)
     {
         _libraryRoot = path;
         _selectedNoteId = null;
+        // Update NoteService root path if possible
+        if (NoteService is Misbah.Core.Services.NoteService concrete)
+        {
+            concrete.SetRootPath(path);
+        }
         StateHasChanged();
     }
 
@@ -19,6 +33,36 @@
     {
         _selectedNoteId = noteId;
         StateHasChanged();
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+        {
+            JS.InvokeVoidAsync("eval", @"
+                window.addEventListener('misbah-nav', function(e) {
+                    if (e.detail && e.detail.title) {
+                        DotNet.invokeMethodAsync('Misbah.UI', 'NavigateToNoteByTitle', e.detail.title);
+                    }
+                });
+            ");
+        }
+    }
+
+    [JSInvokable("NavigateToNoteByTitle")]
+    public static void NavigateToNoteByTitle(string title)
+    {
+        _instance?.NavigateToNoteByTitleInstance(title);
+    }
+
+    private void NavigateToNoteByTitleInstance(string title)
+    {
+        var note = NoteService.GetAllNotes().FirstOrDefault(n => n.Title == title);
+        if (note != null)
+        {
+            _selectedNoteId = note.Id;
+            StateHasChanged();
+        }
     }
 }
 
@@ -39,7 +83,7 @@
             <article class="content px-4">
                 @if (!string.IsNullOrEmpty(_selectedNoteId))
                 {
-                    <Misbah.UI.Components.Pages.Notes.NoteView NoteId="@_selectedNoteId" />
+                    <NoteView NoteId="@_selectedNoteId" />
                 }
                 else
                 {

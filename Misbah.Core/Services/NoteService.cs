@@ -9,8 +9,13 @@ namespace Misbah.Core.Services
 {
     public class NoteService : INoteService
     {
-        private readonly string _rootPath;
+        private string _rootPath;
         public NoteService(string rootPath)
+        {
+            _rootPath = rootPath;
+        }
+
+        public void SetRootPath(string rootPath)
         {
             _rootPath = rootPath;
         }

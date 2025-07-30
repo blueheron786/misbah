@@ -32,6 +32,24 @@
         NoteService.SaveNote(note);
         editMode = false;
     }
+
+    // Render markdown and convert [[Page Name]] to links
+    MarkupString RenderMarkdownWithLinks(string content)
+    {
+        var html = Markdig.Markdown.ToHtml(content ?? "");
+        // Replace [[Page Name]] with anchor tags using a MatchEvaluator
+        html = System.Text.RegularExpressions.Regex.Replace(
+            html,
+            @"\[\[([^\]]+)\]\]",
+            new System.Text.RegularExpressions.MatchEvaluator(m =>
+            {
+                var page = m.Groups[1].Value.Replace("\"", "&quot;");
+                var link = "<a href=\"#\" onclick=\"window.dispatchEvent(new CustomEvent('misbah-nav', { detail: { title: '" + page + "' } }));return false;\">" + page + "</a>";
+                return link;
+            }),
+            System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+        return (MarkupString)html;
+    }
 }
 
 @if (note != null)
@@ -46,7 +64,7 @@
         }
         else
         {
-            <div class="markdown-body">@((MarkupString)Markdig.Markdown.ToHtml(note.Content))</div>
+            <div class="markdown-body">@RenderMarkdownWithLinks(note.Content)</div>
         }
     </div>
 }
