@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Misbah.UI", "Misbah.UI\Misb
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Misbah.Core", "Misbah.Core\Misbah.Core.csproj", "{377B69EA-038F-455C-8B6C-5CB27FF5EE24}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Misbah.Core.Tests", "Misbah.Core.Tests\Misbah.Core.Tests.csproj", "{19CCE827-DA28-43EB-A61A-5E5DB11889A5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -41,6 +43,18 @@ Global
 		{377B69EA-038F-455C-8B6C-5CB27FF5EE24}.Release|x64.Build.0 = Release|Any CPU
 		{377B69EA-038F-455C-8B6C-5CB27FF5EE24}.Release|x86.ActiveCfg = Release|Any CPU
 		{377B69EA-038F-455C-8B6C-5CB27FF5EE24}.Release|x86.Build.0 = Release|Any CPU
+		{19CCE827-DA28-43EB-A61A-5E5DB11889A5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{19CCE827-DA28-43EB-A61A-5E5DB11889A5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{19CCE827-DA28-43EB-A61A-5E5DB11889A5}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{19CCE827-DA28-43EB-A61A-5E5DB11889A5}.Debug|x64.Build.0 = Debug|Any CPU
+		{19CCE827-DA28-43EB-A61A-5E5DB11889A5}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{19CCE827-DA28-43EB-A61A-5E5DB11889A5}.Debug|x86.Build.0 = Debug|Any CPU
+		{19CCE827-DA28-43EB-A61A-5E5DB11889A5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{19CCE827-DA28-43EB-A61A-5E5DB11889A5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{19CCE827-DA28-43EB-A61A-5E5DB11889A5}.Release|x64.ActiveCfg = Release|Any CPU
+		{19CCE827-DA28-43EB-A61A-5E5DB11889A5}.Release|x64.Build.0 = Release|Any CPU
+		{19CCE827-DA28-43EB-A61A-5E5DB11889A5}.Release|x86.ActiveCfg = Release|Any CPU
+		{19CCE827-DA28-43EB-A61A-5E5DB11889A5}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

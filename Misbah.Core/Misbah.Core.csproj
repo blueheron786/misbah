@@ -3,4 +3,7 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
   </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Markdig" Version="0.41.3" />
+  </ItemGroup>
 </Project>
