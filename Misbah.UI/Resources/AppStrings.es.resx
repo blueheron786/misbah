@@ -39,4 +39,7 @@
   <data name="Cancel" xml:space="preserve">
     <value>Cancelar</value>
   </data>
+  <data name="WelcomeToMisbah" xml:space="preserve">
+    <value>Bienvenido a Misbah</value>
+  </data>
 </root>
