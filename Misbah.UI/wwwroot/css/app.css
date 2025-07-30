@@ -1,3 +1,31 @@
+/* Tighten spacing and hide bullet for markdown task lists */
+ul.md-task-list {
+    list-style: none;
+    margin: 0 0 0 0.5em;
+    padding-left: 0;
+}
+ul.md-task-list li {
+    list-style: none;
+    margin-bottom: 0;
+    padding: 0 0 0 0.2em;
+    line-height: 1;
+}
+ul.md-task-list input.md-task {
+    vertical-align: middle;
+    margin-right: 0.5em;
+}
+ul:not(.md-task-list) li {
+    margin-bottom: 0.2em;
+}
+/* Highlight ==like this== yellow */
+.md-highlight {
+    background: #ffff00;
+    color: #222;
+    padding: 0.1em 0.25em;
+    border-radius: 0.2em;
+    font-weight: bold;
+    box-shadow: 0 0 2px 1px #ff0;
+}
 html, body {
     font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
