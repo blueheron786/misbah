@@ -17,18 +17,14 @@ namespace Misbah.Core.Services
         {
             string[] lines = (content ?? "").Split('\n');
             var htmlLines = new List<string>();
-            bool inNormalList = false;
-            bool inTaskList = false;
+            bool inList = false;
             bool inCodeBlock = false;
             int emptyCount = 0;
-            var taskLines = new List<int>();
-            var pipeline = new MarkdownPipelineBuilder().UseAdvancedExtensions().Build();
+            taskLineNumbers = new List<int>();
             for (int i = 0; i < lines.Length; i++)
             {
                 if (IsCodeBlockDelimiter(lines[i]))
                 {
-                    if (inNormalList) { htmlLines.Add("</ul>"); inNormalList = false; }
-                    if (inTaskList) { htmlLines.Add("</ul>"); inTaskList = false; }
                     HandleCodeBlockDelimiter(ref inCodeBlock, htmlLines);
                     emptyCount = 0;
                     continue;
@@ -38,60 +34,26 @@ namespace Misbah.Core.Services
                     htmlLines.Add(System.Net.WebUtility.HtmlEncode(lines[i]) + "\n");
                     continue;
                 }
-                // Task list
-                var isTask = Regex.IsMatch(lines[i], @"^- \[( |x)\] ", RegexOptions.IgnoreCase);
-                if (isTask)
+                if (TryRenderTaskList(lines[i], i, htmlLines, taskLineNumbers, ref inList))
                 {
-                    if (inNormalList) { htmlLines.Add("</ul>"); inNormalList = false; }
-                    if (!inTaskList) { htmlLines.Add("<ul class='md-task-list'>"); inTaskList = true; }
-                    TryRenderTaskList(lines[i], i, htmlLines, taskLines, ref inTaskList);
                     emptyCount = 0;
                     continue;
                 }
-                // Normal markdown list (not a task list)
-                var isNormalList = Regex.IsMatch(lines[i], @"^\s*[-*+] ") && !isTask;
-                if (isNormalList)
-                {
-                    if (inTaskList) { htmlLines.Add("</ul>"); inTaskList = false; }
-                    if (!inNormalList) { htmlLines.Add("<ul>"); inNormalList = true; }
-                    string item = lines[i].Trim().Substring(2);
-                    // Preprocess for highlight and bold/italic before Markdig for list items
-                    item = Regex.Replace(item, "==([^=]+)==", m => $"<span class='md-highlight'>{System.Net.WebUtility.HtmlEncode(m.Groups[1].Value)}</span>");
-                    item = Regex.Replace(item, @"\*\*\*([^*]+)\*\*\*", m => $"<b><i>{System.Net.WebUtility.HtmlEncode(m.Groups[1].Value)}</i></b>");
-                    // Inline code for list items
-                    item = RenderInlineCode(item);
-                    var itemHtml = Markdown.ToHtml(item, pipeline);
-                    if (itemHtml.StartsWith("<p>") && itemHtml.EndsWith("</p>\n"))
-                        itemHtml = itemHtml.Substring(3, itemHtml.Length - 8);
-                    htmlLines.Add($"<li>{itemHtml}</li>");
-                    emptyCount = 0;
-                    continue;
-                }
-                // Blank line closes any open list
+                if (inList) { htmlLines.Add("</ul>"); inList = false; }
                 if (string.IsNullOrWhiteSpace(lines[i]))
                 {
-                    if (inNormalList) { htmlLines.Add("</ul>"); inNormalList = false; }
-                    if (inTaskList) { htmlLines.Add("</ul>"); inTaskList = false; }
                     emptyCount++;
                     if (emptyCount == 1) htmlLines.Add("<br>");
                     continue;
                 }
-                if (inNormalList) { htmlLines.Add("</ul>"); inNormalList = false; }
-                if (inTaskList) { htmlLines.Add("</ul>"); inTaskList = false; }
                 emptyCount = 0;
-                // Preprocess for highlight and bold/italic before Markdig
-                var processed = lines[i];
-                processed = Regex.Replace(processed, "==([^=]+)==", m => $"<span class='md-highlight'>{System.Net.WebUtility.HtmlEncode(m.Groups[1].Value)}</span>");
-                processed = Regex.Replace(processed, @"\*\*\*([^*]+)\*\*\*", m => $"<b><i>{System.Net.WebUtility.HtmlEncode(m.Groups[1].Value)}</i></b>");
-                var inlineCode = RenderInlineCode(processed);
-                var lineHtml = Markdown.ToHtml(inlineCode, pipeline);
+                var inlineCode = RenderInlineCode(lines[i]);
+                var lineHtml = Markdown.ToHtml(inlineCode);
                 if (lineHtml.StartsWith("<p>") && lineHtml.EndsWith("</p>\n"))
                     lineHtml = lineHtml.Substring(3, lineHtml.Length - 8);
                 htmlLines.Add(lineHtml);
             }
-            if (inTaskList) { htmlLines.Add("</ul>"); }
-            if (inNormalList) { htmlLines.Add("</ul>"); }
-            taskLineNumbers = taskLines;
+            if (inList) { htmlLines.Add("</ul>"); }
             return string.Join("", htmlLines);
         }
 
@@ -163,7 +125,7 @@ namespace Misbah.Core.Services
             var match = Regex.Match(line, @"^- \[( |x)\] (.*)$", RegexOptions.IgnoreCase);
             if (match.Success)
             {
-                if (!inList) { htmlLines.Add("<ul class='md-task-list'>"); inList = true; }
+                if (!inList) { htmlLines.Add("<ul>"); inList = true; }
                 bool isChecked = match.Groups[1].Value.ToLower() == "x";
                 string taskText = match.Groups[2].Value;
                 string checkbox = $"<input type='checkbox' class='md-task' data-line='{lineNumber}' {(isChecked ? "checked" : "")} onclick=\"window.dispatchEvent(new CustomEvent('misbah-task-toggle',{{detail:{{line:{lineNumber}}}}}));\">";
