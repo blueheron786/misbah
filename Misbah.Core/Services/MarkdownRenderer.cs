@@ -22,6 +22,7 @@ namespace Misbah.Core.Services
             bool inCodeBlock = false;
             int emptyCount = 0;
             var taskLines = new List<int>();
+            var pipeline = new MarkdownPipelineBuilder().UseAdvancedExtensions().Build();
             for (int i = 0; i < lines.Length; i++)
             {
                 if (IsCodeBlockDelimiter(lines[i]))
@@ -54,10 +55,15 @@ namespace Misbah.Core.Services
                     if (inTaskList) { htmlLines.Add("</ul>"); inTaskList = false; }
                     if (!inNormalList) { htmlLines.Add("<ul>"); inNormalList = true; }
                     string item = lines[i].Trim().Substring(2);
-                    // Highlight ==like this== and bold/italic ***like this***
+                    // Preprocess for highlight and bold/italic before Markdig for list items
                     item = Regex.Replace(item, "==([^=]+)==", m => $"<span class='md-highlight'>{System.Net.WebUtility.HtmlEncode(m.Groups[1].Value)}</span>");
                     item = Regex.Replace(item, @"\*\*\*([^*]+)\*\*\*", m => $"<b><i>{System.Net.WebUtility.HtmlEncode(m.Groups[1].Value)}</i></b>");
-                    htmlLines.Add($"<li>{item}</li>");
+                    // Inline code for list items
+                    item = RenderInlineCode(item);
+                    var itemHtml = Markdown.ToHtml(item, pipeline);
+                    if (itemHtml.StartsWith("<p>") && itemHtml.EndsWith("</p>\n"))
+                        itemHtml = itemHtml.Substring(3, itemHtml.Length - 8);
+                    htmlLines.Add($"<li>{itemHtml}</li>");
                     emptyCount = 0;
                     continue;
                 }
@@ -73,11 +79,12 @@ namespace Misbah.Core.Services
                 if (inNormalList) { htmlLines.Add("</ul>"); inNormalList = false; }
                 if (inTaskList) { htmlLines.Add("</ul>"); inTaskList = false; }
                 emptyCount = 0;
-                // Highlight ==like this== and bold/italic ***like this***
-                var processed = Regex.Replace(lines[i], "==([^=]+)==", m => $"<span class='md-highlight'>{System.Net.WebUtility.HtmlEncode(m.Groups[1].Value)}</span>");
+                // Preprocess for highlight and bold/italic before Markdig
+                var processed = lines[i];
+                processed = Regex.Replace(processed, "==([^=]+)==", m => $"<span class='md-highlight'>{System.Net.WebUtility.HtmlEncode(m.Groups[1].Value)}</span>");
                 processed = Regex.Replace(processed, @"\*\*\*([^*]+)\*\*\*", m => $"<b><i>{System.Net.WebUtility.HtmlEncode(m.Groups[1].Value)}</i></b>");
                 var inlineCode = RenderInlineCode(processed);
-                var lineHtml = Markdown.ToHtml(inlineCode);
+                var lineHtml = Markdown.ToHtml(inlineCode, pipeline);
                 if (lineHtml.StartsWith("<p>") && lineHtml.EndsWith("</p>\n"))
                     lineHtml = lineHtml.Substring(3, lineHtml.Length - 8);
                 htmlLines.Add(lineHtml);
@@ -129,41 +136,6 @@ namespace Misbah.Core.Services
                     return linkHtml;
                 }),
                 RegexOptions.IgnoreCase);
-        }
-
-        /// <summary>
-        /// Extracts all wiki link page names from markdown content.
-        /// </summary>
-        public List<string> ExtractWikiLinks(string? content)
-        {
-            var result = new List<string>();
-            if (string.IsNullOrEmpty(content)) return result;
-            foreach (Match m in Regex.Matches(content, @"\[\[([^\]]+)\]\]"))
-            {
-                result.Add(m.Groups[1].Value);
-            }
-            return result;
-        }
-
-        /// <summary>
-        /// Extracts all markdown task lines (with their line numbers and checked state).
-        /// </summary>
-        public List<(int line, bool isChecked, string text)> ExtractTasks(string? content)
-        {
-            var result = new List<(int, bool, string)>();
-            if (string.IsNullOrEmpty(content)) return result;
-            var lines = content.Split('\n');
-            for (int i = 0; i < lines.Length; i++)
-            {
-                var match = Regex.Match(lines[i], @"^- \[( |x)\] (.*)$", RegexOptions.IgnoreCase);
-                if (match.Success)
-                {
-                    bool isChecked = match.Groups[1].Value.ToLower() == "x";
-                    string taskText = match.Groups[2].Value;
-                    result.Add((i, isChecked, taskText));
-                }
-            }
-            return result;
         }
 
         // --- Private helpers ---
