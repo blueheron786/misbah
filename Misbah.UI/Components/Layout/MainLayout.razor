@@ -1,21 +1,36 @@
 @using Misbah.UI.Components
 @using Misbah.UI.Components.Pages.Notes
+@using Misbah.UI.Components.Layout
 @using Misbah.UI.Resources
 @using Microsoft.JSInterop
 @inherits LayoutComponentBase
 
 @inject Misbah.Core.Services.INoteService NoteService
 @inject IJSRuntime JS
+@using Misbah.UI.Utils
+@using System.IO
 
 @code {
     private string? _hubRoot;
     private string? _selectedNoteId;
     private static MainLayout? _instance;
 
+
     protected override void OnInitialized()
     {
         _instance = this;
+        // Try to load last hub path from config
+        var config = ConfigManager.Load();
+        if (!string.IsNullOrEmpty(config.LastHubPath) && Directory.Exists(config.LastHubPath))
+        {
+            _hubRoot = config.LastHubPath;
+            if (NoteService is Misbah.Core.Services.NoteService concrete)
+            {
+                concrete.SetRootPath(_hubRoot);
+            }
+        }
     }
+
 
     void OnHubSelected(string path)
     {
@@ -26,6 +41,10 @@
         {
             concrete.SetRootPath(path);
         }
+        // Save to config
+        var config = ConfigManager.Load();
+        config.LastHubPath = path;
+        ConfigManager.Save(config);
         StateHasChanged();
     }
 
