@@ -1,0 +1,18 @@
+@namespace Misbah.UI.Components
+@using System.Globalization
+@using Microsoft.JSInterop
+@inject IJSRuntime JS
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        var culture = await JS.InvokeAsync<string>("eval", "window.__misbahCulture || 'en'");
+        if (!string.IsNullOrEmpty(culture))
+        {
+            var ci = new CultureInfo(culture);
+            CultureInfo.DefaultThreadCurrentCulture = ci;
+            CultureInfo.DefaultThreadCurrentUICulture = ci;
+            Misbah.UI.Resources.AppStrings.Culture = ci;
+        }
+    }
+}
