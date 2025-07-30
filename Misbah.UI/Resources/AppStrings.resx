@@ -6,6 +6,9 @@
   <data name="GitHubRepo" xml:space="preserve">
     <value>GitHub Repo</value>
   </data>
+  <data name="Cancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
   <data name="NoLibraryLoaded" xml:space="preserve">
     <value>No library loaded</value>
   </data>

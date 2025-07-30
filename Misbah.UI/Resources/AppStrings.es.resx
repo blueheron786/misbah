@@ -36,4 +36,7 @@
   <data name="NoFoldersFound" xml:space="preserve">
     <value>No se encontraron carpetas.</value>
   </data>
+  <data name="Cancel" xml:space="preserve">
+    <value>Cancelar</value>
+  </data>
 </root>

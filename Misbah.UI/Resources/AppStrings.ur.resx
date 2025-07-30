@@ -36,4 +36,7 @@
   <data name="NoFoldersFound" xml:space="preserve">
     <value>کوئی فولڈر نہیں ملا۔</value>
   </data>
+  <data name="Cancel" xml:space="preserve">
+    <value>منسوخ کریں</value>
+  </data>
 </root>

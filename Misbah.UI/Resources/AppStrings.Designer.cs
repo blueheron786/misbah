@@ -35,5 +35,6 @@ namespace Misbah.UI.Resources {
         public static string Save => ResourceManager.GetString("Save", resourceCulture);
         public static string SelectNoteToViewOrEdit => ResourceManager.GetString("SelectNoteToViewOrEdit", resourceCulture);
         public static string NoFoldersFound => ResourceManager.GetString("NoFoldersFound", resourceCulture);
+        public static string Cancel => ResourceManager.GetString("Cancel", resourceCulture);
     }
 }
