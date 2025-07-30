@@ -92,8 +92,26 @@
         string[] lines = (content ?? "").Split('\n');
         var htmlLines = new List<string>();
         bool inList = false;
+        bool inCodeBlock = false;
         for (int i = 0; i < lines.Length; i++)
         {
+            // Code block start/end
+            if (lines[i].TrimStart().StartsWith("```"))
+            {
+                if (!inCodeBlock) {
+                    htmlLines.Add("<pre><code>");
+                    inCodeBlock = true;
+                } else {
+                    htmlLines.Add("</code></pre>");
+                    inCodeBlock = false;
+                }
+                continue;
+            }
+            if (inCodeBlock)
+            {
+                htmlLines.Add(System.Net.WebUtility.HtmlEncode(lines[i]) + "\n");
+                continue;
+            }
             var match = System.Text.RegularExpressions.Regex.Match(lines[i], @"^- \[( |x)\] (.*)$", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
             if (match.Success)
             {
@@ -106,9 +124,13 @@
             else
             {
                 if (inList) { htmlLines.Add("</ul>"); inList = false; }
-                // Render non-task lines with Markdig (for formatting, links, etc.)
-                var lineHtml = Markdig.Markdown.ToHtml(lines[i]);
-                // Remove wrapping <p> if present, to avoid extra spacing
+                // Inline code: `code`
+                var inlineCode = System.Text.RegularExpressions.Regex.Replace(
+                    lines[i],
+                    "`([^`]+)`",
+                    m => $"<code>{System.Net.WebUtility.HtmlEncode(m.Groups[1].Value)}</code>");
+                // Render non-task, non-code lines with Markdig (for formatting, links, etc.)
+                var lineHtml = Markdig.Markdown.ToHtml(inlineCode);
                 if (lineHtml.StartsWith("<p>") && lineHtml.EndsWith("</p>\n"))
                     lineHtml = lineHtml.Substring(3, lineHtml.Length - 8);
                 htmlLines.Add(lineHtml);
