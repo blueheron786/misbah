@@ -4,11 +4,10 @@
 @code {
     private string? _libraryRoot;
 
-    void LoadLibrary()
+    void OnLibrarySelected(string path)
     {
-        // TODO: Replace with folder picker dialog
-        // For now, just hardcode or prompt for a path
-        _libraryRoot = "Notes";
+        _libraryRoot = path;
+        StateHasChanged();
     }
 }
 
@@ -16,13 +15,7 @@
     @if (string.IsNullOrEmpty(_libraryRoot))
     {
         <main style="width:100vw; height:100vh; display:flex; align-items:center; justify-content:center;">
-            <div style="text-align:center;">
-                <h2>No library loaded</h2>
-                <button class="btn btn-primary" @onclick="LoadLibrary">Load a Library</button>
-                <div style="margin-top:1em;">
-                    <a href="https://github.com/blueheron786/misbah" target="_blank">GitHub Repo</a>
-                </div>
-            </div>
+            <LibraryPicker OnLibraryPicked="OnLibrarySelected" />
         </main>
     }
     else
