@@ -1,12 +1,39 @@
 <?xml version="1.0" encoding="utf-8"?>
 <root>
+  <data name="GitHubRepo" xml:space="preserve">
+    <value>مستودع GitHub</value>
+  </data>
   <data name="NoLibraryLoaded" xml:space="preserve">
-    <value>لا توجد مكتبة محملة</value>
+    <value>لم يتم تحميل أي مكتبة</value>
   </data>
   <data name="LoadLibrary" xml:space="preserve">
     <value>تحميل مكتبة</value>
   </data>
-  <data name="GitHubRepo" xml:space="preserve">
-    <value>مستودع GitHub</value>
+  <data name="HideFolders" xml:space="preserve">
+    <value>إخفاء المجلدات</value>
+  </data>
+  <data name="ShowFolders" xml:space="preserve">
+    <value>عرض المجلدات</value>
+  </data>
+  <data name="Notes" xml:space="preserve">
+    <value>ملاحظات</value>
+  </data>
+  <data name="NoNotesFound" xml:space="preserve">
+    <value>لا توجد ملاحظات.</value>
+  </data>
+  <data name="Preview" xml:space="preserve">
+    <value>معاينة</value>
+  </data>
+  <data name="Edit" xml:space="preserve">
+    <value>تعديل</value>
+  </data>
+  <data name="Save" xml:space="preserve">
+    <value>حفظ</value>
+  </data>
+  <data name="SelectNoteToViewOrEdit" xml:space="preserve">
+    <value>اختر ملاحظة للعرض أو التعديل.</value>
+  </data>
+  <data name="NoFoldersFound" xml:space="preserve">
+    <value>لا توجد مجلدات.</value>
   </data>
 </root>

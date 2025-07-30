@@ -23,8 +23,17 @@ namespace Misbah.UI.Resources {
             set { resourceCulture = value; }
         }
 
+        public static string GitHubRepo => ResourceManager.GetString("GitHubRepo", resourceCulture);
         public static string NoLibraryLoaded => ResourceManager.GetString("NoLibraryLoaded", resourceCulture);
         public static string LoadLibrary => ResourceManager.GetString("LoadLibrary", resourceCulture);
-        public static string GitHubRepo => ResourceManager.GetString("GitHubRepo", resourceCulture);
+        public static string HideFolders => ResourceManager.GetString("HideFolders", resourceCulture);
+        public static string ShowFolders => ResourceManager.GetString("ShowFolders", resourceCulture);
+        public static string Notes => ResourceManager.GetString("Notes", resourceCulture);
+        public static string NoNotesFound => ResourceManager.GetString("NoNotesFound", resourceCulture);
+        public static string Preview => ResourceManager.GetString("Preview", resourceCulture);
+        public static string Edit => ResourceManager.GetString("Edit", resourceCulture);
+        public static string Save => ResourceManager.GetString("Save", resourceCulture);
+        public static string SelectNoteToViewOrEdit => ResourceManager.GetString("SelectNoteToViewOrEdit", resourceCulture);
+        public static string NoFoldersFound => ResourceManager.GetString("NoFoldersFound", resourceCulture);
     }
 }

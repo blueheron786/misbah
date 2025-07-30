@@ -1,17 +1,18 @@
 @using Misbah.Core.Models
 @using Misbah.UI.Components.Pages.Notes
+@using Misbah.UI.Resources
 @inject Misbah.Core.Services.INoteService NoteService
 @inject Misbah.Core.Services.IFolderService FolderService
 @inject NavigationManager Navigation
 <div class="sidebar-panel-wrapper">
     <button @onclick="() => _showFolders = !_showFolders" class="toggle-panel-btn">
-        @(_showFolders ? "Hide Folders" : "Show Folders")
+        @(_showFolders ? AppStrings.HideFolders : AppStrings.ShowFolders)
     </button>
     @if (_showFolders)
     {
         <FolderTree RootPath="@RootPath" OnNoteSelected="SelectNote" />
     }
-    <h3>Notes</h3>
+    <h3>@AppStrings.Notes</h3>
     <ul>
         @if (_notes != null)
         {
@@ -24,7 +25,7 @@
         }
         else
         {
-            <li><em>No notes found.</em></li>
+            <li><em>@AppStrings.NoNotesFound</em></li>
         }
     </ul>
 </div>
