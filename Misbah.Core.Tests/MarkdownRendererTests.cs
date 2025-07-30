@@ -125,5 +125,41 @@ Links to [[Stats]] and [YouTube](https://youtube.com) are fair game.
             Assert.That(html, Does.Contain("youtube.com"));
             Assert.That(html, Does.Contain("🌐"));
         }
+
+        [Test]
+        public void User_Markdown_Produces_Correct_HTML()
+        {
+            var renderer = new MarkdownRenderer();
+            var md = """
+- one
+- two
+- three
+
+A list:
+
+- [ ] one
+- [ ] two
+- [ ] three
+
+Please ***bold and italicize*** this bad boi. And ==highlight== this bad boi.
+""";
+            var html = renderer.RenderFull(md, out var lines);
+            // Normal list: should be a <ul> with three <li> (with no checkboxes)
+            var normalList = System.Text.RegularExpressions.Regex.Match(html, "<ul>(.*?)</ul>", System.Text.RegularExpressions.RegexOptions.Singleline);
+            Assert.That(normalList.Success, "Normal list <ul> not found");
+            Assert.That(normalList.Groups[1].Value, Does.Contain("<li>one</li>"));
+            Assert.That(normalList.Groups[1].Value, Does.Contain("<li>two</li>"));
+            Assert.That(normalList.Groups[1].Value, Does.Contain("<li>three</li>"));
+            Assert.That(normalList.Groups[1].Value, Does.Not.Contain("checkbox"));
+            // Task list: should be a <ul class='md-task-list'> with three checkboxes
+            var taskList = System.Text.RegularExpressions.Regex.Match(html, "<ul class='md-task-list'>(.*?)</ul>", System.Text.RegularExpressions.RegexOptions.Singleline);
+            Assert.That(taskList.Success, "Task list <ul class='md-task-list'> not found");
+            int checkboxCount = System.Text.RegularExpressions.Regex.Matches(taskList.Groups[1].Value, "<input type='checkbox' class='md-task'").Count;
+            Assert.That(checkboxCount, Is.EqualTo(3));
+            // Highlight
+            Assert.That(html, Does.Contain("<span class='md-highlight'>highlight</span>"));
+            // Bold+italic
+            Assert.That(html, Does.Contain("<b><i>bold and italicize</i></b>"));
+        }
     }
 }
