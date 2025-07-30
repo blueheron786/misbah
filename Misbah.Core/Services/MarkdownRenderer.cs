@@ -15,78 +15,84 @@ namespace Misbah.Core.Services
         /// <returns>HTML string.</returns>
         public string Render(string? content, out List<int> taskLineNumbers)
         {
-            // Do NOT preprocess highlight here; only in RenderFull to avoid double-escaping
             string[] lines = (content ?? "").Split('\n');
             var htmlLines = new List<string>();
-            var taskLines = new List<int>();
-
-            var pipelineBuilder = new MarkdownPipelineBuilder()
-                .UseAdvancedExtensions()
-                .UseEmphasisExtras()
-                .UseTaskLists()
-                .UsePipeTables()
-                .UseListExtras()
-                .UseAutoIdentifiers()
-                .UseAutoLinks()
-                .UseGenericAttributes();
-            var pipeline = pipelineBuilder.Build();
-            // Enable ==highlight==
-
-            // Only custom-render task lists; let Markdig handle everything else (including normal lists and highlight)
-            var block = new List<string>();
+            bool inNormalList = false;
             bool inTaskList = false;
-            Action flushBlock = () => {
-                if (block.Count == 0) return;
-                var joined = string.Join("\n", block);
-                var html = Markdown.ToHtml(joined, pipeline);
-                htmlLines.Add(html);
-                block.Clear();
-            };
-
+            bool inCodeBlock = false;
+            int emptyCount = 0;
+            var taskLines = new List<int>();
+            var pipeline = new MarkdownPipelineBuilder().UseAdvancedExtensions().Build();
             for (int i = 0; i < lines.Length; i++)
             {
+                if (IsCodeBlockDelimiter(lines[i]))
+                {
+                    if (inNormalList) { htmlLines.Add("</ul>"); inNormalList = false; }
+                    if (inTaskList) { htmlLines.Add("</ul>"); inTaskList = false; }
+                    HandleCodeBlockDelimiter(ref inCodeBlock, htmlLines);
+                    emptyCount = 0;
+                    continue;
+                }
+                if (inCodeBlock)
+                {
+                    htmlLines.Add(System.Net.WebUtility.HtmlEncode(lines[i]) + "\n");
+                    continue;
+                }
+                // Task list
                 var isTask = Regex.IsMatch(lines[i], @"^- \[( |x)\] ", RegexOptions.IgnoreCase);
                 if (isTask)
                 {
-                    flushBlock();
+                    if (inNormalList) { htmlLines.Add("</ul>"); inNormalList = false; }
                     if (!inTaskList) { htmlLines.Add("<ul class='md-task-list'>"); inTaskList = true; }
                     TryRenderTaskList(lines[i], i, htmlLines, taskLines, ref inTaskList);
-                }
-                else
-                {
-                    if (inTaskList) { htmlLines.Add("</ul>"); inTaskList = false; }
-                    block.Add(lines[i]);
-                }
-            }
-            if (inTaskList) { htmlLines.Add("</ul>"); }
-            flushBlock();
-            taskLineNumbers = taskLines;
-            var html = string.Join("", htmlLines);
-            return html;
-        }
-
-        /// <summary>
-        /// Preprocesses ==highlight== to <span class='md-highlight'>highlight</span> only outside code blocks.
-        /// </summary>
-        private string PreprocessHighlight(string markdown)
-        {
-            var lines = markdown.Split('\n');
-            bool inCode = false;
-            for (int i = 0; i < lines.Length; i++)
-            {
-                var line = lines[i];
-                if (line.TrimStart().StartsWith("```") )
-                {
-                    inCode = !inCode;
+                    emptyCount = 0;
                     continue;
                 }
-                if (!inCode)
+                // Normal markdown list (not a task list)
+                var isNormalList = Regex.IsMatch(lines[i], @"^\s*[-*+] ") && !isTask;
+                if (isNormalList)
                 {
-                    // Replace ==text== with <span class='md-highlight'>text</span> (no HTML escaping, let Markdig handle it)
-                    lines[i] = Regex.Replace(line, @"==(.+?)==", m => $"<span class='md-highlight'>{m.Groups[1].Value}</span>", RegexOptions.Singleline);
+                    if (inTaskList) { htmlLines.Add("</ul>"); inTaskList = false; }
+                    if (!inNormalList) { htmlLines.Add("<ul>"); inNormalList = true; }
+                    string item = lines[i].Trim().Substring(2);
+                    // Preprocess for highlight and bold/italic before Markdig for list items
+                    item = Regex.Replace(item, "==([^=]+)==", m => $"<span class='md-highlight'>{System.Net.WebUtility.HtmlEncode(m.Groups[1].Value)}</span>");
+                    item = Regex.Replace(item, @"\*\*\*([^*]+)\*\*\*", m => $"<b><i>{System.Net.WebUtility.HtmlEncode(m.Groups[1].Value)}</i></b>");
+                    // Inline code for list items
+                    item = RenderInlineCode(item);
+                    var itemHtml = Markdown.ToHtml(item, pipeline);
+                    if (itemHtml.StartsWith("<p>") && itemHtml.EndsWith("</p>\n"))
+                        itemHtml = itemHtml.Substring(3, itemHtml.Length - 8);
+                    htmlLines.Add($"<li>{itemHtml}</li>");
+                    emptyCount = 0;
+                    continue;
                 }
+                // Blank line closes any open list
+                if (string.IsNullOrWhiteSpace(lines[i]))
+                {
+                    if (inNormalList) { htmlLines.Add("</ul>"); inNormalList = false; }
+                    if (inTaskList) { htmlLines.Add("</ul>"); inTaskList = false; }
+                    emptyCount++;
+                    if (emptyCount == 1) htmlLines.Add("<br>");
+                    continue;
+                }
+                if (inNormalList) { htmlLines.Add("</ul>"); inNormalList = false; }
+                if (inTaskList) { htmlLines.Add("</ul>"); inTaskList = false; }
+                emptyCount = 0;
+                // Preprocess for highlight and bold/italic before Markdig
+                var processed = lines[i];
+                processed = Regex.Replace(processed, "==([^=]+)==", m => $"<span class='md-highlight'>{System.Net.WebUtility.HtmlEncode(m.Groups[1].Value)}</span>");
+                processed = Regex.Replace(processed, @"\*\*\*([^*]+)\*\*\*", m => $"<b><i>{System.Net.WebUtility.HtmlEncode(m.Groups[1].Value)}</i></b>");
+                var inlineCode = RenderInlineCode(processed);
+                var lineHtml = Markdown.ToHtml(inlineCode, pipeline);
+                if (lineHtml.StartsWith("<p>") && lineHtml.EndsWith("</p>\n"))
+                    lineHtml = lineHtml.Substring(3, lineHtml.Length - 8);
+                htmlLines.Add(lineHtml);
             }
-            return string.Join("\n", lines);
+            if (inTaskList) { htmlLines.Add("</ul>"); }
+            if (inNormalList) { htmlLines.Add("</ul>"); }
+            taskLineNumbers = taskLines;
+            return string.Join("", htmlLines);
         }
 
         /// <summary>
@@ -97,14 +103,11 @@ namespace Misbah.Core.Services
         /// <returns>HTML string with all post-processing applied.</returns>
         public string RenderFull(string? content, out List<int> taskLineNumbers)
         {
-            // Preprocess highlight before any Markdown rendering
-            var preprocessed = PreprocessHighlight(content ?? "");
-            var html = Render(preprocessed, out taskLineNumbers);
+            var html = Render(content, out taskLineNumbers);
             html = ReplaceWikiLinks(html);
             html = AddExternalLinkEmoji(html);
             return html;
         }
-
 
         /// <summary>
         /// Adds 🌐 emoji to external links in the HTML.

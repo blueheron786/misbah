@@ -1,3 +1,4 @@
+
 <style>
 .misbah-code {
     background: #23272e;
@@ -23,7 +24,6 @@ pre.misbah-code {
 @using Markdig
 @inject Misbah.Core.Services.INoteService NoteService
 @inject IJSRuntime JSRuntime
-@inject Misbah.Core.Services.MarkdownRenderer MarkdownRenderer
 
 <style>
 .misbah-code {
@@ -122,8 +122,102 @@ pre.misbah-code {
                 });
             ");
         }
-        var html = MarkdownRenderer.RenderFull(content, out _);
+
+        var html = RenderMarkdownHtml(content);
+        html = AddExternalLinkEmoji(html);
+        html = ReplaceWikiLinks(html);
         return (MarkupString)html;
+    }
+
+    // Helper: Render markdown to HTML, handling code blocks, tasks, and inline code
+    private string RenderMarkdownHtml(string? content)
+    {
+        string[] lines = (content ?? "").Split('\n');
+        var htmlLines = new List<string>();
+        bool inList = false;
+        bool inCodeBlock = false;
+        int emptyCount = 0;
+        for (int i = 0; i < lines.Length; i++)
+        {
+            // Code block start/end
+            if (lines[i].TrimStart().StartsWith("```") )
+            {
+                if (!inCodeBlock) {
+                    htmlLines.Add("<pre class='misbah-code'><code class='misbah-code'>");
+                    inCodeBlock = true;
+                } else {
+                    htmlLines.Add("</code></pre>");
+                    inCodeBlock = false;
+                }
+                emptyCount = 0;
+                continue;
+            }
+            if (inCodeBlock)
+            {
+                htmlLines.Add(System.Net.WebUtility.HtmlEncode(lines[i]) + "\n");
+                continue;
+            }
+            // Task list
+            var match = System.Text.RegularExpressions.Regex.Match(lines[i], @"^- \[( |x)\] (.*)$", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+            if (match.Success)
+            {
+                if (!inList) { htmlLines.Add("<ul>"); inList = true; }
+                bool isChecked = match.Groups[1].Value.ToLower() == "x";
+                string taskText = match.Groups[2].Value;
+                string checkbox = $"<input type='checkbox' class='md-task' data-line='{i}' {(isChecked ? "checked" : "")} onclick=\"window.dispatchEvent(new CustomEvent('misbah-task-toggle',{{detail:{{line:{i}}}}}));\">";
+                htmlLines.Add($"<li>{checkbox} {System.Net.WebUtility.HtmlEncode(taskText)}</li>");
+                emptyCount = 0;
+            }
+            else
+            {
+                if (inList) { htmlLines.Add("</ul>"); inList = false; }
+                // Collapse multiple empty lines to a single <br>
+                if (string.IsNullOrWhiteSpace(lines[i]))
+                {
+                    emptyCount++;
+                    if (emptyCount == 1) htmlLines.Add("<br>");
+                    continue;
+                }
+                emptyCount = 0;
+                // Inline code: `code`
+                var inlineCode = System.Text.RegularExpressions.Regex.Replace(
+                    lines[i],
+                    "`([^`]+)`",
+                    m => $"<code class='misbah-code'>{System.Net.WebUtility.HtmlEncode(m.Groups[1].Value)}</code>");
+                // Render non-task, non-code lines with Markdig (for formatting, links, etc.)
+                var lineHtml = Markdig.Markdown.ToHtml(inlineCode);
+                if (lineHtml.StartsWith("<p>") && lineHtml.EndsWith("</p>\n"))
+                    lineHtml = lineHtml.Substring(3, lineHtml.Length - 8);
+                htmlLines.Add(lineHtml);
+            }
+        }
+        if (inList) { htmlLines.Add("</ul>"); }
+        return string.Join("", htmlLines);
+    }
+
+    // Helper: Add globe emoji to external links
+    private string AddExternalLinkEmoji(string html)
+    {
+        return System.Text.RegularExpressions.Regex.Replace(
+            html,
+            @"<a ([^>]*href=""https?://[^""]+""[^>]*)>(.*?)</a>",
+            m => $"<a {m.Groups[1].Value}>{m.Groups[2].Value}</a> 🌐",
+            System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+    }
+
+    // Helper: Replace [[Page Name]] with internal anchor tags
+    private string ReplaceWikiLinks(string html)
+    {
+        return System.Text.RegularExpressions.Regex.Replace(
+            html,
+            @"\[\[([^\]]+)\]\]",
+            new System.Text.RegularExpressions.MatchEvaluator(m =>
+            {
+                var page = m.Groups[1].Value.Replace("\"", "&quot;");
+                var linkHtml = "<a href=\"#\" onclick=\"window.dispatchEvent(new CustomEvent('misbah-nav', { detail: { title: '" + page + "' } }));return false;\">" + page + "</a>";
+                return linkHtml;
+            }),
+            System.Text.RegularExpressions.RegexOptions.IgnoreCase);
     }
 }
 
@@ -160,7 +254,7 @@ pre.misbah-code {
 
     private void ShowHtmlModal()
     {
-        renderedHtml = MarkdownRenderer.RenderFull(note?.Content, out _);
+        renderedHtml = RenderMarkdownHtml(note?.Content);
         showHtmlModal = true;
     }
 
