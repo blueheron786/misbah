@@ -1,0 +1,21 @@
+@code {
+    [Parameter] public EventCallback<string> OnLibraryPicked { get; set; }
+
+    private async Task PickLibrary()
+    {
+        // Use static helper to show dialog on UI thread
+        var folder = Misbah.UI.FolderDialogHelper.ShowFolderDialog();
+        if (!string.IsNullOrEmpty(folder))
+        {
+            await OnLibraryPicked.InvokeAsync(folder);
+        }
+    }
+}
+
+<div style="text-align:center;">
+    <h2>No library loaded</h2>
+    <button class="btn btn-primary" @onclick="PickLibrary">Load a Library</button>
+    <div style="margin-top:1em;">
+        <a href="https://github.com/blueheron786/misbah" target="_blank">GitHub Repo</a>
+    </div>
+</div>
