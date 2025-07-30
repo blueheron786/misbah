@@ -38,7 +38,7 @@
 {
     <div class="note-view">
         <h2>@note.Title</h2>
-        <button @onclick="ToggleEdit">@(editMode ? "Cancel" : AppStrings.Edit)</button>
+        <button @onclick="ToggleEdit">@(editMode ? AppStrings.Cancel : AppStrings.Edit)</button>
         @if (editMode)
         {
             <textarea @bind="editedContent" rows="20" style="width:100%"></textarea>
