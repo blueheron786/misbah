@@ -1,0 +1,21 @@
+@namespace Misbah.UI.Components
+@using Misbah.UI.Resources
+@inject Microsoft.JSInterop.IJSRuntime JS
+
+<select @onchange="ChangeLang" class="form-select" style="width:auto;display:inline-block;">
+    <option value="en">English</option>
+    <option value="ar">العربية</option>
+    <option value="ur">اردو</option>
+    <option value="es">Español</option>
+</select>
+
+@code {
+    private async Task ChangeLang(ChangeEventArgs e)
+    {
+        var culture = e.Value?.ToString() ?? "en";
+        var ci = new System.Globalization.CultureInfo(culture);
+        System.Globalization.CultureInfo.DefaultThreadCurrentCulture = ci;
+        System.Globalization.CultureInfo.DefaultThreadCurrentUICulture = ci;
+        await JS.InvokeVoidAsync("eval", "location.reload()") ; // reload to apply
+    }
+}

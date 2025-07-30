@@ -1,3 +1,4 @@
+@namespace Misbah.UI.Components
 @code {
     [Parameter] public EventCallback<string> OnLibraryPicked { get; set; }
 
@@ -12,10 +13,11 @@
     }
 }
 
+@using Misbah.UI.Resources
 <div style="text-align:center;">
-    <h2>No library loaded</h2>
-    <button class="btn btn-primary" @onclick="PickLibrary">Load a Library</button>
+    <h2>@AppStrings.NoLibraryLoaded</h2>
+    <button class="btn btn-primary" @onclick="PickLibrary">@AppStrings.LoadLibrary</button>
     <div style="margin-top:1em;">
-        <a href="https://github.com/blueheron786/misbah" target="_blank">GitHub Repo</a>
+        <a href="https://github.com/blueheron786/misbah" target="_blank">@AppStrings.GitHubRepo</a>
     </div>
 </div>

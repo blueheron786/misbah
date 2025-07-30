@@ -5,6 +5,7 @@ using Misbah.Core.Services;
 using Misbah.Core.Utils;
 
 var builder = BlazorDesktopHostBuilder.CreateDefault(args);
+builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
 
 builder.RootComponents.Add<Routes>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
