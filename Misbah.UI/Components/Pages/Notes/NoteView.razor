@@ -87,25 +87,35 @@
             ");
         }
 
+
+        // Render markdown line-by-line, inject custom checkboxes for task lists, and process wiki/external links
         string[] lines = (content ?? "").Split('\n');
+        var htmlLines = new List<string>();
+        bool inList = false;
         for (int i = 0; i < lines.Length; i++)
         {
-            // Task list: - [ ] or - [x]
             var match = System.Text.RegularExpressions.Regex.Match(lines[i], @"^- \[( |x)\] (.*)$", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
             if (match.Success)
             {
+                if (!inList) { htmlLines.Add("<ul>"); inList = true; }
                 bool isChecked = match.Groups[1].Value.ToLower() == "x";
                 string taskText = match.Groups[2].Value;
                 string checkbox = $"<input type='checkbox' class='md-task' data-line='{i}' {(isChecked ? "checked" : "")} onclick=\"window.dispatchEvent(new CustomEvent('misbah-task-toggle',{{detail:{{line:{i}}}}}));\">";
-                lines[i] = checkbox + " " + System.Net.WebUtility.HtmlEncode(taskText);
+                htmlLines.Add($"<li>{checkbox} {System.Net.WebUtility.HtmlEncode(taskText)}</li>");
             }
             else
             {
+                if (inList) { htmlLines.Add("</ul>"); inList = false; }
                 // Render non-task lines with Markdig (for formatting, links, etc.)
-                lines[i] = Markdig.Markdown.ToHtml(lines[i]);
+                var lineHtml = Markdig.Markdown.ToHtml(lines[i]);
+                // Remove wrapping <p> if present, to avoid extra spacing
+                if (lineHtml.StartsWith("<p>") && lineHtml.EndsWith("</p>\n"))
+                    lineHtml = lineHtml.Substring(3, lineHtml.Length - 8);
+                htmlLines.Add(lineHtml);
             }
         }
-        var html = string.Join("<br>", lines);
+        if (inList) { htmlLines.Add("</ul>"); }
+        var html = string.Join("", htmlLines);
 
         // Add globe emoji to all <a href="http(s)://..."> links
         html = System.Text.RegularExpressions.Regex.Replace(
