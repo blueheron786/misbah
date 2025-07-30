@@ -1,0 +1,70 @@
+@namespace Misbah.UI.Components.Pages.Notes
+@using Misbah.Core.Models
+@inject Misbah.Core.Services.IFolderService FolderService
+
+@code {
+    [Parameter] public string? RootPath { get; set; }
+    [Parameter] public EventCallback<string> OnNoteSelected { get; set; }
+    private FolderNode? _rootFolder;
+    private HashSet<string> _expandedFolders = new();
+
+    protected override void OnInitialized()
+    {
+        if (!string.IsNullOrEmpty(RootPath))
+        {
+            _rootFolder = FolderService.LoadFolderTree(RootPath);
+            _expandedFolders.Add(_rootFolder.Path);
+        }
+    }
+
+    void ToggleFolder(string path)
+    {
+        if (_expandedFolders.Contains(path))
+            _expandedFolders.Remove(path);
+        else
+            _expandedFolders.Add(path);
+    }
+
+    RenderFragment RenderFolder(FolderNode folder) => builder =>
+    {
+        int seq = 0;
+        builder.OpenElement(seq++, "li");
+        builder.OpenElement(seq++, "div");
+        builder.AddAttribute(seq++, "class", "folder-label");
+        builder.AddAttribute(seq++, "@onclick", EventCallback.Factory.Create(this, () => ToggleFolder(folder.Path)));
+        builder.AddContent(seq++, _expandedFolders.Contains(folder.Path) ? "▼ " : "► ");
+        builder.AddContent(seq++, folder.Name);
+        builder.CloseElement();
+        if (_expandedFolders.Contains(folder.Path))
+        {
+            builder.OpenElement(seq++, "ul");
+            foreach (var sub in folder.Folders)
+            {
+                builder.AddContent(seq++, RenderFolder(sub));
+            }
+            foreach (var note in folder.Notes)
+            {
+                builder.OpenElement(seq++, "li");
+                builder.AddAttribute(seq++, "class", "note-leaf");
+                builder.AddAttribute(seq++, "@onclick", EventCallback.Factory.Create(this, () => OnNoteSelected.InvokeAsync(note.Id)));
+                builder.AddContent(seq++, note.Title);
+                builder.CloseElement();
+            }
+            builder.CloseElement();
+        }
+        builder.CloseElement();
+    };
+}
+
+@if (_rootFolder != null)
+{
+    <div class="folder-tree">
+        <ul>
+            @RenderFolder(_rootFolder)
+        </ul>
+    </div>
+}
+else
+{
+    <div class="folder-tree"><em>No folders found.</em></div>
+}
