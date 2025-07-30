@@ -25,8 +25,8 @@ namespace Misbah.UI.Resources {
 
         public static string GitHubRepo => ResourceManager.GetString("GitHubRepo", resourceCulture);
         public static string WelcomeToMisbah => ResourceManager.GetString("WelcomeToMisbah", resourceCulture);
-        public static string NoLibraryLoaded => ResourceManager.GetString("NoLibraryLoaded", resourceCulture);
-        public static string LoadLibrary => ResourceManager.GetString("LoadLibrary", resourceCulture);
+        public static string NoHubLoaded => ResourceManager.GetString("NoHubLoaded", resourceCulture);
+        public static string LoadHub => ResourceManager.GetString("LoadHub", resourceCulture);
         public static string HideFolders => ResourceManager.GetString("HideFolders", resourceCulture);
         public static string ShowFolders => ResourceManager.GetString("ShowFolders", resourceCulture);
         public static string Notes => ResourceManager.GetString("Notes", resourceCulture);
