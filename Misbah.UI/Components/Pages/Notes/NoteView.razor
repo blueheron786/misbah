@@ -1,4 +1,22 @@
 
+<style>
+.misbah-code {
+    background: #23272e;
+    color: #e6e6e6;
+    font-family: 'Fira Mono', 'Consolas', 'Menlo', 'Monaco', monospace;
+    font-size: 0.98em;
+    border-radius: 4px;
+    padding: 0.2em 0.5em;
+    margin: 0.1em 0;
+    display: inline-block;
+    white-space: pre;
+}
+pre.misbah-code {
+    display: block;
+    padding: 1em;
+    overflow-x: auto;
+}
+</style>
 @page "/notes/{NoteId}"
 @using Misbah.Core.Models
 @using Misbah.UI.Resources
@@ -6,6 +24,25 @@
 @using Markdig
 @inject Misbah.Core.Services.INoteService NoteService
 @inject IJSRuntime JSRuntime
+
+<style>
+.misbah-code {
+    background: #23272e;
+    color: #e6e6e6;
+    font-family: 'Fira Mono', 'Consolas', 'Menlo', 'Monaco', monospace;
+    font-size: 0.98em;
+    border-radius: 4px;
+    padding: 0.2em 0.5em;
+    margin: 0.1em 0;
+    display: inline-block;
+    white-space: pre;
+}
+pre.misbah-code {
+    display: block;
+    padding: 1em;
+    overflow-x: auto;
+}
+</style>
 
 @code {
 
@@ -71,10 +108,9 @@
         }
     }
 
-    // Render markdown line-by-line, inject custom checkboxes for task lists, and process wiki/external links
+    // Main markdown renderer
     MarkupString RenderMarkdownWithLinks(string? content)
     {
-        // Register JS event handler for checkbox toggles (only once)
         if (!_jsHandlerRegistered)
         {
             _jsHandlerRegistered = true;
@@ -87,24 +123,33 @@
             ");
         }
 
+        var html = RenderMarkdownHtml(content);
+        html = AddExternalLinkEmoji(html);
+        html = ReplaceWikiLinks(html);
+        return (MarkupString)html;
+    }
 
-        // Render markdown line-by-line, inject custom checkboxes for task lists, and process wiki/external links
+    // Helper: Render markdown to HTML, handling code blocks, tasks, and inline code
+    private string RenderMarkdownHtml(string? content)
+    {
         string[] lines = (content ?? "").Split('\n');
         var htmlLines = new List<string>();
         bool inList = false;
         bool inCodeBlock = false;
+        int emptyCount = 0;
         for (int i = 0; i < lines.Length; i++)
         {
             // Code block start/end
-            if (lines[i].TrimStart().StartsWith("```"))
+            if (lines[i].TrimStart().StartsWith("```") )
             {
                 if (!inCodeBlock) {
-                    htmlLines.Add("<pre><code>");
+                    htmlLines.Add("<pre class='misbah-code'><code class='misbah-code'>");
                     inCodeBlock = true;
                 } else {
                     htmlLines.Add("</code></pre>");
                     inCodeBlock = false;
                 }
+                emptyCount = 0;
                 continue;
             }
             if (inCodeBlock)
@@ -112,6 +157,7 @@
                 htmlLines.Add(System.Net.WebUtility.HtmlEncode(lines[i]) + "\n");
                 continue;
             }
+            // Task list
             var match = System.Text.RegularExpressions.Regex.Match(lines[i], @"^- \[( |x)\] (.*)$", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
             if (match.Success)
             {
@@ -120,15 +166,24 @@
                 string taskText = match.Groups[2].Value;
                 string checkbox = $"<input type='checkbox' class='md-task' data-line='{i}' {(isChecked ? "checked" : "")} onclick=\"window.dispatchEvent(new CustomEvent('misbah-task-toggle',{{detail:{{line:{i}}}}}));\">";
                 htmlLines.Add($"<li>{checkbox} {System.Net.WebUtility.HtmlEncode(taskText)}</li>");
+                emptyCount = 0;
             }
             else
             {
                 if (inList) { htmlLines.Add("</ul>"); inList = false; }
+                // Collapse multiple empty lines to a single <br>
+                if (string.IsNullOrWhiteSpace(lines[i]))
+                {
+                    emptyCount++;
+                    if (emptyCount == 1) htmlLines.Add("<br>");
+                    continue;
+                }
+                emptyCount = 0;
                 // Inline code: `code`
                 var inlineCode = System.Text.RegularExpressions.Regex.Replace(
                     lines[i],
                     "`([^`]+)`",
-                    m => $"<code>{System.Net.WebUtility.HtmlEncode(m.Groups[1].Value)}</code>");
+                    m => $"<code class='misbah-code'>{System.Net.WebUtility.HtmlEncode(m.Groups[1].Value)}</code>");
                 // Render non-task, non-code lines with Markdig (for formatting, links, etc.)
                 var lineHtml = Markdig.Markdown.ToHtml(inlineCode);
                 if (lineHtml.StartsWith("<p>") && lineHtml.EndsWith("</p>\n"))
@@ -137,17 +192,23 @@
             }
         }
         if (inList) { htmlLines.Add("</ul>"); }
-        var html = string.Join("", htmlLines);
+        return string.Join("", htmlLines);
+    }
 
-        // Add globe emoji to all <a href="http(s)://..."> links
-        html = System.Text.RegularExpressions.Regex.Replace(
+    // Helper: Add globe emoji to external links
+    private string AddExternalLinkEmoji(string html)
+    {
+        return System.Text.RegularExpressions.Regex.Replace(
             html,
             @"<a ([^>]*href=""https?://[^""]+""[^>]*)>(.*?)</a>",
             m => $"<a {m.Groups[1].Value}>{m.Groups[2].Value}</a> 🌐",
             System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+    }
 
-        // Replace [[Page Name]] with internal anchor tags
-        html = System.Text.RegularExpressions.Regex.Replace(
+    // Helper: Replace [[Page Name]] with internal anchor tags
+    private string ReplaceWikiLinks(string html)
+    {
+        return System.Text.RegularExpressions.Regex.Replace(
             html,
             @"\[\[([^\]]+)\]\]",
             new System.Text.RegularExpressions.MatchEvaluator(m =>
@@ -157,7 +218,6 @@
                 return linkHtml;
             }),
             System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-        return (MarkupString)html;
     }
 }
 
