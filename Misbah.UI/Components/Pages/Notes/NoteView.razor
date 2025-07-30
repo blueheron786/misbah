@@ -1,20 +1,52 @@
+
 @page "/notes/{NoteId}"
 @using Misbah.Core.Models
 @using Misbah.UI.Resources
+@using Microsoft.JSInterop
 @inject Misbah.Core.Services.INoteService NoteService
+@inject IJSRuntime JSRuntime
 
 @code {
-    [Parameter] public string NoteId { get; set; }
-    private Note note;
-    private bool editMode = false;
-    private string editedContent;
 
+    private static NoteView? _instance;
+    private static bool _jsHandlerRegistered = false;
+
+    [Parameter] public string? NoteId { get; set; }
+    private Note? note;
+    private bool editMode = false;
+    private string? editedContent;
+
+    [JSInvokable("ToggleTask")]
+    public static void ToggleTask(int line)
+    {
+        if (_instance != null && _instance.note != null)
+        {
+            var lines = _instance.note.Content.Split('\n');
+            if (line >= 0 && line < lines.Length)
+            {
+                var taskPattern = @"^- \[( |x)\] (.*)$";
+                var match = System.Text.RegularExpressions.Regex.Match(lines[line], taskPattern, System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                if (match.Success)
+                {
+                    bool isChecked = match.Groups[1].Value.ToLower() == "x";
+                    string newLine = isChecked ? "- [ ] " + match.Groups[2].Value : "- [x] " + match.Groups[2].Value;
+                    lines[line] = newLine;
+                    _instance.note.Content = string.Join("\n", lines);
+                    _instance.NoteService.SaveNote(_instance.note);
+                    _instance.editedContent = _instance.note.Content;
+                    _instance.StateHasChanged();
+                }
+            }
+        }
+    }
+    
     protected override void OnParametersSet()
     {
+        _instance = this;
         if (!string.IsNullOrEmpty(NoteId))
         {
             note = NoteService.LoadNote(NoteId);
-            editedContent = note.Content;
+            editedContent = note?.Content;
             editMode = false;
         }
     }
@@ -22,20 +54,35 @@
     void ToggleEdit()
     {
         editMode = !editMode;
-        if (editMode)
+        if (editMode && note != null)
             editedContent = note.Content;
     }
 
     void Save()
     {
-        note.Content = editedContent;
-        NoteService.SaveNote(note);
-        editMode = false;
+        if (note != null && editedContent != null)
+        {
+            note.Content = editedContent;
+            NoteService.SaveNote(note);
+            editMode = false;
+        }
     }
 
     // Render markdown and convert [[Page Name]] to links
-    MarkupString RenderMarkdownWithLinks(string content)
+    MarkupString RenderMarkdownWithLinks(string? content)
     {
+        // Register JS event handler for checkbox toggles (only once)
+        if (!_jsHandlerRegistered)
+        {
+            _jsHandlerRegistered = true;
+            _ = JSRuntime.InvokeVoidAsync("eval", @"
+                window.addEventListener('misbah-task-toggle', function(e) {
+                    if (e.detail && typeof DotNet !== 'undefined') {
+                        DotNet.invokeMethodAsync('Misbah.UI', 'ToggleTask', e.detail.line);
+                    }
+                });
+            ");
+        }
         // 0. Replace markdown task list with clickable checkboxes
         string taskPattern = @"^- \[( |x)\] (.*)$";
         string[] lines = (content ?? "").Split('\n');
