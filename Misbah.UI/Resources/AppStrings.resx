@@ -42,4 +42,7 @@
   <data name="NoFoldersFound" xml:space="preserve">
     <value>No folders found.</value>
   </data>
+  <data name="WelcomeToMisbah" xml:space="preserve">
+    <value>Welcome to Misbah</value>
+  </data>
 </root>
