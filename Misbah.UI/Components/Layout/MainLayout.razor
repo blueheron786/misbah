@@ -8,7 +8,7 @@
 @inject IJSRuntime JS
 
 @code {
-    private string? _libraryRoot;
+    private string? _hubRoot;
     private string? _selectedNoteId;
     private static MainLayout? _instance;
 
@@ -17,9 +17,9 @@
         _instance = this;
     }
 
-    void OnLibrarySelected(string path)
+    void OnHubSelected(string path)
     {
-        _libraryRoot = path;
+        _hubRoot = path;
         _selectedNoteId = null;
         // Update NoteService root path if possible
         if (NoteService is Misbah.Core.Services.NoteService concrete)
@@ -67,16 +67,16 @@
 }
 
 <div class="page">
-    @if (string.IsNullOrEmpty(_libraryRoot))
+    @if (string.IsNullOrEmpty(_hubRoot))
     {
         <main style="width:100vw; height:100vh; display:flex; align-items:center; justify-content:center; flex-direction:column;">
-            <LibraryPicker OnLibraryPicked="OnLibrarySelected" />
+            <HubPicker OnHubPicked="OnHubSelected" />
         </main>
     }
     else
     {
         <div class="sidebar-panel">
-            <FolderTree RootPath="@_libraryRoot" OnNoteSelected="OnNoteSelected" />
+            <FolderTree RootPath="@_hubRoot" OnNoteSelected="OnNoteSelected" />
         </div>
         <main>
             <!-- GitHub repo link removed -->

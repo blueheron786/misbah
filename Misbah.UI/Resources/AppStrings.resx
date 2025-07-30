@@ -9,11 +9,11 @@
   <data name="Cancel" xml:space="preserve">
     <value>Cancel</value>
   </data>
-  <data name="NoLibraryLoaded" xml:space="preserve">
-    <value>No library loaded</value>
+  <data name="NoHubLoaded" xml:space="preserve">
+    <value>No hub loaded</value>
   </data>
-  <data name="LoadLibrary" xml:space="preserve">
-    <value>Load a Library</value>
+  <data name="LoadHub" xml:space="preserve">
+    <value>Load Hub</value>
   </data>
   <data name="HideFolders" xml:space="preserve">
     <value>Hide Folders</value>
