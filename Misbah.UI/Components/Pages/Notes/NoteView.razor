@@ -3,6 +3,7 @@
 @using Misbah.Core.Models
 @using Misbah.UI.Resources
 @using Microsoft.JSInterop
+@using Markdig
 @inject Misbah.Core.Services.INoteService NoteService
 @inject IJSRuntime JSRuntime
 
@@ -17,9 +18,9 @@
     private string? editedContent;
 
     [JSInvokable("ToggleTask")]
-    public static void ToggleTask(int line)
+    public static async Task ToggleTask(int line)
     {
-        if (_instance != null && _instance.note != null)
+        if (_instance != null && _instance.note != null && !string.IsNullOrEmpty(_instance.NoteId))
         {
             var lines = _instance.note.Content.Split('\n');
             if (line >= 0 && line < lines.Length)
@@ -33,8 +34,10 @@
                     lines[line] = newLine;
                     _instance.note.Content = string.Join("\n", lines);
                     _instance.NoteService.SaveNote(_instance.note);
+                    // Reload the note from storage to ensure latest content
+                    _instance.note = _instance.NoteService.LoadNote(_instance.NoteId);
                     _instance.editedContent = _instance.note.Content;
-                    _instance.StateHasChanged();
+                    await _instance.InvokeAsync(_instance.StateHasChanged);
                 }
             }
         }
@@ -68,7 +71,7 @@
         }
     }
 
-    // Render markdown and convert [[Page Name]] to links
+    // Render markdown line-by-line, inject custom checkboxes for task lists, and process wiki/external links
     MarkupString RenderMarkdownWithLinks(string? content)
     {
         // Register JS event handler for checkbox toggles (only once)
@@ -83,12 +86,12 @@
                 });
             ");
         }
-        // 0. Replace markdown task list with clickable checkboxes
-        string taskPattern = @"^- \[( |x)\] (.*)$";
+
         string[] lines = (content ?? "").Split('\n');
         for (int i = 0; i < lines.Length; i++)
         {
-            var match = System.Text.RegularExpressions.Regex.Match(lines[i], taskPattern, System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+            // Task list: - [ ] or - [x]
+            var match = System.Text.RegularExpressions.Regex.Match(lines[i], @"^- \[( |x)\] (.*)$", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
             if (match.Success)
             {
                 bool isChecked = match.Groups[1].Value.ToLower() == "x";
@@ -96,17 +99,22 @@
                 string checkbox = $"<input type='checkbox' class='md-task' data-line='{i}' {(isChecked ? "checked" : "")} onclick=\"window.dispatchEvent(new CustomEvent('misbah-task-toggle',{{detail:{{line:{i}}}}}));\">";
                 lines[i] = checkbox + " " + System.Net.WebUtility.HtmlEncode(taskText);
             }
+            else
+            {
+                // Render non-task lines with Markdig (for formatting, links, etc.)
+                lines[i] = Markdig.Markdown.ToHtml(lines[i]);
+            }
         }
         var html = string.Join("<br>", lines);
 
-        // 1. Add globe emoji to all <a href="http(s)://..."> links (Markdown [text](url) and bare URLs)
+        // Add globe emoji to all <a href="http(s)://..."> links
         html = System.Text.RegularExpressions.Regex.Replace(
             html,
             @"<a ([^>]*href=""https?://[^""]+""[^>]*)>(.*?)</a>",
             m => $"<a {m.Groups[1].Value}>{m.Groups[2].Value}</a> 🌐",
             System.Text.RegularExpressions.RegexOptions.IgnoreCase);
 
-        // 2. Replace [[Page Name]] with internal anchor tags (no emoji)
+        // Replace [[Page Name]] with internal anchor tags
         html = System.Text.RegularExpressions.Regex.Replace(
             html,
             @"\[\[([^\]]+)\]\]",
