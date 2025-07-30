@@ -37,15 +37,22 @@
     MarkupString RenderMarkdownWithLinks(string content)
     {
         var html = Markdig.Markdown.ToHtml(content ?? "");
-        // Replace [[Page Name]] with anchor tags using a MatchEvaluator
+        // 1. Add globe emoji to all <a href="http(s)://..."> links (Markdown [text](url) and bare URLs)
+        html = System.Text.RegularExpressions.Regex.Replace(
+            html,
+            @"<a ([^>]*href=""https?://[^""]+""[^>]*)>(.*?)</a>",
+            m => $"<a {m.Groups[1].Value}>{m.Groups[2].Value}</a> 🌐",
+            System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
+        // 2. Replace [[Page Name]] with internal anchor tags (no emoji)
         html = System.Text.RegularExpressions.Regex.Replace(
             html,
             @"\[\[([^\]]+)\]\]",
             new System.Text.RegularExpressions.MatchEvaluator(m =>
             {
                 var page = m.Groups[1].Value.Replace("\"", "&quot;");
-                var link = "<a href=\"#\" onclick=\"window.dispatchEvent(new CustomEvent('misbah-nav', { detail: { title: '" + page + "' } }));return false;\">" + page + "</a>";
-                return link;
+                var linkHtml = "<a href=\"#\" onclick=\"window.dispatchEvent(new CustomEvent('misbah-nav', { detail: { title: '" + page + "' } }));return false;\">" + page + "</a>";
+                return linkHtml;
             }),
             System.Text.RegularExpressions.RegexOptions.IgnoreCase);
         return (MarkupString)html;
