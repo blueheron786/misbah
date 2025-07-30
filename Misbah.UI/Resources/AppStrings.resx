@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <data name="NoLibraryLoaded" xml:space="preserve">
+    <value>No library loaded</value>
+  </data>
+  <data name="LoadLibrary" xml:space="preserve">
+    <value>Load a Library</value>
+  </data>
+  <data name="GitHubRepo" xml:space="preserve">
+    <value>GitHub Repo</value>
+  </data>
+</root>

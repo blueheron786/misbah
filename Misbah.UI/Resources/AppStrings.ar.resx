@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <data name="NoLibraryLoaded" xml:space="preserve">
+    <value>لا توجد مكتبة محملة</value>
+  </data>
+  <data name="LoadLibrary" xml:space="preserve">
+    <value>تحميل مكتبة</value>
+  </data>
+  <data name="GitHubRepo" xml:space="preserve">
+    <value>مستودع GitHub</value>
+  </data>
+</root>

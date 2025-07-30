@@ -1,4 +1,7 @@
+@using Misbah.UI.Components
 @using Misbah.UI.Components.Pages.Notes
+@using Misbah.UI.Components
+@using Misbah.UI.Resources
 @inherits LayoutComponentBase
 
 @code {
@@ -21,11 +24,12 @@
     else
     {
         <div class="sidebar-panel">
-            <FolderTree RootPath="@_libraryRoot" OnNoteSelected="@(_ => Task.CompletedTask)" />
+            <FolderTree RootPath="@_libraryRoot" OnNoteSelected="EventCallback.Factory.Create<string>(this, _ => Task.CompletedTask)" />
         </div>
         <main>
-            <div class="top-row px-4">
-                <a href="https://github.com/blueheron786/misbah" target="_blank">GitHub Repo</a>
+            <div class="top-row px-4" style="display:flex;align-items:center;gap:1em;">
+                <LangSelector />
+                <a href="https://github.com/blueheron786/misbah" target="_blank">@Misbah.UI.Resources.AppStrings.GitHubRepo</a>
             </div>
             <article class="content px-4">
                 @Body
