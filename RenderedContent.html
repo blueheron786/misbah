@@ -1,0 +1,101 @@
+<!--!--><!--!--><style>
+.misbah-code {
+    background: #23272e;
+    color: #e6e6e6;
+    font-family: 'Fira Mono', 'Consolas', 'Menlo', 'Monaco', monospace;
+    font-size: 0.98em;
+    border-radius: 4px;
+    padding: 0.2em 0.5em;
+    margin: 0.1em 0;
+    display: inline-block;
+    white-space: pre;
+}
+pre.misbah-code {
+    display: block;
+    padding: 1em;
+    overflow-x: auto;
+}
+</style>
+
+<!--!--><style>
+.misbah-code {
+    background: #23272e;
+    color: #e6e6e6;
+    font-family: 'Fira Mono', 'Consolas', 'Menlo', 'Monaco', monospace;
+    font-size: 0.98em;
+    border-radius: 4px;
+    padding: 0.2em 0.5em;
+    margin: 0.1em 0;
+    display: inline-block;
+    white-space: pre;
+}
+pre.misbah-code {
+    display: block;
+    padding: 1em;
+    overflow-x: auto;
+}
+</style><div class="note-view"><h2>0 - Inbox</h2><!--!-->
+        <button>Edit</button><div style="display:flex;align-items:center;gap:1em;"><div class="markdown-body" style="flex:1;"><!--!--><h2>Temporary for Misbah</h2>
+<br>Checkboxes:<ul><li><input type="checkbox" class="md-task" data-line="3" checked="" onclick="window.dispatchEvent(new CustomEvent('misbah-task-toggle',{detail:{line:3}}));"> Checked</li><li><input type="checkbox" class="md-task" data-line="4" onclick="window.dispatchEvent(new CustomEvent('misbah-task-toggle',{detail:{line:4}}));"> Unchecked</li></ul>And ==highlighted text==. Plus, a list:<ul>
+<li>A</li>
+</ul>
+<ul>
+<li>B</li>
+</ul>
+<br><h2>Stop Here</h2>
+<br>#todo #entrepreneurship #AI<pre class="misbah-code"><code class="misbah-code">let contents = app.vault.getAbstractFileByPath(dv.current().file.path);
+app.vault.read(contents).then(text =&gt; {
+  let lines = text.split("\n");
+
+  // Match any line with 4+ dashes as horizontal rule
+  let ruleIndexes = lines
+    .map((line, i) =&gt; /^-{3,}\s*$/.test(line.trim()) ? i : -1)
+    .filter(i =&gt; i !== -1);
+
+  // Determine cutoff: either second rule or end of file
+  let cutoff = ruleIndexes.length &gt;= 2 ? ruleIndexes[1] : lines.length;
+
+  // Slice up to cutoff and count bullets. Make it line.trim to count sub lines, too.
+  let bullets = lines.slice(0, cutoff).filter(line =&gt; line.startsWith("- ") &amp;&amp; !line.startsWith("- [")); // bullet points, not checklists
+
+  let itemCount = bullets.length;
+  let message = itemCount === 0 
+    ? "is CLEAR! ✨" 
+    : `has **${itemCount} things** to process.`;
+
+  dv.paragraph(`📂 Inbox ${message}`);
+});
+</code></pre><h2>This Week - July 27th (Sunday)</h2>
+<br><ul><li><input type="checkbox" class="md-task" data-line="39" onclick="window.dispatchEvent(new CustomEvent('misbah-task-toggle',{detail:{line:39}}));"> Java</li><li><input type="checkbox" class="md-task" data-line="40" onclick="window.dispatchEvent(new CustomEvent('misbah-task-toggle',{detail:{line:40}}));"> <a href="#" onclick="window.dispatchEvent(new CustomEvent('misbah-nav', { detail: { title: 'UrduPod101' } }));return false;">UrduPod101</a></li><li><input type="checkbox" class="md-task" data-line="41" onclick="window.dispatchEvent(new CustomEvent('misbah-task-toggle',{detail:{line:41}}));"> <a href="#" onclick="window.dispatchEvent(new CustomEvent('misbah-nav', { detail: { title: 'Cats for the Masses' } }));return false;">Cats for the Masses</a></li></ul><br><hr>
+<br><ul>
+<li>==What are you doing to enjoin good and forbid evil?== It's not a generic thing, it's specifically promoting Islamic values</li>
+</ul>
+<ul>
+<li>Buy basement showerhead: https://www.homedepot.ca/product/delta-water-saving-showerhead/1000508084</li>
+</ul>
+<ul>
+<li>wasps are back on 2F</li>
+</ul>
+<ul>
+<li>eduarena.ai</li>
+</ul>
+<ul>
+<li>story: kids swing really high and then jump and get to the job moon. Get there favorite color suit as they reach the atmosphere. Find out sun and moon are going to collide and have to stop it</li>
+</ul>
+<ul>
+<li>do your stupid writing course, we need more editors. And don't forget, no plan survives first contact</li>
+</ul>
+<ul>
+<li>gemini: <code class="misbah-code">AIzaSyBFPZ_G4JLd9QG-pwIzBIXiVsc4inM8vgU</code> for novel writer</li>
+</ul>
+<ul>
+<li>mechanical pencil and lead from the dollar store</li>
+</ul>
+<ul>
+<li>flowers or what in the front yard outside of property, in sick of this</li>
+</ul>
+<ul>
+<li>switch to OFFICIAL vault stats plugin</li>
+</ul>
+</div><!--!-->
+                <button class="btn btn-secondary">View Rendered HTML</button></div></div>
