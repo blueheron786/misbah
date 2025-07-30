@@ -28,11 +28,14 @@
 
     RenderFragment RenderFolder(FolderNode folder) => builder =>
     {
+        // Hide folders starting with '.'
+        if (!string.IsNullOrEmpty(folder.Name) && folder.Name.StartsWith("."))
+            return;
         int seq = 0;
         builder.OpenElement(seq++, "li");
         builder.OpenElement(seq++, "div");
         builder.AddAttribute(seq++, "class", "folder-label");
-        builder.AddAttribute(seq++, "@onclick", EventCallback.Factory.Create(this, () => ToggleFolder(folder.Path)));
+        builder.AddAttribute(seq++, "onclick", EventCallback.Factory.Create<Microsoft.AspNetCore.Components.Web.MouseEventArgs>(this, (e) => ToggleFolder(folder.Path)));
         builder.AddContent(seq++, _expandedFolders.Contains(folder.Path) ? "▼ " : "► ");
         builder.AddContent(seq++, folder.Name);
         builder.CloseElement();
@@ -47,7 +50,9 @@
             {
                 builder.OpenElement(seq++, "li");
                 builder.AddAttribute(seq++, "class", "note-leaf");
-                builder.AddAttribute(seq++, "@onclick", EventCallback.Factory.Create(this, () => OnNoteSelected.InvokeAsync(note.Id)));
+                builder.AddAttribute(seq++, "onclick", EventCallback.Factory.Create<Microsoft.AspNetCore.Components.Web.MouseEventArgs>(this, (e) => {
+                    OnNoteSelected.InvokeAsync(note.Id);
+                }));
                 builder.AddContent(seq++, note.Title);
                 builder.CloseElement();
             }

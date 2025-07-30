@@ -1,0 +1,29 @@
+@page "/notes/{NoteId}"
+@using Misbah.Core.Models
+@using Misbah.UI.Resources
+@inject Misbah.Core.Services.INoteService NoteService
+
+@code {
+    [Parameter] public string NoteId { get; set; }
+    private Note note;
+
+    protected override void OnParametersSet()
+    {
+        if (!string.IsNullOrEmpty(NoteId))
+        {
+            note = NoteService.LoadNote(NoteId);
+        }
+    }
+}
+
+@if (note != null)
+{
+    <div class="note-view">
+        <h2>@note.Title</h2>
+        <div class="markdown-body">@((MarkupString)Markdig.Markdown.ToHtml(note.Content))</div>
+    </div>
+}
+else
+{
+    <p>@AppStrings.SelectNoteToViewOrEdit</p>
+}

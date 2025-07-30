@@ -64,3 +64,24 @@ h1:focus {
     .blazor-error-boundary::after {
         content: "An error has occurred."
     }
+
+.folder-tree .folder-label {
+    cursor: pointer;
+    padding: 2px 6px;
+    user-select: none;
+    font-weight: 500;
+}
+.folder-tree .folder-label:hover {
+    background: #e6f0fa;
+}
+.folder-tree .note-leaf {
+    cursor: pointer;
+    padding: 2px 6px 2px 24px;
+    user-select: none;
+    color: #006bb7;
+    border-radius: 3px;
+}
+.folder-tree .note-leaf:hover {
+    background: #e6f0fa;
+    color: #004a87;
+}
