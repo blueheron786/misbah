@@ -36,4 +36,7 @@
   <data name="NoFoldersFound" xml:space="preserve">
     <value>لا توجد مجلدات.</value>
   </data>
+  <data name="Cancel" xml:space="preserve">
+    <value>إلغاء</value>
+  </data>
 </root>
