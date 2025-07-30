@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <data name="NoLibraryLoaded" xml:space="preserve">
+    <value>کوئی لائبریری لوڈ نہیں ہوئی</value>
+  </data>
+  <data name="LoadLibrary" xml:space="preserve">
+    <value>لائبریری لوڈ کریں</value>
+  </data>
+  <data name="GitHubRepo" xml:space="preserve">
+    <value>گیٹ ہب ریپو</value>
+  </data>
+</root>
