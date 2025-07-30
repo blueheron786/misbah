@@ -18,14 +18,33 @@ namespace Misbah.Core.Services
                 Name = Path.GetFileName(path),
                 Path = path
             };
-            foreach (var dir in Directory.GetDirectories(path))
+            try
             {
-                folder.Folders.Add(LoadFolder(dir));
+                foreach (var dir in Directory.GetDirectories(path))
+                {
+                    // Avoid symlink recursion
+                    if ((File.GetAttributes(dir) & FileAttributes.ReparsePoint) != 0)
+                        continue;
+                    try
+                    {
+                        folder.Folders.Add(LoadFolder(dir));
+                    }
+                    catch { /* skip inaccessible subfolder */ }
+                }
             }
-            foreach (var file in Directory.GetFiles(path, "*.md"))
+            catch { /* skip inaccessible folder */ }
+            try
             {
-                folder.Notes.Add(new Note { Id = file, Title = Path.GetFileNameWithoutExtension(file), FilePath = file });
+                foreach (var file in Directory.GetFiles(path, "*.md"))
+                {
+                    try
+                    {
+                        folder.Notes.Add(new Note { Id = file, Title = Path.GetFileNameWithoutExtension(file), FilePath = file });
+                    }
+                    catch { /* skip inaccessible file */ }
+                }
             }
+            catch { /* skip files if folder is inaccessible */ }
             return folder;
         }
 

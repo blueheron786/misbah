@@ -1,17 +1,42 @@
+@using Misbah.UI.Components.Pages.Notes
 @inherits LayoutComponentBase
 
+@code {
+    private string? _libraryRoot;
+
+    void LoadLibrary()
+    {
+        // TODO: Replace with folder picker dialog
+        // For now, just hardcode or prompt for a path
+        _libraryRoot = "Notes";
+    }
+}
+
 <div class="page">
-    <div class="sidebar">
-        <NavMenu />
-    </div>
-
-    <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
+    @if (string.IsNullOrEmpty(_libraryRoot))
+    {
+        <main style="width:100vw; height:100vh; display:flex; align-items:center; justify-content:center;">
+            <div style="text-align:center;">
+                <h2>No library loaded</h2>
+                <button class="btn btn-primary" @onclick="LoadLibrary">Load a Library</button>
+                <div style="margin-top:1em;">
+                    <a href="https://github.com/blueheron786/misbah" target="_blank">GitHub Repo</a>
+                </div>
+            </div>
+        </main>
+    }
+    else
+    {
+        <div class="sidebar-panel">
+            <FolderTree RootPath="@_libraryRoot" OnNoteSelected="@(_ => Task.CompletedTask)" />
         </div>
-
-        <article class="content px-4">
-            @Body
-        </article>
-    </main>
+        <main>
+            <div class="top-row px-4">
+                <a href="https://github.com/blueheron786/misbah" target="_blank">GitHub Repo</a>
+            </div>
+            <article class="content px-4">
+                @Body
+            </article>
+        </main>
+    }
 </div>
