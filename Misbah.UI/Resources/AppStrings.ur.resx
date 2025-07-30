@@ -3,11 +3,11 @@
   <data name="GitHubRepo" xml:space="preserve">
     <value>گیٹ ہب ریپو</value>
   </data>
-  <data name="NoLibraryLoaded" xml:space="preserve">
-    <value>کوئی لائبریری لوڈ نہیں ہوئی</value>
+  <data name="NoHubLoaded" xml:space="preserve">
+    <value>کوئی مرکز لوڈ نہیں ہوا</value>
   </data>
-  <data name="LoadLibrary" xml:space="preserve">
-    <value>لائبریری لوڈ کریں</value>
+  <data name="LoadHub" xml:space="preserve">
+    <value>مرکز لوڈ</value>
   </data>
   <data name="HideFolders" xml:space="preserve">
     <value>فولڈرز چھپائیں</value>
