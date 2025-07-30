@@ -7,11 +7,20 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWindowsForms>true</UseWindowsForms>
+    <EnableDefaultEmbeddedResourceItems>false</EnableDefaultEmbeddedResourceItems>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="BlazorDesktop" Version="8.0.8" />
     <PackageReference Include="Markdig" Version="0.41.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\AppStrings.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>AppStrings.Designer.cs</LastGenOutput>
+      <AccessModifier>Public</AccessModifier>
+    </EmbeddedResource>
   </ItemGroup>
 
   <ItemGroup>
