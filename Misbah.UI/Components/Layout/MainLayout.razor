@@ -6,10 +6,18 @@
 
 @code {
     private string? _libraryRoot;
+    private string? _selectedNoteId;
 
     void OnLibrarySelected(string path)
     {
         _libraryRoot = path;
+        _selectedNoteId = null;
+        StateHasChanged();
+    }
+
+    async Task OnNoteSelected(string noteId)
+    {
+        _selectedNoteId = noteId;
         StateHasChanged();
     }
 }
@@ -24,14 +32,21 @@
     else
     {
         <div class="sidebar-panel">
-            <FolderTree RootPath="@_libraryRoot" OnNoteSelected="EventCallback.Factory.Create<string>(this, _ => Task.CompletedTask)" />
+            <FolderTree RootPath="@_libraryRoot" OnNoteSelected="OnNoteSelected" />
         </div>
         <main>
             <div class="top-row px-4" style="display:flex;align-items:center;gap:1em;">
                 <a href="https://github.com/blueheron786/misbah" target="_blank">@Misbah.UI.Resources.AppStrings.GitHubRepo</a>
             </div>
             <article class="content px-4">
-                @Body
+                @if (!string.IsNullOrEmpty(_selectedNoteId))
+                {
+                    <Misbah.UI.Components.Pages.Notes.NoteView NoteId="@_selectedNoteId" />
+                }
+                else
+                {
+                    @Body
+                }
             </article>
         </main>
     }
