@@ -1,20 +1,21 @@
-@using Misbah.UI.Components
+@namespace Misbah.UI.Components.Layout
+@using Misbah.Core.Services
 @using Misbah.UI.Components.Pages.Notes
 @using Misbah.UI.Components.Layout
 @using Misbah.UI.Resources
+@using Misbah.UI.Utils
 @using Microsoft.JSInterop
+@using System.IO
+
 @inherits LayoutComponentBase
 
 @inject Misbah.Core.Services.INoteService NoteService
 @inject IJSRuntime JS
-@using Misbah.UI.Utils
-@using System.IO
 
 @code {
     private string? _hubRoot;
     private string? _selectedNoteId;
     private static MainLayout? _instance;
-
 
     protected override void OnInitialized()
     {
