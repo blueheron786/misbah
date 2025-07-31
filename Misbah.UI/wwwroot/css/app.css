@@ -4,6 +4,18 @@ html, body {
 
 a, .btn-link {
     color: #006bb7;
+    text-decoration: underline;
+    transition: color 0.2s;
+}
+
+/* Style for missing wiki-style links in light mode */
+a.missing-link {
+    color: #e65100;
+    text-decoration: underline wavy #e65100;
+    opacity: 0.85;
+    cursor: help;
+    background: linear-gradient(90deg, #fff3e0 60%, transparent 100%);
+    border-radius: 2px;
 }
 
 .btn-primary {
@@ -81,6 +93,7 @@ h1:focus {
     color: #006bb7;
     border-radius: 3px;
 }
+
 .folder-tree .note-leaf:hover {
     background: #e6f0fa;
     color: #004a87;
