@@ -18,12 +18,37 @@ namespace Misbah.Core.Utils
 
         public List<Note> Search(string query)
         {
-            query = query.ToLower();
-            return _allNotes.Where(note =>
-                (note.Title?.ToLower().Contains(query) ?? false) ||
-                (note.Content?.ToLower().Contains(query) ?? false) ||
-                (note.Tags.Any(tag => tag.ToLower().Contains(query)))
-            ).ToList();
+            if (string.IsNullOrWhiteSpace(query)) return new List<Note>();
+            var phrase = query.ToLower().Trim();
+            var words = phrase.Split(' ', '\t', '\n').Where(w => !string.IsNullOrWhiteSpace(w)).ToArray();
+            return _allNotes
+                .Where(note =>
+                    words.All(word =>
+                        (note.Title?.ToLower().Contains(word) ?? false)
+                        || (note.Content?.ToLower().Contains(word) ?? false)
+                        || (note.Tags.Any(tag => tag.ToLower().Contains(word)))
+                    )
+                )
+                .Select(note => new {
+                    Note = note,
+                    Score = GetScore(note, phrase, words)
+                })
+                .OrderByDescending(x => x.Score)
+                .ThenBy(x => x.Note.Title)
+                .Select(x => x.Note)
+                .ToList();
+        }
+
+        private int GetScore(Note note, string phrase, string[] words)
+        {
+            int score = 0;
+            // Phrase match in title/content/tags
+            if ((note.Title?.ToLower().Contains(phrase) ?? false)) score += 100;
+            if ((note.Content?.ToLower().Contains(phrase) ?? false)) score += 50;
+            if (note.Tags.Any(tag => tag.ToLower().Contains(phrase))) score += 30;
+            // Add 1 for each word match (already required by filter)
+            score += words.Length;
+            return score;
         }
     }
 }
