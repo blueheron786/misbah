@@ -81,8 +81,8 @@ Normal text with `inline` code.";
             Assert.That(html, Does.Contain("<ul>"));
             Assert.That(html, Does.Not.Contain("<ul>\n<li>one</li>\n</ul>\n<ul>")); // No separate <ul> for each item
             // Task list checkboxes should be present
-            Assert.That(html, Does.Contain("<input type='checkbox' class='md-task' data-line='7' checked"));
-            Assert.That(html, Does.Contain("<input type='checkbox' class='md-task' data-line='8' "));
+            Assert.That(html, Does.Contain("<input type='checkbox' class='md-task' data-line='6' checked"));
+            Assert.That(html, Does.Contain("<input type='checkbox' class='md-task' data-line='7' "));
             // Bold and italic
             Assert.That(html, Does.Contain("<em><strong>bold and italicize</strong></em>"));
             // Highlight
