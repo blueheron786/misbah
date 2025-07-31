@@ -7,17 +7,19 @@ namespace Misbah.Core.Utils
 {
     public class SearchService
     {
+        private readonly Note[] _allNotes;
+
         private readonly INoteService _noteService;
         public SearchService(INoteService noteService)
         {
             _noteService = noteService;
+            _allNotes = _noteService.GetAllNotes().ToArray();
         }
 
         public List<Note> Search(string query)
         {
-            var allNotes = _noteService.GetAllNotes();
             query = query.ToLower();
-            return allNotes.Where(note =>
+            return _allNotes.Where(note =>
                 (note.Title?.ToLower().Contains(query) ?? false) ||
                 (note.Content?.ToLower().Contains(query) ?? false) ||
                 (note.Tags.Any(tag => tag.ToLower().Contains(query)))

@@ -4,7 +4,7 @@
 @inject IJSRuntime JS
 
 <div class="search-popup" tabindex="0" @onkeydown="HandleKeyDown">
-<input @bind="_query" @bind:event="oninput" placeholder="Search notes... (Ctrl+O)" autofocus class="search-input" />
+<input @bind="_query" @oninput="OnInput" placeholder="Search notes... (Ctrl+O)" autofocus class="search-input" />
     <ul class="search-results">
         @if (_results != null && _results.Count > 0)
         {
@@ -31,13 +31,7 @@
     [Parameter] public EventCallback<string> OnNoteSelected { get; set; }
     [Parameter] public EventCallback OnClose { get; set; }
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
-        {
-            await JS.InvokeVoidAsync("window.addEventListener", "keydown", DotNetObjectReference.Create(this));
-        }
-    }
+
 
     private void OnInput(ChangeEventArgs e)
     {
