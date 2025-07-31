@@ -46,7 +46,7 @@ namespace Misbah.Core.Services
                     if (!inList) { htmlLines.Add("<ul>"); inList = true; }
                     bool isChecked = match.Groups[1].Value.ToLower() == "x";
                     string taskText = match.Groups[2].Value;
-                    string checkbox = $"<input type='checkbox' class='md-task' data-line='{i}' {(isChecked ? "checked" : "")} onclick=\"window.dispatchEvent(new CustomEvent('misbah-task-toggle',{{detail:{{line:{i}}}}}));\">";
+                    string checkbox = $"<input type='checkbox' class='md-task' data-line='{i}'{(isChecked ? " checked" : "")} onclick=\"window.dispatchEvent(new CustomEvent('misbah-task-toggle',{{detail:{{line:{i}}}}}));\">";
                     htmlLines.Add($"<li>{checkbox} {System.Net.WebUtility.HtmlEncode(taskText)}</li>");
                     taskLineNumbers.Add(i);
                     lastWasBlank = false;
