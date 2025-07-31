@@ -104,6 +104,20 @@
     max-width: 100vw;
 }
 
+body {
+    color: #e6e6e6;
+    background: #23272e;
+}
+}
+
+/* Style for missing wiki-style links */
+a.missing-link {
+    color: #ff9800;
+    text-decoration: underline wavy #ff9800;
+    opacity: 0.8;
+    cursor: help;
+}
+
 input, textarea, select, button {
     background: #23272e;
     color: #e6e6e6;
