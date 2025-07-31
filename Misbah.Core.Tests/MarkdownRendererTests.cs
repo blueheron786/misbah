@@ -65,5 +65,31 @@ Normal text with `inline` code.";
             // Only one <br> between lines
             Assert.That(html.Replace("\n", ""), Does.Contain("Line1<br>Line2"));
         }
+
+        [Test]
+        public void RenderFull_RendersListsAndHighlightsCorrectly()
+        {
+            // Arrange
+            var renderer = new MarkdownRenderer();
+            string markdown = "one\ntwo\nthree\nfour\n\nA list:\n- [x] zERO~!\n- [ ] one\n- [ ] two\n- [ ] three\n\nPlease ***bold and italicize*** this bad boi. And ==highlight== this bad boi.\nLinks are gud. HTML test: <b>strong here</b> and <mark>mark here</mark>!";
+
+            // Act
+            var html = renderer.RenderFull(markdown, out var taskLines);
+
+            // Assert
+            // List items should be grouped in a single <ul>
+            Assert.That(html, Does.Contain("<ul>"));
+            Assert.That(html, Does.Not.Contain("<ul>\n<li>one</li>\n</ul>\n<ul>")); // No separate <ul> for each item
+            // Task list checkboxes should be present
+            Assert.That(html, Does.Contain("<input type='checkbox' class='md-task' data-line='7' checked"));
+            Assert.That(html, Does.Contain("<input type='checkbox' class='md-task' data-line='8' "));
+            // Bold and italic
+            Assert.That(html, Does.Contain("<em><strong>bold and italicize</strong></em>"));
+            // Highlight
+            Assert.That(html, Does.Contain("<mark>highlight</mark>"));
+            // HTML passthrough
+            Assert.That(html, Does.Contain("<b>strong here</b>"));
+            Assert.That(html, Does.Contain("<mark>mark here</mark>"));
+        }
     }
 }
