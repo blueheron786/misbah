@@ -25,6 +25,10 @@ namespace Misbah.Core.Services
             var notes = new List<Note>();
             foreach (var file in Directory.EnumerateFiles(_rootPath, "*.md", SearchOption.AllDirectories))
             {
+                var relativePath = Path.GetRelativePath(_rootPath, file);
+                var parts = relativePath.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+                if (parts.Any(p => p.StartsWith(".", System.StringComparison.Ordinal)))
+                    continue;
                 notes.Add(LoadNote(file));
             }
             return notes;
