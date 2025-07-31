@@ -21,22 +21,29 @@ namespace Misbah.Core.Utils
             if (string.IsNullOrWhiteSpace(query)) return new List<Note>();
             var phrase = query.ToLower().Trim();
             var words = phrase.Split(' ', '\t', '\n').Where(w => !string.IsNullOrWhiteSpace(w)).ToArray();
-            return _allNotes
+
+            var results = _allNotes
                 .Where(note =>
                     words.All(word =>
                         (note.Title?.ToLower().Contains(word) ?? false)
                         || (note.Content?.ToLower().Contains(word) ?? false)
                         || (note.Tags.Any(tag => tag.ToLower().Contains(word)))
                     )
-                )
-                .Select(note => new {
+                );
+
+            var toReturn = results
+                .Select(note => new
+                {
                     Note = note,
-                    Score = GetScore(note, phrase, words)
+                    Score = GetScore(note, phrase, words),
                 })
                 .OrderByDescending(x => x.Score)
                 .ThenBy(x => x.Note.Title)
                 .Select(x => x.Note)
+                .DistinctBy(x => x.Id)
                 .ToList();
+
+            return toReturn;
         }
 
         private int GetScore(Note note, string phrase, string[] words)
