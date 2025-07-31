@@ -1,3 +1,13 @@
+/* Remove bullet points and reduce indentation for folder tree */
+.folder-tree ul {
+    list-style: none;
+    margin-left: 0.7em;
+    padding-left: 0.7em;
+}
+.folder-tree li {
+    margin-left: 0;
+    padding-left: 0.2em;
+}
 /* Misbah Dark Theme */
 html, body {
     background: #181c1f;
