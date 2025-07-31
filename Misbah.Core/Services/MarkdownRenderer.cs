@@ -121,16 +121,29 @@ namespace Misbah.Core.Services
         /// </summary>
         public string ReplaceWikiLinks(string html)
         {
+            // You may want to inject INoteService for real existence check, but for now, simulate with a static list or always missing for test
+            var existingPages = _existingPages ?? new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             return Regex.Replace(
                 html,
                 @"\[\[([^\]]+)\]\]",
                 new MatchEvaluator(m =>
                 {
                     var page = m.Groups[1].Value.Replace("\"", "&quot;");
-                    var linkHtml = "<a href=\"#\" onclick=\"window.dispatchEvent(new CustomEvent('misbah-nav', { detail: { title: '" + page + "' } }));return false;\">" + page + "</a>";
+                    // Normalize for existence check (trim, ignore case, etc.)
+                    var normalizedPage = page.Trim().Replace("&quot;", "\"");
+                    var exists = existingPages.Contains(normalizedPage) || existingPages.Contains(page);
+                    var cls = exists ? "" : " class='missing-link'";
+                    var linkHtml = $"<a href=\"#\" onclick=\"window.dispatchEvent(new CustomEvent('misbah-nav', {{ detail: {{ title: '{page}' }} }}));return false;\"{cls}>{page}</a>";
                     return linkHtml;
                 }),
                 RegexOptions.IgnoreCase);
+        }
+
+        // For testing: set of existing pages
+        private HashSet<string>? _existingPages;
+        public void SetExistingPages(IEnumerable<string> pages)
+        {
+            _existingPages = new HashSet<string>(pages, StringComparer.OrdinalIgnoreCase);
         }
 
         // --- Private helpers ---

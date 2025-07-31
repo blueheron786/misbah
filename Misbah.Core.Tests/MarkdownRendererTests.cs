@@ -1,3 +1,4 @@
+using Misbah.Core.Services;
 using System.Collections.Generic;
 using NUnit.Framework;
 using Misbah.Core.Services;
@@ -42,7 +43,7 @@ Normal text with `inline` code.";
             var md = "[Google](https://google.com)";
             var html = renderer.Render(md, out _);
             html = renderer.AddExternalLinkEmoji(html);
-            Assert.That(html, Does.Contain("🌐"));
+            Assert.That(html, Does.Contain("<i class='fa fa-external-link-alt'"));
         }
 
         [Test]
@@ -90,6 +91,18 @@ Normal text with `inline` code.";
             // HTML passthrough
             Assert.That(html, Does.Contain("<b>strong here</b>"));
             Assert.That(html, Does.Contain("<mark>mark here</mark>"));
+        }
+
+        [Test]
+        public void WikiLinks_MissingPage_GetsMissingLinkClass()
+        {
+            var renderer = new MarkdownRenderer();
+            renderer.SetExistingPages(new[] { "My Note" });
+            var md = "See [[Missing Page]] and [[My Note]] for details.";
+            var html = renderer.Render(md, out _);
+            html = renderer.ReplaceWikiLinks(html);
+            Assert.That(html, Does.Contain("class='missing-link'>Missing Page</a>"));
+            Assert.That(html, Does.Not.Contain("class='missing-link'>My Note</a>"));
         }
     }
 }
