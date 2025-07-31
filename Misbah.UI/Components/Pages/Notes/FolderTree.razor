@@ -41,7 +41,24 @@ protected override void OnParametersSet()
             builder.OpenElement(seq++, "div");
             builder.AddAttribute(seq++, "class", "folder-label");
             builder.AddAttribute(seq++, "onclick", EventCallback.Factory.Create<Microsoft.AspNetCore.Components.Web.MouseEventArgs>(this, () => OnFolderClicked(folder.Path)));
-            builder.AddContent(seq++, _expandedFolders.Contains(folder.Path) ? "▼ " : "► ");
+            // FontAwesome expand/collapse icon
+            if (_expandedFolders.Contains(folder.Path))
+            {
+                builder.OpenElement(seq++, "i");
+                builder.AddAttribute(seq++, "class", "fa fa-chevron-down fa-fw");
+                builder.CloseElement();
+            }
+            else
+            {
+                builder.OpenElement(seq++, "i");
+                builder.AddAttribute(seq++, "class", "fa fa-chevron-right fa-fw");
+                builder.CloseElement();
+            }
+            // Folder icon
+            builder.OpenElement(seq++, "i");
+            builder.AddAttribute(seq++, "class", "fa fa-folder fa-fw");
+            builder.CloseElement();
+            builder.AddContent(seq++, " ");
             builder.AddContent(seq++, folder.Name);
             builder.CloseElement();
 
@@ -70,6 +87,11 @@ protected override void OnParametersSet()
             builder.OpenElement(seq++, "li");
             builder.AddAttribute(seq++, "class", "note-leaf");
             builder.AddAttribute(seq++, "onclick", EventCallback.Factory.Create<Microsoft.AspNetCore.Components.Web.MouseEventArgs>(this, async () => await OnNoteClicked(note.Id)));
+            // Note icon
+            builder.OpenElement(seq++, "i");
+            builder.AddAttribute(seq++, "class", "fa fa-file-alt fa-fw");
+            builder.CloseElement();
+            builder.AddContent(seq++, " ");
             builder.AddContent(seq++, note.Title);
             builder.CloseElement();
         };
