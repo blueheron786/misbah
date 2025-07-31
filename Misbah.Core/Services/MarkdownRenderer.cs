@@ -108,10 +108,11 @@ namespace Misbah.Core.Services
         /// </summary>
         public string AddExternalLinkEmoji(string html)
         {
+            // Replace with Font Awesome external-link icon
             return Regex.Replace(
                 html,
-                @"<a ([^>]*href=""https?://[^""]+""[^>]*?)>(.*?)</a>",
-                m => "<a " + m.Groups[1].Value + ">" + m.Groups[2].Value + "</a> 🌐",
+                "<a ([^>]*href=\\\"https?://[^\\\"]+\\\"[^>]*?)>(.*?)</a>",
+                m => "<a " + m.Groups[1].Value + ">" + m.Groups[2].Value + "</a> <i class='fa fa-external-link-alt' style='font-size:0.95em;vertical-align:middle;'></i>",
                 RegexOptions.IgnoreCase);
         }
 
