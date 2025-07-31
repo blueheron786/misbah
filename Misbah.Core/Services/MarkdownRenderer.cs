@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using Markdig;
+using Markdig.Renderers;
 
 namespace Misbah.Core.Services
 {
@@ -15,47 +16,78 @@ namespace Misbah.Core.Services
         /// <returns>HTML string.</returns>
         public string Render(string? content, out List<int> taskLineNumbers)
         {
-            string[] lines = (content ?? "").Split('\n');
+            // Custom renderer for lists, checkboxes, code blocks, and inline code
+            var lines = (content ?? string.Empty).Replace("\r\n", "\n").Replace("\r", "\n").Split('\n');
             var htmlLines = new List<string>();
+            taskLineNumbers = new List<int>();
             bool inList = false;
             bool inCodeBlock = false;
-            int emptyCount = 0;
-            taskLineNumbers = new List<int>();
+            var pipeline = new MarkdownPipelineBuilder().UseAdvancedExtensions().Build();
+            bool lastWasBlank = false;
             for (int i = 0; i < lines.Length; i++)
             {
-                if (IsCodeBlockDelimiter(lines[i]))
+                var line = lines[i];
+                if (IsCodeBlockDelimiter(line))
                 {
                     HandleCodeBlockDelimiter(ref inCodeBlock, htmlLines);
-                    emptyCount = 0;
+                    lastWasBlank = false;
                     continue;
                 }
                 if (inCodeBlock)
                 {
-                    htmlLines.Add(System.Net.WebUtility.HtmlEncode(lines[i]) + "\n");
+                    htmlLines.Add(System.Net.WebUtility.HtmlEncode(line));
+                    lastWasBlank = false;
                     continue;
                 }
-                if (TryRenderTaskList(lines[i], i, htmlLines, taskLineNumbers, ref inList))
+                // Custom task list rendering with sequential data-line
+                var match = Regex.Match(line, @"^- \[( |x)\] (.*)$", RegexOptions.IgnoreCase);
+                if (match.Success)
                 {
-                    emptyCount = 0;
+                    if (!inList) { htmlLines.Add("<ul>"); inList = true; }
+                    bool isChecked = match.Groups[1].Value.ToLower() == "x";
+                    string taskText = match.Groups[2].Value;
+                    string checkbox = $"<input type='checkbox' class='md-task' data-line='{i}' {(isChecked ? "checked" : "")} onclick=\"window.dispatchEvent(new CustomEvent('misbah-task-toggle',{{detail:{{line:{i}}}}}));\">";
+                    htmlLines.Add($"<li>{checkbox} {System.Net.WebUtility.HtmlEncode(taskText)}</li>");
+                    taskLineNumbers.Add(i);
+                    lastWasBlank = false;
+                    continue;
+                }
+                if (IsNormalListLine(line))
+                {
+                    if (!inList) { htmlLines.Add("<ul>"); inList = true; }
+                    var item = line.Substring(2).Trim();
+                    var itemHtml = Markdown.ToHtml(item, pipeline).Trim();
+                    if (itemHtml.StartsWith("<p>") && itemHtml.EndsWith("</p>"))
+                        itemHtml = itemHtml.Substring(3, itemHtml.Length - 7);
+                    htmlLines.Add($"<li>{itemHtml}</li>");
+                    lastWasBlank = false;
                     continue;
                 }
                 if (inList) { htmlLines.Add("</ul>"); inList = false; }
-                if (string.IsNullOrWhiteSpace(lines[i]))
+                // Collapse consecutive blank lines to a single <br>
+                if (string.IsNullOrWhiteSpace(line))
                 {
-                    emptyCount++;
-                    if (emptyCount == 1) htmlLines.Add("<br>");
+                    if (!lastWasBlank)
+                    {
+                        htmlLines.Add("<br>");
+                        lastWasBlank = true;
+                    }
                     continue;
                 }
-                emptyCount = 0;
-                var inlineCode = RenderInlineCode(lines[i]);
-                var lineHtml = Markdown.ToHtml(inlineCode);
-                if (lineHtml.StartsWith("<p>") && lineHtml.EndsWith("</p>\n"))
-                    lineHtml = lineHtml.Substring(3, lineHtml.Length - 8);
-                htmlLines.Add(lineHtml);
+                // Inline code and Markdig for inline features
+                var processed = RenderInlineCode(line);
+                processed = Markdown.ToHtml(processed, pipeline).Trim();
+                if (processed.StartsWith("<p>") && processed.EndsWith("</p>"))
+                    processed = processed.Substring(3, processed.Length - 7);
+                htmlLines.Add(processed);
+                lastWasBlank = false;
             }
-            if (inList) { htmlLines.Add("</ul>"); }
-            return string.Join("", htmlLines);
+            if (inList) htmlLines.Add("</ul>");
+            if (inCodeBlock) htmlLines.Add("</code></pre>");
+            return string.Join("\n", htmlLines);
         }
+
+
 
         /// <summary>
         /// Renders markdown content to HTML, applying all post-processing (wiki links, external link emoji).
@@ -101,6 +133,18 @@ namespace Misbah.Core.Services
         }
 
         // --- Private helpers ---
+        // Helper to detect if a line is a normal (non-task) list item
+        private bool IsNormalListLine(string line)
+        {
+            // Match lines like "- item" but not "- [ ] item" or "- [x] item"
+            return Regex.IsMatch(line, "^- (?!\\[[ xX]\\]).+", RegexOptions.IgnoreCase);
+        }
+        // (removed duplicate IsNormalListLine)
+        // Helper to detect if a line is a task list item
+        private bool IsTaskListLine(string line)
+        {
+            return Regex.IsMatch(line, @"^- \[( |x)\] (.*)$", RegexOptions.IgnoreCase);
+        }
         private bool IsCodeBlockDelimiter(string line)
         {
             return line.TrimStart().StartsWith("```");
