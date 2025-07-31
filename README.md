@@ -1,4 +1,7 @@
+
 # Misbah
+
+![.NET Core CI](https://github.com/blueheron786/misbah/actions/workflows/dotnet-tests.yml/badge.svg?branch=main)
 
 An open-source note-taking app focused on storing and linking ideas.
 
