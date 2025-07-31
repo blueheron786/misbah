@@ -137,6 +137,8 @@ pre.misbah-code {
         bool inList = false;
         bool inCodeBlock = false;
         int emptyCount = 0;
+        // Use Markdig pipeline with advanced extensions for highlight support
+        var pipeline = new Markdig.MarkdownPipelineBuilder().UseAdvancedExtensions().Build();
         for (int i = 0; i < lines.Length; i++)
         {
             // Code block start/end
@@ -185,7 +187,7 @@ pre.misbah-code {
                     "`([^`]+)`",
                     m => $"<code class='misbah-code'>{System.Net.WebUtility.HtmlEncode(m.Groups[1].Value)}</code>");
                 // Render non-task, non-code lines with Markdig (for formatting, links, etc.)
-                var lineHtml = Markdig.Markdown.ToHtml(inlineCode);
+                var lineHtml = Markdig.Markdown.ToHtml(inlineCode, pipeline);
                 if (lineHtml.StartsWith("<p>") && lineHtml.EndsWith("</p>\n"))
                     lineHtml = lineHtml.Substring(3, lineHtml.Length - 8);
                 htmlLines.Add(lineHtml);
