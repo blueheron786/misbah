@@ -16,10 +16,57 @@
 @inject IJSRuntime JS
 @inject BlazorDesktopWindow window
 
+@using Misbah.Core.Utils
+@using Misbah.UI.Components
+@using Misbah.UI.Components.Pages.Notes
+<link rel="stylesheet" href="css/search-popup.css" />
+<script src="search-popup.js"></script>
+
 @code {
     private string? _hubRoot;
     private string? _selectedNoteId;
     private static MainLayout? _instance;
+    private bool _showSearchPopup = false;
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+        {
+            JS.InvokeVoidAsync("eval", @"
+                window.addEventListener('misbah-nav', function(e) {
+                    if (e.detail && e.detail.title) {
+                        DotNet.invokeMethodAsync('Misbah.UI', 'NavigateToNoteByTitle', e.detail.title);
+                    }
+                });
+                window.addEventListener('show-search-popup', function() {
+                    DotNet.invokeMethodAsync('Misbah.UI', 'ShowSearchPopup');
+                });
+            ");
+        }
+    }
+
+    [JSInvokable("ShowSearchPopup")]
+    public static void ShowSearchPopup()
+    {
+        if (_instance != null)
+        {
+            _instance._showSearchPopup = true;
+            _instance.StateHasChanged();
+        }
+    }
+
+    void OnSearchPopupClose()
+    {
+        _showSearchPopup = false;
+        StateHasChanged();
+    }
+
+    void OnSearchNoteSelected(string noteId)
+    {
+        _selectedNoteId = noteId;
+        _showSearchPopup = false;
+        StateHasChanged();
+    }
 
     protected override void OnInitialized()
     {
@@ -54,24 +101,10 @@
         StateHasChanged();
     }
 
-    async Task OnNoteSelected(string noteId)
+    void OnNoteSelected(string noteId)
     {
         _selectedNoteId = noteId;
         StateHasChanged();
-    }
-
-    protected override void OnAfterRender(bool firstRender)
-    {
-        if (firstRender)
-        {
-            JS.InvokeVoidAsync("eval", @"
-                window.addEventListener('misbah-nav', function(e) {
-                    if (e.detail && e.detail.title) {
-                        DotNet.invokeMethodAsync('Misbah.UI', 'NavigateToNoteByTitle', e.detail.title);
-                    }
-                });
-            ");
-        }
     }
 
     [JSInvokable("NavigateToNoteByTitle")]
@@ -92,6 +125,10 @@
 }
 
 <div class="page" style="display:flex; flex-direction:row; height:100vh; min-height:0;">
+    @if (_showSearchPopup)
+    {
+        <SearchPopup OnNoteSelected="OnSearchNoteSelected" OnClose="OnSearchPopupClose" />
+    }
     @if (string.IsNullOrEmpty(_hubRoot))
     {
         <main style="flex:1 1 auto; display:flex; align-items:center; justify-content:center; flex-direction:column;">
