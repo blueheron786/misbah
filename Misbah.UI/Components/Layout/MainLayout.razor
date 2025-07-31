@@ -91,21 +91,20 @@
     }
 }
 
-<div class="page">
+<div class="page" style="display:flex; flex-direction:row; height:100vh; min-height:0;">
     @if (string.IsNullOrEmpty(_hubRoot))
     {
-        <main style="width:100vw; height:100vh; display:flex; align-items:center; justify-content:center; flex-direction:column;">
+        <main style="flex:1 1 auto; display:flex; align-items:center; justify-content:center; flex-direction:column;">
             <HubPicker OnHubPicked="OnHubSelected" />
         </main>
     }
     else
     {
-        <div class="sidebar-panel">
+        <div class="sidebar-panel" style="height:100vh; min-height:0; display:flex; flex-direction:column;">
             <FolderTree RootPath="@_hubRoot" OnNoteSelected="OnNoteSelected" />
         </div>
-        <main>
-            <!-- GitHub repo link removed -->
-            <article class="content px-4">
+        <main style="flex:1 1 auto; height:100vh; min-height:0; overflow:auto; display:flex; flex-direction:column;">
+            <article class="content px-4" style="flex:1 1 auto; min-height:0;">
                 @if (!string.IsNullOrEmpty(_selectedNoteId))
                 {
                     <NoteView NoteId="@_selectedNoteId" />
