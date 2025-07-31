@@ -1,6 +1,7 @@
 /* Folder tree resizable and ellipsis */
+/* Prevent native scrollbars on the folder tree container */
 .folder-tree-container {
-    overflow: auto;
+    overflow: hidden;
     min-width: 180px;
     max-width: 50vw;
     width: 260px;
@@ -48,9 +49,11 @@
     border-right: 4px solid #fff;
     box-shadow: 0 0 16px 6px #4fc3f7;
 }
+/* Prevent native scrollbars on the folder tree itself */
 .folder-tree {
     width: 100%;
     height: 100%;
+    overflow: hidden;
 }
 .folder-label, .note-leaf {
     white-space: nowrap;
@@ -94,6 +97,11 @@
     border-radius: 8px;
     padding: 1.1rem;
     box-shadow: 0 2px 8px #0004;
+    overflow-wrap: break-word;
+    word-break: break-word;
+    white-space: normal;
+    overflow-x: hidden;
+    max-width: 100vw;
 }
 
 input, textarea, select, button {
@@ -115,6 +123,11 @@ pre, code, .misbah-code {
 .markdown-body {
     background: transparent;
     color: #e6e6e6;
+    overflow-wrap: break-word;
+    word-break: break-word;
+    white-space: normal;
+    max-width: 100vw;
+    overflow-x: hidden;
 }
 
 .folder-tree .folder-label:hover, .folder-tree .note-leaf:hover {
