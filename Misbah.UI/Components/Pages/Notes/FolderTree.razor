@@ -9,14 +9,15 @@
     private FolderNode? _rootFolder;
     private HashSet<string> _expandedFolders = new();
 
-    protected override void OnInitialized()
+protected override void OnParametersSet()
+{
+    if (!string.IsNullOrEmpty(RootPath))
     {
-        if (!string.IsNullOrEmpty(RootPath))
-        {
-            _rootFolder = FolderService.LoadFolderTree(RootPath);
-            _expandedFolders.Add(_rootFolder.Path);
-        }
+        _rootFolder = FolderService.LoadFolderTree(RootPath);
+        _expandedFolders.Clear();
+        _expandedFolders.Add(_rootFolder.Path);
     }
+}
 
     void ToggleFolder(string path)
     {
@@ -26,40 +27,64 @@
             _expandedFolders.Add(path);
     }
 
-    RenderFragment RenderFolder(FolderNode folder) => builder =>
+    private RenderFragment RenderFolder(FolderNode folder)
     {
-        // Hide folders starting with '.'
+        // Hide dot folders
         if (!string.IsNullOrEmpty(folder.Name) && folder.Name.StartsWith("."))
-            return;
-        int seq = 0;
-        builder.OpenElement(seq++, "li");
-        builder.OpenElement(seq++, "div");
-        builder.AddAttribute(seq++, "class", "folder-label");
-        builder.AddAttribute(seq++, "onclick", EventCallback.Factory.Create<Microsoft.AspNetCore.Components.Web.MouseEventArgs>(this, (e) => ToggleFolder(folder.Path)));
-        builder.AddContent(seq++, _expandedFolders.Contains(folder.Path) ? "▼ " : "► ");
-        builder.AddContent(seq++, folder.Name);
-        builder.CloseElement();
-        if (_expandedFolders.Contains(folder.Path))
+            return builder => { };
+
+        return builder =>
         {
-            builder.OpenElement(seq++, "ul");
-            foreach (var sub in folder.Folders)
+            int seq = 0;
+            builder.OpenElement(seq++, "li");
+            // Folder label
+            builder.OpenElement(seq++, "div");
+            builder.AddAttribute(seq++, "class", "folder-label");
+            builder.AddAttribute(seq++, "onclick", EventCallback.Factory.Create<Microsoft.AspNetCore.Components.Web.MouseEventArgs>(this, () => OnFolderClicked(folder.Path)));
+            builder.AddContent(seq++, _expandedFolders.Contains(folder.Path) ? "▼ " : "► ");
+            builder.AddContent(seq++, folder.Name);
+            builder.CloseElement();
+
+            if (_expandedFolders.Contains(folder.Path))
             {
-                builder.AddContent(seq++, RenderFolder(sub));
-            }
-            foreach (var note in folder.Notes)
-            {
-                builder.OpenElement(seq++, "li");
-                builder.AddAttribute(seq++, "class", "note-leaf");
-                builder.AddAttribute(seq++, "onclick", EventCallback.Factory.Create<Microsoft.AspNetCore.Components.Web.MouseEventArgs>(this, (e) => {
-                    OnNoteSelected.InvokeAsync(note.Id);
-                }));
-                builder.AddContent(seq++, note.Title);
+                builder.OpenElement(seq++, "ul");
+                foreach (var sub in folder.Folders)
+                {
+                    builder.AddContent(seq++, RenderFolder(sub));
+                }
+                foreach (var note in folder.Notes)
+                {
+                    builder.AddContent(seq++, RenderNote(note));
+                }
                 builder.CloseElement();
             }
             builder.CloseElement();
-        }
-        builder.CloseElement();
-    };
+        };
+    }
+
+    private RenderFragment RenderNote(Note note)
+    {
+        return builder =>
+        {
+            int seq = 0;
+            builder.OpenElement(seq++, "li");
+            builder.AddAttribute(seq++, "class", "note-leaf");
+            builder.AddAttribute(seq++, "onclick", EventCallback.Factory.Create<Microsoft.AspNetCore.Components.Web.MouseEventArgs>(this, async () => await OnNoteClicked(note.Id)));
+            builder.AddContent(seq++, note.Title);
+            builder.CloseElement();
+        };
+    }
+
+    private void OnFolderClicked(string path)
+    {
+        ToggleFolder(path);
+        StateHasChanged();
+    }
+
+    private async Task OnNoteClicked(string noteId)
+    {
+        await OnNoteSelected.InvokeAsync(noteId);
+    }
 }
 
 @if (_rootFolder != null)
