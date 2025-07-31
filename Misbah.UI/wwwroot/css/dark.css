@@ -1,0 +1,67 @@
+/* Misbah Dark Theme */
+html, body {
+    background: #181c1f;
+    color: #e6e6e6;
+}
+
+a, .btn-link {
+    color: #4fc3f7;
+}
+
+a:hover, .btn-link:hover {
+    color: #81d4fa;
+}
+
+.btn-primary {
+    color: #fff;
+    background-color: #1976d2;
+    border-color: #1565c0;
+}
+
+.content {
+    background: #23272e;
+    border-radius: 8px;
+    padding: 1.1rem;
+    box-shadow: 0 2px 8px #0004;
+}
+
+input, textarea, select, button {
+    background: #23272e;
+    color: #e6e6e6;
+    border: 1px solid #444b53;
+}
+
+input:focus, textarea:focus, select:focus {
+    outline: 1px solid #4fc3f7;
+    background: #23272e;
+}
+
+pre, code, .misbah-code {
+    background: #23272e !important;
+    color: #e6e6e6 !important;
+}
+
+.markdown-body {
+    background: transparent;
+    color: #e6e6e6;
+}
+
+.folder-tree .folder-label:hover, .folder-tree .note-leaf:hover {
+    background: #263238 !important;
+    color: #4fc3f7 !important;
+}
+
+/* Improve folder label hover for light themes as well */
+.folder-tree .folder-label:hover {
+    background: #e6f0fa !important;
+    color: #1976d2 !important;
+}
+
+::-webkit-scrollbar {
+    background: #23272e;
+    width: 12px;
+}
+::-webkit-scrollbar-thumb {
+    background: #444b53;
+    border-radius: 6px;
+}

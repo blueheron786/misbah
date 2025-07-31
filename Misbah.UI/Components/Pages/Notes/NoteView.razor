@@ -168,38 +168,10 @@ pre.misbah-code {
         {
             <div style="display:flex;align-items:center;gap:1em;">
                 <div class="markdown-body" style="flex:1;">@RenderMarkdownWithLinks(note.Content)</div>
-                <button class="btn btn-secondary" @onclick="ShowHtmlModal">View Rendered HTML</button>
             </div>
-            @if (showHtmlModal)
-            {
-                <div style="position:fixed;top:0;left:0;width:100vw;height:100vh;background:#0008;z-index:9999;display:flex;align-items:center;justify-content:center;">
-                    <div style="background:#fff;padding:1.5em;max-width:90vw;max-height:90vh;overflow:auto;border-radius:8px;box-shadow:0 2px 16px #0004;">
-                        <button class="btn btn-danger" style="float:right;" @onclick="CloseHtmlModal">Close</button>
-                        <button class="btn btn-primary" style="float:right;margin-right:0.5em;" @onclick="CopyRenderedHtml">Copy HTML</button>
-                        <pre style="font-size:12px;white-space:pre-wrap;word-break:break-all;max-width:80vw;max-height:70vh;overflow:auto;">@renderedHtml</pre>
-                    </div>
-                </div>
-            }
         }
 @code {
-    private bool showHtmlModal = false;
-    private string? renderedHtml;
 
-    private void ShowHtmlModal()
-    {
-        renderedHtml = MarkdownRenderer.RenderFull(note?.Content, out var _);
-        showHtmlModal = true;
-    }
-
-    private void CloseHtmlModal() => showHtmlModal = false;
-
-    private async Task CopyRenderedHtml()
-    {
-        if (!string.IsNullOrEmpty(renderedHtml))
-        {
-            await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", renderedHtml);
-        }
-    }
 }
     </div>
 }
