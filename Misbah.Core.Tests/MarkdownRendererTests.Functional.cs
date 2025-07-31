@@ -84,7 +84,18 @@ namespace Misbah.Core.Tests
             var renderer = new MarkdownRenderer();
             var md = "[Google](https://google.com)";
             var html = renderer.RenderFull(md, out _);
-            Assert.That(html, Does.Contain("🌐"));
+            Assert.That(html, Does.Contain("<i class='fa fa-external-link-alt'"));
+        }
+
+        [Test]
+        public void Wiki_Link_To_Existing_Page_Is_Not_Missing()
+        {
+            var renderer = new MarkdownRenderer();
+            renderer.SetExistingPages(new[] { "My Note" });
+            var md = "See [[My Note]] for details.";
+            var html = renderer.RenderFull(md, out _);
+            Assert.That(html, Does.Contain(">My Note</a>"));
+            Assert.That(html, Does.Not.Contain("class='missing-link'"));
         }
 
         [Test]

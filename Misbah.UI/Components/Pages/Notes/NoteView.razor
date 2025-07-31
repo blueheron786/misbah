@@ -124,6 +124,10 @@ pre.misbah-code {
                 });
             ");
         }
+        // Set the list of existing pages before rendering
+        var allNotes = NoteService.GetAllNotes();
+        var titles = allNotes.Select(n => n.Title).ToList();
+        MarkdownRenderer.SetExistingPages(titles);
         var html = MarkdownRenderer.RenderFull(content, out var _);
         return (MarkupString)html;
     }
@@ -138,20 +142,6 @@ pre.misbah-code {
             System.Text.RegularExpressions.RegexOptions.IgnoreCase);
     }
 
-    // Helper: Replace [[Page Name]] with internal anchor tags
-    private string ReplaceWikiLinks(string html)
-    {
-        return System.Text.RegularExpressions.Regex.Replace(
-            html,
-            @"\[\[([^\]]+)\]\]",
-            new System.Text.RegularExpressions.MatchEvaluator(m =>
-            {
-                var page = m.Groups[1].Value.Replace("\"", "&quot;");
-                var linkHtml = "<a href=\"#\" onclick=\"window.dispatchEvent(new CustomEvent('misbah-nav', { detail: { title: '" + page + "' } }));return false;\">" + page + "</a>";
-                return linkHtml;
-            }),
-            System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-    }
 }
 
 @if (note != null)

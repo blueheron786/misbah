@@ -14,8 +14,6 @@ a.missing-link {
     text-decoration: underline wavy #e65100;
     opacity: 0.85;
     cursor: help;
-    background: linear-gradient(90deg, #fff3e0 60%, transparent 100%);
-    border-radius: 2px;
 }
 
 .btn-primary {
