@@ -7,10 +7,14 @@
 @using Microsoft.JSInterop
 @using System.IO
 
+
+@using BlazorDesktop.Wpf
 @inherits LayoutComponentBase
+
 
 @inject Misbah.Core.Services.INoteService NoteService
 @inject IJSRuntime JS
+@inject BlazorDesktopWindow window
 
 @code {
     private string? _hubRoot;
@@ -19,6 +23,7 @@
 
     protected override void OnInitialized()
     {
+        window.ToggleFullScreen();
         _instance = this;
         // Try to load last hub path from config
         var config = ConfigManager.Load();
