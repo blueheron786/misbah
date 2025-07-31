@@ -15,11 +15,11 @@ if (builder.HostEnvironment.IsDevelopment())
     builder.UseDeveloperTools();
 }
 
-builder.Services.AddSingleton<SearchService>();
 
 // Register services for DI
 builder.Services.AddSingleton<INoteService>(sp => new NoteService("Notes")); // TODO: set actual notes root path
 builder.Services.AddSingleton<IFolderService, FolderService>();
 builder.Services.AddSingleton<SearchService>();
+builder.Services.AddSingleton<MarkdownRenderer>();
 
 await builder.Build().RunAsync();
