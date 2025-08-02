@@ -143,15 +143,9 @@ pre, code, .misbah-code {
     overflow-x: hidden;
 }
 
-.folder-tree .folder-label:hover, .folder-tree .note-leaf:hover {
-    background: #263238 !important;
-    color: #4fc3f7 !important;
-}
-
-/* Improve folder label hover for light themes as well */
-.folder-tree .folder-label:hover {
-    background: #e6f0fa !important;
-    color: #1976d2 !important;
+/* Remove folder hover background, only brighten file text color */
+.folder-tree .note-leaf:hover {
+    color: #66d4ff !important;
 }
 
 ::-webkit-scrollbar {
