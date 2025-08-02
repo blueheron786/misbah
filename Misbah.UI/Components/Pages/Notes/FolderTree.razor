@@ -118,20 +118,15 @@ protected override void OnParametersSet()
 
 @if (_rootFolder != null)
 {
-    <div class="folder-tree-container">
-        <div class="folder-tree">
-            <ul>
-                @RenderFolder(_rootFolder)
-            </ul>
-        </div>
+    <div class="folder-tree">
+        <ul>
+            @RenderFolder(_rootFolder)
+        </ul>
     </div>
 }
 else
 {
-    <div class="folder-tree-container">
-        <div class="folder-tree"><em>@AppStrings.NoFoldersFound</em></div>
-        <div class="folder-tree-resizer"></div>
-    </div>
+    <div class="folder-tree"><em>@AppStrings.NoFoldersFound</em></div>
 }
 
 
