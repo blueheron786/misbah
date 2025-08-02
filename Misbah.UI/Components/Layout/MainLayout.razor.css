@@ -88,27 +88,27 @@ main {
     max-width: 50%;
     width: 300px;
     height: 100vh;
-    background-color: #f8f9fa;
-    border-right: 1px solid #dee2e6;
+    background: #23272e;
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    color: #e6e6e6;
 }
 
 .splitter {
     width: 4px;
-    background-color: #dee2e6;
+    background-color: #555;
     cursor: ew-resize;
     position: relative;
     user-select: none;
 }
 
 .splitter:hover {
-    background-color: #007bff;
+    background-color: #777;
 }
 
 .splitter.dragging {
-    background-color: #007bff;
+    background-color: #777;
 }
 
 .main-content {
