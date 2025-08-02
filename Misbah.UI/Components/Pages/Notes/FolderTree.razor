@@ -51,7 +51,7 @@ protected override void OnParametersSet()
                 // Open folder icon (yellow)
                 builder.OpenElement(seq++, "i");
                 builder.AddAttribute(seq++, "class", "fa fa-folder-open fa-fw");
-                builder.AddAttribute(seq++, "style", "color:#fbc02d");
+                builder.AddAttribute(seq++, "style", "color:var(--primary-color)");
                 builder.CloseElement();
             }
             else
@@ -62,7 +62,7 @@ protected override void OnParametersSet()
                 // Closed folder icon (yellow)
                 builder.OpenElement(seq++, "i");
                 builder.AddAttribute(seq++, "class", "fa fa-folder fa-fw");
-                builder.AddAttribute(seq++, "style", "color:#fbc02d");
+                builder.AddAttribute(seq++, "style", "color:var(--primary-color)");
                 builder.CloseElement();
             }
             builder.AddContent(seq++, " ");
@@ -94,9 +94,10 @@ protected override void OnParametersSet()
             builder.OpenElement(seq++, "li");
             builder.AddAttribute(seq++, "class", "note-leaf");
             builder.AddAttribute(seq++, "onclick", EventCallback.Factory.Create<Microsoft.AspNetCore.Components.Web.MouseEventArgs>(this, async () => await OnNoteClicked(note.Id)));
-            // Note icon
-            builder.OpenElement(seq++, "i");
-            builder.AddAttribute(seq++, "class", "fa fa-file-alt fa-fw");
+            // Unicode bullet point, shrunk and colored
+            builder.OpenElement(seq++, "span");
+            builder.AddAttribute(seq++, "style", "color:var(--primary-color);font-size:0.5em;vertical-align:middle;margin-right:0.5em;");
+            builder.AddContent(seq++, "\u2022"); // unicode bullet point
             builder.CloseElement();
             builder.AddContent(seq++, " ");
             builder.AddContent(seq++, note.Title);
