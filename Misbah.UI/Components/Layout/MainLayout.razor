@@ -1,6 +1,5 @@
 @namespace Misbah.UI.Components.Layout
 @using Misbah.Core.Services
-@using Misbah.UI.Components.Pages.Notes
 @using Misbah.UI.Components.Layout
 @using Misbah.UI.Resources
 @using Misbah.UI.Utils
@@ -16,6 +15,7 @@
 
 @using Misbah.Core.Utils
 @using Misbah.UI.Components
+@using Misbah.UI.Components.Pages.Notes
 <link rel="stylesheet" href="css/search-popup.css" />
 <script src="search-popup.js"></script>
 <script src="js/splitter.js"></script>
@@ -39,10 +39,6 @@
                 window.addEventListener('show-search-popup', function() {
                     DotNet.invokeMethodAsync('Misbah.UI', 'ShowSearchPopup');
                 });
-                // Initialize the splitter
-                if (window.initializeSplitter) {
-                    window.initializeSplitter();
-                }
             ");
         }
     }
