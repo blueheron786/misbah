@@ -81,18 +81,19 @@ h1:focus {
     user-select: none;
     font-weight: 500;
 }
+
 .folder-tree .folder-label:hover {
-    background: #e6f0fa;
+    color: #0088ff;
 }
+
 .folder-tree .note-leaf {
     cursor: pointer;
     padding: 2px 6px 2px 24px;
     user-select: none;
     color: #006bb7;
-    border-radius: 3px;
+    border-radius: 3px;5
 }
 
 .folder-tree .note-leaf:hover {
-    background: #e6f0fa;
-    color: #004a87;
+    color: #0088ff;
 }
