@@ -75,3 +75,44 @@ main {
         padding-right: 1.5rem !important;
     }
 }
+
+/* Resizable layout styles */
+.layout-container {
+    display: flex;
+    height: 100vh;
+    width: 100%;
+}
+
+.sidebar-panel {
+    min-width: 180px;
+    max-width: 50%;
+    width: 300px;
+    height: 100vh;
+    background-color: #f8f9fa;
+    border-right: 1px solid #dee2e6;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.splitter {
+    width: 4px;
+    background-color: #dee2e6;
+    cursor: ew-resize;
+    position: relative;
+    user-select: none;
+}
+
+.splitter:hover {
+    background-color: #007bff;
+}
+
+.splitter.dragging {
+    background-color: #007bff;
+}
+
+.main-content {
+    flex: 1;
+    height: 100vh;
+    overflow: auto;
+}
