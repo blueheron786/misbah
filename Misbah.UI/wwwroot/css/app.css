@@ -3,17 +3,45 @@ html, body {
 }
 
 a, .btn-link {
-    color: #006bb7;
+    color: #D4A020;
     text-decoration: underline;
     transition: color 0.2s;
 }
 
 /* Style for missing wiki-style links in light mode */
 a.missing-link {
-    color: #e65100;
-    text-decoration: underline wavy #e65100;
+    color: #B8941A;
+    text-decoration: underline wavy #B8941A;
     opacity: 0.85;
     cursor: help;
+}
+
+/* Checkbox styling - remove bullets and use golden color */
+.md-task {
+    accent-color: #D4A020;
+    margin-right: 8px;
+}
+
+/* Remove list bullets for task lists */
+.markdown-body ul li:has(.md-task) {
+    list-style: none;
+    margin-left: 0;
+}
+
+.markdown-body ul li .md-task {
+    margin-left: -1.5em;
+    margin-right: 0.5em;
+}
+
+/* Fallback for browsers that don't support :has() */
+.markdown-body li.task-list-item {
+    list-style: none;
+    margin-left: 0;
+}
+
+.markdown-body li.task-list-item .md-task {
+    margin-left: -1.5em;
+    margin-right: 0.5em;
 }
 
 .btn-primary {
@@ -23,7 +51,7 @@ a.missing-link {
 }
 
 .btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-    box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+    box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #D4A020;
 }
 
 .content {
@@ -83,17 +111,17 @@ h1:focus {
 }
 
 .folder-tree .folder-label:hover {
-    color: #0088ff;
+    color: #D4A020;
 }
 
 .folder-tree .note-leaf {
     cursor: pointer;
     padding: 2px 6px 2px 24px;
     user-select: none;
-    color: #006bb7;
-    border-radius: 3px;5
+    color: #D4A020;
+    border-radius: 3px;
 }
 
 .folder-tree .note-leaf:hover {
-    color: #0088ff;
+    color: #B8941A;
 }

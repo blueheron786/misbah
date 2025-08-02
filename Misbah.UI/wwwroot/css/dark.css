@@ -38,10 +38,43 @@ body {
 
 /* Style for missing wiki-style links */
 a.missing-link {
-    color: #ff9800;
-    text-decoration: underline wavy #ff9800;
+    color: #D4A574;
+    text-decoration: underline wavy #D4A574;
     opacity: 0.8;
     cursor: help;
+}
+
+/* Dark mode link colors */
+a, .btn-link {
+    color: #F4C430;
+}
+
+/* Checkbox styling - remove bullets and use golden color */
+.md-task {
+    accent-color: #F4C430;
+    margin-right: 8px;
+}
+
+/* Remove list bullets for task lists */
+.markdown-body ul li:has(.md-task) {
+    list-style: none;
+    margin-left: 0;
+}
+
+.markdown-body ul li .md-task {
+    margin-left: -1.5em;
+    margin-right: 0.5em;
+}
+
+/* Fallback for browsers that don't support :has() */
+.markdown-body li.task-list-item {
+    list-style: none;
+    margin-left: 0;
+}
+
+.markdown-body li.task-list-item .md-task {
+    margin-left: -1.5em;
+    margin-right: 0.5em;
 }
 
 input, textarea, select, button {
@@ -51,7 +84,7 @@ input, textarea, select, button {
 }
 
 input:focus, textarea:focus, select:focus {
-    outline: 1px solid #4fc3f7;
+    outline: 1px solid #F4C430;
     background: #23272e;
 }
 
@@ -72,7 +105,7 @@ pre, code, .misbah-code {
 
 /* Remove folder hover background, only brighten file text color */
 .folder-tree .note-leaf:hover {
-    color: #66d4ff !important;
+    color: #F4C430 !important;
 }
 
 ::-webkit-scrollbar {
