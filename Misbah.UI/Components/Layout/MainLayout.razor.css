@@ -86,7 +86,7 @@ main {
 .sidebar-panel {
     min-width: 180px;
     max-width: 50%;
-    width: 300px;
+    width: 25%;
     height: 100vh;
     background: #23272e;
     display: flex;
