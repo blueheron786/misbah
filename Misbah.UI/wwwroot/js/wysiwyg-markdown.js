@@ -77,14 +77,14 @@ window.wysiwygMarkdownEditor = {
         // Bold: Ctrl+B
         if (e.ctrlKey && e.key === 'b') {
             e.preventDefault();
-            document.execCommand('bold', false, null);
+            this.toggleBold();
             return;
         }
 
         // Italic: Ctrl+I
         if (e.ctrlKey && e.key === 'i') {
             e.preventDefault();
-            document.execCommand('italic', false, null);
+            this.toggleItalic();
             return;
         }
 
@@ -101,6 +101,38 @@ window.wysiwygMarkdownEditor = {
             const level = parseInt(e.key);
             this.toggleHeading(level);
             return;
+        }
+
+        // Task list: Ctrl+Shift+X
+        if (e.ctrlKey && e.shiftKey && e.key === 'X') {
+            e.preventDefault();
+            this.toggleTaskList();
+            return;
+        }
+
+        // Unordered list: Ctrl+L
+        if (e.ctrlKey && e.key === 'l') {
+            e.preventDefault();
+            this.toggleUnorderedList();
+            return;
+        }
+
+        // Handle Enter key in task lists
+        if (e.key === 'Enter') {
+            const selection = window.getSelection();
+            if (selection.rangeCount > 0) {
+                const range = selection.getRangeAt(0);
+                const container = range.startContainer;
+                const listItem = container.nodeType === Node.TEXT_NODE ? 
+                    container.parentElement.closest('li') : 
+                    container.closest('li');
+                
+                if (listItem && listItem.querySelector('input[type="checkbox"]')) {
+                    e.preventDefault();
+                    this.createNewTaskItem(listItem);
+                    return;
+                }
+            }
         }
 
         // Handle Enter key to maintain proper paragraph structure
@@ -121,6 +153,119 @@ window.wysiwygMarkdownEditor = {
                 range.setEnd(p, 0);
                 selection.removeAllRanges();
                 selection.addRange(range);
+            }
+        }
+    },
+
+    toggleBold: function() {
+        const selection = window.getSelection();
+        if (selection.rangeCount === 0) return;
+
+        const range = selection.getRangeAt(0);
+        const selectedText = range.toString();
+        
+        if (selectedText) {
+            // Check if the selection is already bold
+            const parentElement = range.commonAncestorContainer.parentElement;
+            if (parentElement && (parentElement.tagName === 'STRONG' || parentElement.tagName === 'B')) {
+                // Remove bold
+                const textNode = document.createTextNode(selectedText);
+                parentElement.parentNode.replaceChild(textNode, parentElement);
+            } else {
+                // Add bold
+                const strong = document.createElement('strong');
+                strong.textContent = selectedText;
+                range.deleteContents();
+                range.insertNode(strong);
+                
+                // Move cursor after the strong element
+                range.setStartAfter(strong);
+                range.setEndAfter(strong);
+                selection.removeAllRanges();
+                selection.addRange(range);
+            }
+        } else {
+            // No selection, toggle bold at cursor position
+            document.execCommand('bold', false, null);
+        }
+    },
+
+    toggleItalic: function() {
+        const selection = window.getSelection();
+        if (selection.rangeCount === 0) return;
+
+        const range = selection.getRangeAt(0);
+        const selectedText = range.toString();
+        
+        if (selectedText) {
+            // Check if the selection is already italic
+            const parentElement = range.commonAncestorContainer.parentElement;
+            if (parentElement && (parentElement.tagName === 'EM' || parentElement.tagName === 'I')) {
+                // Remove italic
+                const textNode = document.createTextNode(selectedText);
+                parentElement.parentNode.replaceChild(textNode, parentElement);
+            } else {
+                // Add italic
+                const em = document.createElement('em');
+                em.textContent = selectedText;
+                range.deleteContents();
+                range.insertNode(em);
+                
+                // Move cursor after the em element
+                range.setStartAfter(em);
+                range.setEndAfter(em);
+                selection.removeAllRanges();
+                selection.addRange(range);
+            }
+        } else {
+            // No selection, toggle italic at cursor position
+            document.execCommand('italic', false, null);
+        }
+    },
+
+    toggleTaskList: function() {
+        const selection = window.getSelection();
+        if (selection.rangeCount === 0) return;
+
+        const range = selection.getRangeAt(0);
+        const element = range.commonAncestorContainer.nodeType === Node.TEXT_NODE 
+            ? range.commonAncestorContainer.parentElement 
+            : range.commonAncestorContainer;
+
+        let targetElement = element;
+        while (targetElement && !targetElement.tagName?.match(/^(P|LI|DIV)$/)) {
+            targetElement = targetElement.parentElement;
+        }
+
+        if (targetElement) {
+            if (targetElement.tagName === 'LI') {
+                // Check if it's already a task list item
+                const checkbox = targetElement.querySelector('input[type="checkbox"]');
+                if (checkbox) {
+                    // Remove checkbox, convert to regular list item
+                    checkbox.remove();
+                    targetElement.innerHTML = targetElement.innerHTML.trim();
+                } else {
+                    // Add checkbox to make it a task list item
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.className = 'md-task';
+                    targetElement.insertBefore(checkbox, targetElement.firstChild);
+                    targetElement.insertBefore(document.createTextNode(' '), checkbox.nextSibling);
+                }
+            } else {
+                // Convert paragraph to task list
+                const ul = document.createElement('ul');
+                const li = document.createElement('li');
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.className = 'md-task';
+                
+                li.appendChild(checkbox);
+                li.appendChild(document.createTextNode(' ' + targetElement.textContent));
+                ul.appendChild(li);
+                
+                targetElement.parentNode.replaceChild(ul, targetElement);
             }
         }
     },
@@ -215,6 +360,10 @@ window.wysiwygMarkdownEditor = {
             return '';
         }
         
+        // Handle task lists FIRST (before regular lists)
+        markdown = markdown.replace(/<li[^>]*>\s*<input[^>]*type="checkbox"[^>]*checked[^>]*>\s*(.*?)<\/li>/gi, '- [x] $1');
+        markdown = markdown.replace(/<li[^>]*>\s*<input[^>]*type="checkbox"[^>]*>\s*(.*?)<\/li>/gi, '- [ ] $1');
+        
         // Convert headings
         markdown = markdown.replace(/<h1[^>]*>(.*?)<\/h1>/gi, '# $1\n\n');
         markdown = markdown.replace(/<h2[^>]*>(.*?)<\/h2>/gi, '## $1\n\n');
@@ -226,10 +375,10 @@ window.wysiwygMarkdownEditor = {
         // Convert paragraphs
         markdown = markdown.replace(/<p[^>]*>(.*?)<\/p>/gi, '$1\n\n');
         
-        // Convert bold
+        // Convert bold (handle both <strong> and <b>)
         markdown = markdown.replace(/<(strong|b)[^>]*>(.*?)<\/(strong|b)>/gi, '**$2**');
         
-        // Convert italic
+        // Convert italic (handle both <em> and <i>)
         markdown = markdown.replace(/<(em|i)[^>]*>(.*?)<\/(em|i)>/gi, '*$2*');
         
         // Convert inline code
@@ -240,14 +389,22 @@ window.wysiwygMarkdownEditor = {
         
         // Convert blockquotes
         markdown = markdown.replace(/<blockquote[^>]*>(.*?)<\/blockquote>/gi, (match, content) => {
-            return content.split('\n').map(line => '> ' + line.trim()).join('\n') + '\n\n';
+            // Clean up the content and split into lines
+            const cleanContent = content.replace(/<[^>]*>/g, '').trim();
+            return cleanContent.split('\n').map(line => '> ' + line.trim()).filter(line => line.trim() !== '>').join('\n') + '\n\n';
         });
         
-        // Convert lists
+        // Convert unordered lists (but not task lists which we handled above)
         markdown = markdown.replace(/<ul[^>]*>(.*?)<\/ul>/gi, (match, content) => {
-            return content.replace(/<li[^>]*>(.*?)<\/li>/gi, '- $1\n') + '\n';
+            // Only convert if it doesn't contain checkboxes (task lists)
+            if (content.includes('type="checkbox"')) {
+                return content.replace(/<li[^>]*>(.*?)<\/li>/gi, '$1\n');
+            } else {
+                return content.replace(/<li[^>]*>(.*?)<\/li>/gi, '- $1\n') + '\n';
+            }
         });
         
+        // Convert ordered lists
         markdown = markdown.replace(/<ol[^>]*>(.*?)<\/ol>/gi, (match, content) => {
             let counter = 1;
             return content.replace(/<li[^>]*>(.*?)<\/li>/gi, () => `${counter++}. $1\n`) + '\n';
@@ -259,7 +416,7 @@ window.wysiwygMarkdownEditor = {
         // Convert horizontal rules
         markdown = markdown.replace(/<hr[^>]*>/gi, '---\n\n');
         
-        // Clean up HTML tags
+        // Clean up remaining HTML tags
         markdown = markdown.replace(/<[^>]*>/g, '');
         
         // Clean up extra whitespace
@@ -272,6 +429,71 @@ window.wysiwygMarkdownEditor = {
         markdown = textarea.value;
         
         return markdown;
+    },
+
+    createNewTaskItem: function(currentItem) {
+        const newItem = document.createElement('li');
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.className = 'md-task';
+        
+        newItem.appendChild(checkbox);
+        newItem.appendChild(document.createTextNode(' '));
+        
+        currentItem.parentNode.insertBefore(newItem, currentItem.nextSibling);
+        
+        // Set cursor after the checkbox
+        const range = document.createRange();
+        const selection = window.getSelection();
+        range.setStartAfter(checkbox);
+        range.collapse(true);
+        selection.removeAllRanges();
+        selection.addRange(range);
+    },
+
+    toggleUnorderedList: function() {
+        const selection = window.getSelection();
+        if (selection.rangeCount === 0) return;
+
+        const range = selection.getRangeAt(0);
+        const container = range.commonAncestorContainer;
+        const listItem = container.nodeType === Node.TEXT_NODE ? 
+            container.parentElement.closest('li') : 
+            container.closest('li');
+
+        if (listItem && listItem.parentElement.tagName === 'UL') {
+            // Convert list item to paragraph
+            const p = document.createElement('p');
+            p.textContent = listItem.textContent;
+            listItem.parentElement.insertBefore(p, listItem);
+            listItem.remove();
+
+            // If the list is now empty, remove it
+            if (listItem.parentElement.children.length === 0) {
+                listItem.parentElement.remove();
+            }
+        } else {
+            // Create new list
+            const ul = document.createElement('ul');
+            const li = document.createElement('li');
+            
+            if (range.collapsed) {
+                li.textContent = 'List item';
+            } else {
+                li.textContent = range.toString();
+                range.deleteContents();
+            }
+            
+            ul.appendChild(li);
+            range.insertNode(ul);
+            
+            // Set cursor in the list item
+            const newRange = document.createRange();
+            newRange.setStart(li.firstChild, li.textContent.length);
+            newRange.collapse(true);
+            selection.removeAllRanges();
+            selection.addRange(newRange);
+        }
     },
 
     debounce: function(func, wait) {

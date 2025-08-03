@@ -23,6 +23,7 @@ pre.misbah-code {
 @using Microsoft.JSInterop
 @using Markdig
 @using Misbah.UI.Components.Pages.Notes
+@using Misbah.UI.Components
 @inject Misbah.Core.Services.INoteService NoteService
 @inject IJSRuntime JSRuntime
 @inject Misbah.Core.Services.MarkdownRenderer MarkdownRenderer
@@ -53,8 +54,6 @@ pre.misbah-code {
 
     [Parameter] public string? NoteId { get; set; }
     private Note? note;
-    private bool editMode = false;
-    private bool useLiveView = false; // New option for live view editing
     private string? editedContent;
 
     [JSInvokable("ToggleTask")]
@@ -90,34 +89,10 @@ pre.misbah-code {
         {
             note = NoteService.LoadNote(NoteId);
             editedContent = note?.Content;
-            editMode = false;
         }
     }
 
-    void ToggleEdit()
-    {
-        editMode = !editMode;
-        if (editMode && note != null)
-            editedContent = note.Content;
-    }
-
-    void ToggleLiveView()
-    {
-        useLiveView = !useLiveView;
-        StateHasChanged();
-    }
-
-    void Save()
-    {
-        if (note != null && editedContent != null)
-        {
-            note.Content = editedContent;
-            NoteService.SaveNote(note);
-            editMode = false;
-        }
-    }
-
-    private Task OnLiveViewContentChanged(string content)
+    private Task OnContentChanged(string content)
     {
         if (note != null)
         {
@@ -129,73 +104,18 @@ pre.misbah-code {
     }
 
 
-    // Main markdown renderer using shared MarkdownRenderer
-    MarkupString RenderMarkdownWithLinks(string? content)
-    {
-        if (!_jsHandlerRegistered)
-        {
-            _jsHandlerRegistered = true;
-            _ = JSRuntime.InvokeVoidAsync("eval", @"
-                window.addEventListener('misbah-task-toggle', function(e) {
-                    if (e.detail && typeof DotNet !== 'undefined') {
-                        DotNet.invokeMethodAsync('Misbah.UI', 'ToggleTask', e.detail.line);
-                    }
-                });
-            ");
-        }
-        // Set the list of existing pages before rendering
-        var allNotes = NoteService.GetAllNotes();
-        var titles = allNotes.Select(n => n.Title).ToList();
-        MarkdownRenderer.SetExistingPages(titles);
-        var html = MarkdownRenderer.RenderFull(content, out var _);
-        return (MarkupString)html;
-    }
-
-    // Helper: Add globe emoji to external links
-    private string AddExternalLinkEmoji(string html)
-    {
-        return System.Text.RegularExpressions.Regex.Replace(
-            html,
-            @"<a ([^>]*href=""https?://[^""]+""[^>]*)>(.*?)</a>",
-            m => $"<a {m.Groups[1].Value}>{m.Groups[2].Value}</a> 🌐",
-            System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-    }
-
 }
 
 @if (note != null)
 {
     <div class="note-view">
         <h2>@note.Title</h2>
-        <div style="display: flex; gap: 10px; margin-bottom: 20px;">
-            <button @onclick="ToggleLiveView" class="btn btn-primary">
-                @(useLiveView ? "🔀 Standard View" : "✨ WYSIWYG Editor")
-            </button>
-            @if (!useLiveView)
-            {
-                <button @onclick="ToggleEdit">@(editMode ? AppStrings.Cancel : AppStrings.Edit)</button>
-            }
-        </div>
         
-        @if (useLiveView)
-        {
-            <!-- True WYSIWYG live view editor -->
-            <WysiwygMarkdownEditor Content="@(note.Content ?? "")"
-                                   ContentChanged="OnLiveViewContentChanged"
-                                   Height="calc(100vh - 200px)"
-                                   Theme="dark" />
-        }
-        else if (editMode)
-        {
-            <textarea @bind="editedContent" rows="20" style="width:100%"></textarea>
-            <button @onclick="Save">@AppStrings.Save</button>
-        }
-        else
-        {
-            <div style="display:flex;align-items:center;gap:1em;">
-                <div class="markdown-body" style="flex:1;">@RenderMarkdownWithLinks(note.Content)</div>
-            </div>
-        }
+        <!-- WYSIWYG Editor -->
+        <WysiwygMarkdownEditor Content="@(note.Content ?? "")"
+                               ContentChanged="OnContentChanged"
+                               Height="calc(100vh - 200px)"
+                               Theme="dark" />
     </div>
 }
 else
