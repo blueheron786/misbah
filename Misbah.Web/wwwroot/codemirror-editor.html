@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Live Markdown Editor</title>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        
+        #editor {
+            height: 100vh;
+            width: 100%;
+        }
+        
+        .cm-editor {
+            height: 100% !important;
+        }
+        
+        .cm-scroller {
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        
+        /* Live markdown styling */
+        .cm-line .cm-header1 {
+            font-size: 2em;
+            font-weight: bold;
+            color: #2563eb;
+        }
+        
+        .cm-line .cm-header2 {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #3b82f6;
+        }
+        
+        .cm-line .cm-header3 {
+            font-size: 1.25em;
+            font-weight: bold;
+            color: #60a5fa;
+        }
+        
+        .cm-line .cm-strong {
+            font-weight: bold;
+        }
+        
+        .cm-line .cm-emphasis {
+            font-style: italic;
+        }
+        
+        .cm-line .cm-strikethrough {
+            text-decoration: line-through;
+        }
+        
+        .cm-line .cm-code {
+            background-color: #f3f4f6;
+            padding: 0.125rem 0.25rem;
+            border-radius: 0.25rem;
+            font-family: 'Consolas', 'Monaco', monospace;
+        }
+        
+        .cm-line .cm-link {
+            color: #3b82f6;
+            text-decoration: underline;
+        }
+        
+        /* Task list styling */
+        .cm-line .cm-task-marker {
+            margin-right: 0.5rem;
+        }
+        
+        .cm-line .cm-task-marker input[type="checkbox"] {
+            margin-right: 0.25rem;
+        }
+        
+        /* Block quote styling */
+        .cm-line .cm-quote {
+            border-left: 4px solid #e5e7eb;
+            padding-left: 1rem;
+            margin-left: 0;
+            color: #6b7280;
+        }
+        
+        /* Code block styling */
+        .cm-line .cm-code-block {
+            background-color: #f8fafc;
+            font-family: 'Consolas', 'Monaco', monospace;
+            color: #1f2937;
+        }
+    </style>
+</head>
+<body>
+    <div id="editor"></div>
+    
+    <script type="module">
+        import { EditorView, basicSetup } from "https://esm.sh/@codemirror/basic-setup@6.0.21";
+        import { EditorState } from "https://esm.sh/@codemirror/state@6.4.1";
+        import { markdown, markdownLanguage } from "https://esm.sh/@codemirror/lang-markdown@6.2.5";
+        import { oneDark } from "https://esm.sh/@codemirror/theme-one-dark@6.1.2";
+        import { syntaxHighlighting, HighlightStyle } from "https://esm.sh/@codemirror/language@6.10.2";
+        import { tags } from "https://esm.sh/@lezer/highlight@1.2.0";
+        import { ViewPlugin, Decoration, DecorationSet } from "https://esm.sh/@codemirror/view@6.28.4";
+        import { RangeSetBuilder } from "https://esm.sh/@codemirror/state@6.4.1";
+
+        let editor;
+        let isDarkTheme = false;
+
+        // Custom highlighting for live markdown
+        const markdownHighlighting = HighlightStyle.define([
+            { tag: tags.heading1, fontSize: "2em", fontWeight: "bold", color: "#2563eb" },
+            { tag: tags.heading2, fontSize: "1.5em", fontWeight: "bold", color: "#3b82f6" },
+            { tag: tags.heading3, fontSize: "1.25em", fontWeight: "bold", color: "#60a5fa" },
+            { tag: tags.heading4, fontSize: "1.1em", fontWeight: "bold", color: "#93c5fd" },
+            { tag: tags.heading5, fontSize: "1em", fontWeight: "bold", color: "#bfdbfe" },
+            { tag: tags.heading6, fontSize: "0.9em", fontWeight: "bold", color: "#dbeafe" },
+            { tag: tags.strong, fontWeight: "bold" },
+            { tag: tags.emphasis, fontStyle: "italic" },
+            { tag: tags.strikethrough, textDecoration: "line-through" },
+            { tag: tags.code, backgroundColor: "#f3f4f6", padding: "0.125rem 0.25rem", borderRadius: "0.25rem" },
+            { tag: tags.link, color: "#3b82f6", textDecoration: "underline" },
+            { tag: tags.quote, borderLeft: "4px solid #e5e7eb", paddingLeft: "1rem", color: "#6b7280" }
+        ]);
+
+        // Task list plugin for interactive checkboxes
+        const taskListPlugin = ViewPlugin.fromClass(class {
+            constructor(view) {
+                this.decorations = this.buildDecorations(view);
+            }
+
+            update(update) {
+                if (update.docChanged || update.selectionSet) {
+                    this.decorations = this.buildDecorations(update.view);
+                }
+            }
+
+            buildDecorations(view) {
+                const builder = new RangeSetBuilder();
+                const doc = view.state.doc;
+                
+                for (let i = 1; i <= doc.lines; i++) {
+                    const line = doc.line(i);
+                    const text = line.text;
+                    
+                    // Match task list items: - [ ] or - [x]
+                    const taskMatch = text.match(/^(\s*- \[)([ x])\]/);
+                    if (taskMatch) {
+                        const checkboxPos = line.from + taskMatch[1].length;
+                        const isChecked = taskMatch[2] === 'x';
+                        
+                        const checkboxWidget = Decoration.widget({
+                            widget: new CheckboxWidget(isChecked, checkboxPos, view),
+                            side: 1
+                        });
+                        
+                        builder.add(checkboxPos, checkboxPos, checkboxWidget);
+                    }
+                }
+                
+                return builder.finish();
+            }
+        }, {
+            decorations: v => v.decorations
+        });
+
+        class CheckboxWidget extends HTMLElement {
+            constructor(checked, pos, view) {
+                super();
+                this.checked = checked;
+                this.pos = pos;
+                this.view = view;
+                
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.checked = checked;
+                checkbox.style.marginRight = '0.25rem';
+                checkbox.style.cursor = 'pointer';
+                
+                checkbox.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    this.toggleTask();
+                });
+                
+                this.appendChild(checkbox);
+            }
+            
+            toggleTask() {
+                const newChar = this.checked ? ' ' : 'x';
+                const transaction = this.view.state.update({
+                    changes: {
+                        from: this.pos,
+                        to: this.pos + 1,
+                        insert: newChar
+                    }
+                });
+                this.view.dispatch(transaction);
+            }
+        }
+
+        // Initialize editor
+        window.createEditor = (initialContent = '', theme = 'light') => {
+            isDarkTheme = theme === 'dark';
+            
+            const extensions = [
+                basicSetup,
+                markdown({ base: markdownLanguage }),
+                syntaxHighlighting(markdownHighlighting),
+                taskListPlugin,
+                EditorView.theme({
+                    "&": {
+                        fontSize: "14px",
+                        fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+                    },
+                    ".cm-content": {
+                        padding: "20px",
+                        lineHeight: "1.6"
+                    },
+                    ".cm-focused": {
+                        outline: "none"
+                    }
+                }),
+                EditorView.updateListener.of(update => {
+                    if (update.docChanged) {
+                        const content = update.state.doc.toString();
+                        // Notify parent about content changes
+                        notifyContentChanged(content);
+                    }
+                })
+            ];
+
+            if (isDarkTheme) {
+                extensions.push(oneDark);
+            }
+
+            editor = new EditorView({
+                state: EditorState.create({
+                    doc: initialContent,
+                    extensions: extensions
+                }),
+                parent: document.getElementById('editor')
+            });
+        };
+
+        // API functions for parent to call
+        window.getContent = () => {
+            return editor ? editor.state.doc.toString() : '';
+        };
+
+        window.setContent = (content) => {
+            if (!editor) return;
+            
+            editor.dispatch({
+                changes: {
+                    from: 0,
+                    to: editor.state.doc.length,
+                    insert: content || ''
+                }
+            });
+        };
+
+        window.setTheme = (theme) => {
+            if (!editor) return;
+            
+            isDarkTheme = theme === 'dark';
+            
+            // Recreate editor with new theme
+            const currentContent = editor.state.doc.toString();
+            editor.destroy();
+            window.createEditor(currentContent, theme);
+        };
+
+        window.focus = () => {
+            if (editor) {
+                editor.focus();
+            }
+        };
+
+        // Notify parent of content changes
+        function notifyContentChanged(content) {
+            // For Blazor Desktop/WebView2
+            if (window.chrome && window.chrome.webview) {
+                window.chrome.webview.postMessage({
+                    type: 'contentChanged',
+                    content: content
+                });
+            }
+            
+            // For general web context
+            if (window.parent && window.parent !== window) {
+                window.parent.postMessage({
+                    type: 'contentChanged',
+                    content: content
+                }, '*');
+            }
+            
+            // Custom event for any listeners
+            window.dispatchEvent(new CustomEvent('markdown-content-changed', {
+                detail: { content: content }
+            }));
+        }
+
+        // Initialize with empty content when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            window.createEditor('', 'light');
+        });
+    </script>
+</body>
+</html>

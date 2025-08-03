@@ -402,3 +402,69 @@ FodyWeavers.xsd
 # End of https://www.toptal.com/developers/gitignore/api/csharp
 
 .misbah
+
+# ===== MOBILE & CAPACITOR =====
+# Node.js dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build output for mobile app
+dist/
+
+# Capacitor
+.capacitor/
+
+# Android - Build outputs
+android/app/build/
+android/app/src/main/assets/public/
+android/build/
+android/.gradle/
+android/gradle/
+android/gradlew
+android/gradlew.bat
+android/local.properties
+android/.idea/
+android/*.iml
+android/app/release/
+android/app/debug/
+android/.cxx/
+android/app/.cxx/
+
+# Android - Additional generated files
+android/app/src/main/assets/capacitor.config.json
+android/app/src/main/res/values/strings.xml.bak
+android/app/src/main/AndroidManifest.xml.orig
+
+# Capacitor configuration (keep the base config but ignore local overrides)
+capacitor.config.local.json
+
+# Package manager lockfiles (keep one, ignore others)
+package-lock.json
+yarn.lock
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# IDE files for mobile development
+.vscode/settings.json
+*.code-workspace
+
+# Temporary files
+*.tmp
+*.temp
+
+# Mobile app signing keys (IMPORTANT: Never commit these!)
+android/app/keystore.jks
+android/app/key.properties
+*.keystore
+*.jks
+
+# Build scripts logs
+build-android.log
+*.temp

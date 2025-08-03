@@ -1,0 +1,21 @@
+{
+  "name": "misbah-android",
+  "version": "1.0.0",
+  "description": "Misbah Android App using Capacitor",
+  "main": "index.js",
+  "scripts": {
+    "build-web": "cd Misbah.Web && dotnet publish -c Release -o ../dist",
+    "capacitor:init": "capacitor init misbah com.misbah.app",
+    "capacitor:add:android": "capacitor add android",
+    "capacitor:sync": "capacitor sync",
+    "capacitor:run:android": "capacitor run android",
+    "capacitor:open:android": "capacitor open android"
+  },
+  "dependencies": {
+    "@capacitor/core": "^6.1.2",
+    "@capacitor/cli": "^6.1.2",
+    "@capacitor/android": "^6.1.2"
+  },
+  "author": "",
+  "license": "ISC"
+}
