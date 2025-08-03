@@ -16,10 +16,6 @@
         @((MarkupString)renderedContent)
     </div>
 </div>
-@if (_isSaved)
-{
-    <div class="wysiwyg-saved-indicator" style="color:#F80; font-size:0.95em; margin-top:6px; transition:opacity 0.5s;">Saved</div>
-}
 
 @code {
     [Parameter] public string Content { get; set; } = "";
@@ -32,8 +28,6 @@
     private string lastKnownContent = "";
     private ElementReference editorElement;
     private DotNetObjectReference<WysiwygMarkdownEditor>? dotNetRef;
-    private bool _isSaved = false;
-    private System.Timers.Timer? _saveTimer;
 
     protected override void OnInitialized()
     {
@@ -73,41 +67,22 @@
 
     private async Task OnContentInput(ChangeEventArgs e)
     {
-        // Convert HTML back to markdown and notify parent
-        await ConvertHtmlToMarkdownAndNotify();
+        // No auto-save on input
     }
 
     private async Task OnContentBlur(FocusEventArgs e)
     {
-        // Ensure content is saved when focus is lost
-        await ConvertHtmlToMarkdownAndNotify();
+        // No auto-save on blur
     }
 
     private async Task OnKeyDown(KeyboardEventArgs e)
     {
-        // Handle special key combinations
-        if (e.Key == "Enter" && (e.CtrlKey || e.MetaKey))
-        {
-            await ConvertHtmlToMarkdownAndNotify();
-        }
+        // Optionally handle keyboard shortcuts for formatting, but no save
     }
 
-    private void ShowSavedIndicator()
-    {
-        _isSaved = true;
-        StateHasChanged();
-        _saveTimer?.Dispose();
-        _saveTimer = new System.Timers.Timer(1200);
-        _saveTimer.Elapsed += (s, e) => {
-            _isSaved = false;
-            InvokeAsync(StateHasChanged);
-            _saveTimer?.Dispose();
-        };
-        _saveTimer.AutoReset = false;
-        _saveTimer.Start();
-    }
 
-    private async Task ConvertHtmlToMarkdownAndNotify()
+
+    public async Task SaveAsync()
     {
         try
         {
@@ -117,7 +92,6 @@
             {
                 lastKnownContent = markdown;
                 await ContentChanged.InvokeAsync(markdown);
-                ShowSavedIndicator();
             }
         }
         catch (Exception ex)
@@ -129,26 +103,15 @@
     [JSInvokable]
     public async Task OnEditorContentChanged(string html)
     {
-        try
-        {
-            var markdown = await JSRuntime.InvokeAsync<string>("wysiwygMarkdownEditor.htmlToMarkdown", html);
-            if (ContentChanged.HasDelegate && markdown != lastKnownContent)
-            {
-                lastKnownContent = markdown;
-                await ContentChanged.InvokeAsync(markdown);
-                ShowSavedIndicator();
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error in OnEditorContentChanged: {ex.Message}");
-        }
+        // No auto-save on content change
     }
 
     public async ValueTask DisposeAsync()
     {
         try
         {
+            // Save on app/component close
+            await SaveAsync();
             if (dotNetRef != null)
             {
                 await JSRuntime.InvokeVoidAsync("wysiwygMarkdownEditor.dispose", $"wysiwyg-editor-{editorId}");
