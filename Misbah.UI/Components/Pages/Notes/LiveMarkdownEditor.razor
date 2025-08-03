@@ -1,0 +1,254 @@
+@using Misbah.Core.Models
+@using Microsoft.AspNetCore.Components.Web
+@using Microsoft.JSInterop
+@inject IJSRuntime JSRuntime
+@implements IAsyncDisposable
+
+<div class="live-markdown-editor" style="height: @Height; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden;">
+    @if (IsReady)
+    {
+        <iframe @ref="editorFrame" 
+                src="codemirror-editor.html" 
+                style="width: 100%; height: 100%; border: none; display: block;"
+                @onload="OnIframeLoad">
+        </iframe>
+    }
+    else
+    {
+        <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #6b7280;">
+            <span>Loading editor...</span>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public string Content { get; set; } = "";
+    [Parameter] public EventCallback<string> ContentChanged { get; set; }
+    [Parameter] public string Height { get; set; } = "400px";
+    [Parameter] public string Theme { get; set; } = "light";
+    [Parameter] public bool AutoSave { get; set; } = true;
+    [Parameter] public int AutoSaveDelay { get; set; } = 2000; // 2 seconds
+
+    private ElementReference editorFrame;
+    private IJSObjectReference? editorModule;
+    private DotNetObjectReference<LiveMarkdownEditor>? dotNetRef;
+    private bool IsReady = false;
+    private string currentContent = "";
+    private System.Threading.Timer? autoSaveTimer;
+    private bool isUpdatingContent = false;
+
+    protected override Task OnInitializedAsync()
+    {
+        dotNetRef = DotNetObjectReference.Create(this);
+        IsReady = true;
+        return Task.CompletedTask;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && IsReady)
+        {
+            await InitializeEditor();
+        }
+    }
+
+    private async Task OnIframeLoad()
+    {
+        await Task.Delay(100); // Give iframe time to fully load
+        await InitializeEditor();
+    }
+
+    private async Task InitializeEditor()
+    {
+        try
+        {
+            // Get the iframe's window object and call our functions
+            await JSRuntime.InvokeVoidAsync("eval", $@"
+                const iframe = document.querySelector('iframe[src=""codemirror-editor.html""]');
+                if (iframe && iframe.contentWindow) {{
+                    const iframeWindow = iframe.contentWindow;
+                    
+                    // Set up message listener for content changes
+                    window.addEventListener('message', function(event) {{
+                        if (event.data && event.data.type === 'contentChanged') {{
+                            DotNet.invokeMethodAsync('{dotNetRef?.Value.GetType().Assembly.GetName().Name}', 
+                                                   'OnContentChanged', event.data.content);
+                        }}
+                    }});
+                    
+                    // Initialize editor with content
+                    if (iframeWindow.createEditor) {{
+                        iframeWindow.createEditor('{EscapeJavaScript(Content)}', '{Theme}');
+                    }}
+                    
+                    // Store reference for later use
+                    window.markdownEditor = iframeWindow;
+                }}
+            ");
+
+            currentContent = Content;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error initializing editor: {ex.Message}");
+        }
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (!string.IsNullOrEmpty(Content) && Content != currentContent && !isUpdatingContent)
+        {
+            await SetEditorContent(Content);
+        }
+    }
+
+    [JSInvokable]
+    public async Task OnContentChanged(string content)
+    {
+        if (isUpdatingContent) return;
+
+        currentContent = content;
+        
+        // Trigger content changed event
+        if (ContentChanged.HasDelegate)
+        {
+            await ContentChanged.InvokeAsync(content);
+        }
+
+        // Handle auto-save
+        if (AutoSave)
+        {
+            autoSaveTimer?.Dispose();
+            autoSaveTimer = new System.Threading.Timer(async _ => await TriggerAutoSave(), null, AutoSaveDelay, Timeout.Infinite);
+        }
+    }
+
+    private async Task TriggerAutoSave()
+    {
+        if (ContentChanged.HasDelegate)
+        {
+            await InvokeAsync(async () => await ContentChanged.InvokeAsync(currentContent));
+        }
+    }
+
+    public async Task SetContent(string content)
+    {
+        Content = content;
+        await SetEditorContent(content);
+    }
+
+    private async Task SetEditorContent(string content)
+    {
+        if (!IsReady) return;
+
+        try
+        {
+            isUpdatingContent = true;
+            
+            await JSRuntime.InvokeVoidAsync("eval", $@"
+                if (window.markdownEditor && window.markdownEditor.setContent) {{
+                    window.markdownEditor.setContent('{EscapeJavaScript(content)}');
+                }}
+            ");
+
+            currentContent = content;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error setting editor content: {ex.Message}");
+        }
+        finally
+        {
+            isUpdatingContent = false;
+        }
+    }
+
+    public async Task<string> GetContent()
+    {
+        if (!IsReady) return "";
+
+        try
+        {
+            return await JSRuntime.InvokeAsync<string>("eval", @"
+                window.markdownEditor && window.markdownEditor.getContent ? window.markdownEditor.getContent() : ''
+            ");
+        }
+        catch
+        {
+            return currentContent;
+        }
+    }
+
+    public async Task SetTheme(string theme)
+    {
+        Theme = theme;
+        
+        if (!IsReady) return;
+
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("eval", $@"
+                if (window.markdownEditor && window.markdownEditor.setTheme) {{
+                    window.markdownEditor.setTheme('{theme}');
+                }}
+            ");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error setting theme: {ex.Message}");
+        }
+    }
+
+    public async Task Focus()
+    {
+        if (!IsReady) return;
+
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("eval", @"
+                if (window.markdownEditor && window.markdownEditor.focus) {
+                    window.markdownEditor.focus();
+                }
+            ");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error focusing editor: {ex.Message}");
+        }
+    }
+
+    private static string EscapeJavaScript(string input)
+    {
+        if (string.IsNullOrEmpty(input)) return "";
+        
+        return input
+            .Replace("\\", "\\\\")
+            .Replace("'", "\\'")
+            .Replace("\"", "\\\"")
+            .Replace("\n", "\\n")
+            .Replace("\r", "\\r")
+            .Replace("\t", "\\t");
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        autoSaveTimer?.Dispose();
+        dotNetRef?.Dispose();
+        
+        if (editorModule != null)
+        {
+            await editorModule.DisposeAsync();
+        }
+    }
+}
+
+<style>
+    .live-markdown-editor {
+        position: relative;
+        background: white;
+    }
+    
+    .live-markdown-editor iframe {
+        transition: opacity 0.2s ease-in-out;
+    }
+</style>

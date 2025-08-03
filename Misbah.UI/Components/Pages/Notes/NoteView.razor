@@ -22,6 +22,7 @@ pre.misbah-code {
 @using Misbah.UI.Resources
 @using Microsoft.JSInterop
 @using Markdig
+@using Misbah.UI.Components.Pages.Notes
 @inject Misbah.Core.Services.INoteService NoteService
 @inject IJSRuntime JSRuntime
 @inject Misbah.Core.Services.MarkdownRenderer MarkdownRenderer
@@ -53,6 +54,7 @@ pre.misbah-code {
     [Parameter] public string? NoteId { get; set; }
     private Note? note;
     private bool editMode = false;
+    private bool useLiveView = false; // New option for live view editing
     private string? editedContent;
 
     [JSInvokable("ToggleTask")]
@@ -99,6 +101,12 @@ pre.misbah-code {
             editedContent = note.Content;
     }
 
+    void ToggleLiveView()
+    {
+        useLiveView = !useLiveView;
+        StateHasChanged();
+    }
+
     void Save()
     {
         if (note != null && editedContent != null)
@@ -107,6 +115,17 @@ pre.misbah-code {
             NoteService.SaveNote(note);
             editMode = false;
         }
+    }
+
+    private Task OnLiveViewContentChanged(string content)
+    {
+        if (note != null)
+        {
+            note.Content = content;
+            NoteService.SaveNote(note); // Auto-save
+            StateHasChanged();
+        }
+        return Task.CompletedTask;
     }
 
 
@@ -148,8 +167,25 @@ pre.misbah-code {
 {
     <div class="note-view">
         <h2>@note.Title</h2>
-        <button @onclick="ToggleEdit">@(editMode ? AppStrings.Cancel : AppStrings.Edit)</button>
-        @if (editMode)
+        <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+            <button @onclick="ToggleLiveView" class="btn btn-primary">
+                @(useLiveView ? "🔀 Standard View" : "👁️ Live View")
+            </button>
+            @if (!useLiveView)
+            {
+                <button @onclick="ToggleEdit">@(editMode ? AppStrings.Cancel : AppStrings.Edit)</button>
+            }
+        </div>
+        
+        @if (useLiveView)
+        {
+            <!-- True Obsidian-style live view editor -->
+            <TrueLiveMarkdownEditor Content="@(note.Content ?? "")"
+                                    ContentChanged="OnLiveViewContentChanged"
+                                    Height="calc(100vh - 200px)"
+                                    Theme="light" />
+        }
+        else if (editMode)
         {
             <textarea @bind="editedContent" rows="20" style="width:100%"></textarea>
             <button @onclick="Save">@AppStrings.Save</button>
@@ -160,9 +196,6 @@ pre.misbah-code {
                 <div class="markdown-body" style="flex:1;">@RenderMarkdownWithLinks(note.Content)</div>
             </div>
         }
-@code {
-
-}
     </div>
 }
 else
