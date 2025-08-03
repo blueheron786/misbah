@@ -132,12 +132,21 @@ window.wysiwygMarkdownEditor = {
                     this.createNewTaskItem(listItem);
                     return;
                 }
+                
+                // Handle Enter in regular lists
+                if (listItem && listItem.parentElement && listItem.parentElement.tagName === 'UL') {
+                    e.preventDefault();
+                    this.createNewListItem(listItem);
+                    return;
+                }
             }
         }
 
         // Handle Enter key to maintain proper paragraph structure
         if (e.key === 'Enter' && !e.shiftKey) {
             const selection = window.getSelection();
+            if (selection.rangeCount === 0) return;
+            
             const range = selection.getRangeAt(0);
             const currentElement = range.commonAncestorContainer;
             
@@ -151,6 +160,19 @@ window.wysiwygMarkdownEditor = {
                 currentElement.parentNode.insertBefore(p, currentElement.nextSibling);
                 range.setStart(p, 0);
                 range.setEnd(p, 0);
+                selection.removeAllRanges();
+                selection.addRange(range);
+                return;
+            }
+            
+            // Default behavior - create proper line breaks
+            if (!range.commonAncestorContainer.closest('li')) {
+                e.preventDefault();
+                const br = document.createElement('br');
+                range.deleteContents();
+                range.insertNode(br);
+                range.setStartAfter(br);
+                range.collapse(true);
                 selection.removeAllRanges();
                 selection.addRange(range);
             }
@@ -360,6 +382,11 @@ window.wysiwygMarkdownEditor = {
             return '';
         }
         
+        // Handle line breaks first - convert <br> and <div> to newlines
+        markdown = markdown.replace(/<br[^>]*>/gi, '\n');
+        markdown = markdown.replace(/<div[^>]*>/gi, '\n');
+        markdown = markdown.replace(/<\/div>/gi, '\n');
+        
         // Handle task lists FIRST (before regular lists)
         markdown = markdown.replace(/<li[^>]*>\s*<input[^>]*type="checkbox"[^>]*checked[^>]*>\s*(.*?)<\/li>/gi, '- [x] $1');
         markdown = markdown.replace(/<li[^>]*>\s*<input[^>]*type="checkbox"[^>]*>\s*(.*?)<\/li>/gi, '- [ ] $1');
@@ -398,16 +425,20 @@ window.wysiwygMarkdownEditor = {
         markdown = markdown.replace(/<ul[^>]*>(.*?)<\/ul>/gi, (match, content) => {
             // Only convert if it doesn't contain checkboxes (task lists)
             if (content.includes('type="checkbox"')) {
-                return content.replace(/<li[^>]*>(.*?)<\/li>/gi, '$1\n');
+                // For task lists, just clean up the content
+                return content.replace(/<li[^>]*>(.*?)<\/li>/gi, '$1\n') + '\n';
             } else {
-                return content.replace(/<li[^>]*>(.*?)<\/li>/gi, '- $1\n') + '\n';
+                // For regular lists, add bullet points
+                const listItems = content.replace(/<li[^>]*>(.*?)<\/li>/gi, '- $1\n');
+                return '\n' + listItems + '\n';
             }
         });
         
         // Convert ordered lists
         markdown = markdown.replace(/<ol[^>]*>(.*?)<\/ol>/gi, (match, content) => {
             let counter = 1;
-            return content.replace(/<li[^>]*>(.*?)<\/li>/gi, () => `${counter++}. $1\n`) + '\n';
+            const listItems = content.replace(/<li[^>]*>(.*?)<\/li>/gi, () => `${counter++}. $1\n`);
+            return '\n' + listItems + '\n';
         });
         
         // Convert links
@@ -419,8 +450,13 @@ window.wysiwygMarkdownEditor = {
         // Clean up remaining HTML tags
         markdown = markdown.replace(/<[^>]*>/g, '');
         
-        // Clean up extra whitespace
-        markdown = markdown.replace(/\n{3,}/g, '\n\n');
+        // Fix multiple consecutive newlines but preserve intentional spacing
+        markdown = markdown.replace(/\n{4,}/g, '\n\n\n');
+        
+        // Clean up leading/trailing whitespace on lines
+        markdown = markdown.split('\n').map(line => line.trim()).join('\n');
+        
+        // Remove leading and trailing newlines from the entire content
         markdown = markdown.replace(/^\n+|\n+$/g, '');
         
         // Decode HTML entities
@@ -446,6 +482,21 @@ window.wysiwygMarkdownEditor = {
         const range = document.createRange();
         const selection = window.getSelection();
         range.setStartAfter(checkbox);
+        range.collapse(true);
+        selection.removeAllRanges();
+        selection.addRange(range);
+    },
+
+    createNewListItem: function(currentItem) {
+        const newItem = document.createElement('li');
+        newItem.textContent = '';
+        
+        currentItem.parentNode.insertBefore(newItem, currentItem.nextSibling);
+        
+        // Set cursor in the new list item
+        const range = document.createRange();
+        const selection = window.getSelection();
+        range.setStart(newItem, 0);
         range.collapse(true);
         selection.removeAllRanges();
         selection.addRange(range);
