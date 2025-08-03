@@ -2,7 +2,6 @@ using System;
 using System.IO;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Console;
 using Misbah.Core.Services;
 
 namespace Misbah.Core.Tests
@@ -14,14 +13,11 @@ namespace Misbah.Core.Tests
     {
         public static async Task RunTestAsync()
         {
-            // Setup logging
-            using var loggerFactory = LoggerFactory.Create(builder =>
-                builder.AddConsole().SetMinimumLevel(LogLevel.Debug));
-            
-            var gitLogger = loggerFactory.CreateLogger<GitSyncService>();
-            var autoSaveLogger = loggerFactory.CreateLogger<AutoSaveService>();
-            var coordinatorLogger = loggerFactory.CreateLogger<AutoSyncCoordinator>();
-            var noteLogger = loggerFactory.CreateLogger<NoteService>();
+            // Setup simple logging (for testing, use NullLogger to avoid dependencies)
+            var gitLogger = Microsoft.Extensions.Logging.Abstractions.NullLogger<GitSyncService>.Instance;
+            var autoSaveLogger = Microsoft.Extensions.Logging.Abstractions.NullLogger<AutoSaveService>.Instance;
+            var coordinatorLogger = Microsoft.Extensions.Logging.Abstractions.NullLogger<AutoSyncCoordinator>.Instance;
+            var noteLogger = Microsoft.Extensions.Logging.Abstractions.NullLogger<NoteService>.Instance;
 
             // Create services
             var gitSyncService = new GitSyncService(gitLogger);
