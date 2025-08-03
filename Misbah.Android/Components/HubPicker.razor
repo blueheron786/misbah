@@ -1,14 +1,42 @@
 @namespace Misbah.Web.Components
+@inject IJSRuntime JSRuntime
+
 @code {
     [Parameter] public EventCallback<string> OnHubPicked { get; set; }
 
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // Initialize JSRuntime for the helper
+            Misbah.Web.FolderDialogHelper.Initialize(JSRuntime);
+        }
+    }
+
     private async Task PickHub()
     {
-        // Use static helper to show dialog on UI thread
-        var folder = await Misbah.Web.FolderDialogHelper.ShowFolderDialog();
-        if (!string.IsNullOrEmpty(folder))
+        try
         {
-            await OnHubPicked.InvokeAsync(folder);
+            Console.WriteLine("PickHub starting with native file picker...");
+            if (JSRuntime != null)
+            {
+                // Use the file-based picker directly
+                var folder = await JSRuntime.InvokeAsync<string?>("showDirectoryPickerViaFile");
+                if (!string.IsNullOrEmpty(folder))
+                {
+                    Console.WriteLine($"PickHub selected: {folder}");
+                    await OnHubPicked.InvokeAsync(folder);
+                }
+                else
+                {
+                    Console.WriteLine("PickHub returned null/empty");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error with file picker: {ex.Message}");
+            Console.WriteLine($"Stack trace: {ex.StackTrace}");
         }
     }
 }
@@ -17,6 +45,28 @@
 <div style="text-align:center;">
     <h1>@AppStrings.WelcomeToMisbah</h1>
     <h2>@AppStrings.NoHubLoaded</h2>
-    <!-- Language selector goes here -->
-    <button class="btn btn-primary" @onclick="PickHub">@AppStrings.LoadHub</button>
+    
+    <div style="margin: 30px auto; max-width: 500px;">
+        <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+            <h4 style="margin-top: 0; color: #495057;">📁 Choose Your Notes Folder</h4>
+            <p style="color: #6c757d; margin-bottom: 20px;">
+                Select any file from your notes folder and we'll use that folder for your vault.
+            </p>
+            
+            <button class="btn btn-primary btn-lg" @onclick="PickHub" style="margin: 10px; min-width: 220px; display: block; margin-left: auto; margin-right: auto;">
+                <i class="fa fa-file-text"></i> Select Notes Folder
+            </button>
+            
+            <div style="margin-top: 15px; font-size: 0.85em; color: #6c757d; text-align: left;">
+                <strong>How it works:</strong>
+                <ul style="margin: 10px 0; padding-left: 20px;">
+                    <li>Tap the button to open Android's file browser</li>
+                    <li>Navigate to your notes folder</li>
+                    <li>Select ANY file inside that folder</li>
+                    <li>We'll automatically use that file's folder as your vault</li>
+                </ul>
+                <p style="margin-top: 10px;"><strong>Tip:</strong> Make sure your notes folder contains at least one file!</p>
+            </div>
+        </div>
+    </div>
 </div>

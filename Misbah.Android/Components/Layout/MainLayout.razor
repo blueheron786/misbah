@@ -84,18 +84,29 @@
 
     void OnHubSelected(string path)
     {
+        Console.WriteLine($"Hub selected: '{path}'");
         _hubRoot = path;
         _selectedNoteId = null;
+        
         // Update NoteService root path if possible
         if (NoteService is Misbah.Core.Services.NoteService concrete)
         {
+            Console.WriteLine($"Setting NoteService root path to: {path}");
             concrete.SetRootPath(path);
         }
+        else
+        {
+            Console.WriteLine($"NoteService is not concrete type, it's: {NoteService?.GetType().Name}");
+        }
+        
         // Save to config
         var config = ConfigManager.Load();
         config.LastHubPath = path;
         ConfigManager.Save(config);
+        Console.WriteLine($"Saved hub path to config: {path}");
+        
         StateHasChanged();
+        Console.WriteLine("StateHasChanged called after hub selection");
     }
 
     void OnNoteSelected(string noteId)

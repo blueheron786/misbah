@@ -12,7 +12,7 @@ namespace Misbah.Android.Resources {
         public static ResourceManager ResourceManager {
             get {
                 if (object.ReferenceEquals(resourceMan, null)) {
-                    resourceMan = new ResourceManager("Misbah.Web.Resources.AppStrings", typeof(AppStrings).Assembly);
+                    resourceMan = new ResourceManager("Misbah.Android.Resources.AppStrings", typeof(AppStrings).Assembly);
                 }
                 return resourceMan;
             }
