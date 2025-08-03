@@ -168,9 +168,33 @@
 }
 
 /* Task lists */
-.wysiwyg-markdown-editor .editor-content .md-task {
+.wysiwyg-markdown-editor .editor-content .md-task,
+.wysiwyg-markdown-editor .editor-content input[type="checkbox"] {
     accent-color: #F80;
     margin-right: 0.5rem;
+    cursor: pointer;
+}
+
+.wysiwyg-markdown-editor .editor-content ul li:has(input[type="checkbox"]),
+.wysiwyg-markdown-editor .editor-content ul li:has(.md-task) {
+    list-style: none;
+    margin-left: -1.5rem;
+}
+
+/* Fallback for browsers without :has() support */
+.wysiwyg-markdown-editor .editor-content ul li input[type="checkbox"]:first-child,
+.wysiwyg-markdown-editor .editor-content ul li .md-task:first-child {
+    margin-left: -1.5rem;
+}
+
+/* Better formatting for task lists */
+.wysiwyg-markdown-editor .editor-content ul li {
+    position: relative;
+}
+
+.wysiwyg-markdown-editor .editor-content ul li input[type="checkbox"] {
+    position: relative;
+    top: 2px;
 }
 
 /* Placeholder */
