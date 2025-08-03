@@ -169,7 +169,7 @@ pre.misbah-code {
         <h2>@note.Title</h2>
         <div style="display: flex; gap: 10px; margin-bottom: 20px;">
             <button @onclick="ToggleLiveView" class="btn btn-primary">
-                @(useLiveView ? "🔀 Standard View" : "👁️ Live View")
+                @(useLiveView ? "🔀 Standard View" : "✨ WYSIWYG Editor")
             </button>
             @if (!useLiveView)
             {
@@ -179,11 +179,11 @@ pre.misbah-code {
         
         @if (useLiveView)
         {
-            <!-- True Obsidian-style live view editor -->
-            <TrueLiveMarkdownEditor Content="@(note.Content ?? "")"
-                                    ContentChanged="OnLiveViewContentChanged"
-                                    Height="calc(100vh - 200px)"
-                                    Theme="dark" />
+            <!-- True WYSIWYG live view editor -->
+            <WysiwygMarkdownEditor Content="@(note.Content ?? "")"
+                                   ContentChanged="OnLiveViewContentChanged"
+                                   Height="calc(100vh - 200px)"
+                                   Theme="dark" />
         }
         else if (editMode)
         {
