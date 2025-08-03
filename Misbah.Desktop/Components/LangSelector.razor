@@ -1,0 +1,22 @@
+@namespace Misbah.UI.Components
+@using Misbah.Desktop.Resources
+@using Microsoft.JSInterop
+@inject IJSRuntime JS
+
+<select @onchange="ChangeLang" class="form-select" style="width:auto;display:inline-block;">
+    <option value="en">English</option>
+    <option value="ar">العربية</option>
+    <option value="ur">اردو</option>
+    <option value="es">Español</option>
+</select>
+
+@code {
+    private async Task ChangeLang(ChangeEventArgs e)
+    {
+        var culture = e.Value?.ToString() ?? "en";
+        await JS.InvokeVoidAsync("localStorage.setItem", new object[] { "misbah-culture", culture });
+        await JS.InvokeVoidAsync("eval", new object[] { "location.reload()" });
+    }
+
+    // Only set culture on language change, not on every render, to avoid infinite reloads
+}

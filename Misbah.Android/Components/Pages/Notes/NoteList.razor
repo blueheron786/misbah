@@ -1,0 +1,53 @@
+@using Misbah.Core.Models
+@using Misbah.Android.Components.Pages.Notes
+@using Misbah.Android.Resources
+@inject Misbah.Core.Services.INoteService NoteService
+@inject Misbah.Core.Services.IFolderService FolderService
+@inject NavigationManager Navigation
+<div class="sidebar-panel-wrapper">
+    <button @onclick="() => _showFolders = !_showFolders" class="toggle-panel-btn">
+        @(_showFolders ? AppStrings.HideFolders : AppStrings.ShowFolders)
+    </button>
+    @if (_showFolders)
+    {
+        <FolderTree RootPath="@RootPath" OnNoteSelected="SelectNote" />
+    }
+    <h3>@AppStrings.Notes</h3>
+    <ul>
+        @if (_notes != null)
+        {
+            foreach (var note in _notes)
+            {
+                <li @onclick="() => SelectNote(note.Id)" class="@(_selectedNoteId == note.Id ? "selected" : "")">
+                    @note.Title
+                </li>
+            }
+        }
+        else
+        {
+            <li><em>@AppStrings.NoNotesFound</em></li>
+        }
+    </ul>
+</div>
+@code {
+    [Parameter] public string? RootPath { get; set; }
+    private List<Note>? _notes;
+    private FolderNode? _folderTree;
+    private string? _selectedNoteId;
+    private bool _showFolders = true;
+
+    protected override void OnInitialized()
+    {
+        if (!string.IsNullOrEmpty(RootPath))
+        {
+            _folderTree = FolderService.LoadFolderTree(RootPath);
+            _notes = NoteService.GetAllNotes().ToList();
+        }
+    }
+
+    public void SelectNote(string id)
+    {
+        _selectedNoteId = id;
+        Navigation.NavigateTo($"/notes/{Uri.EscapeDataString(id)}");
+    }
+}

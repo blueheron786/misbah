@@ -1,5 +1,5 @@
 {
   "appId": "com.misbah.app",
   "appName": "misbah",
-  "webDir": "dist\\wwwroot"
+  "webDir": "Misbah.Android\\bin\\Release\\net8.0\\wwwroot"
 }

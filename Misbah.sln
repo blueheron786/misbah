@@ -3,13 +3,13 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Misbah.UI", "Misbah.UI\Misbah.UI.csproj", "{1EC6F7C9-1C2D-4E9A-9804-865ED2B91973}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Misbah.Desktop", "Misbah.Desktop\Misbah.Desktop.csproj", "{1EC6F7C9-1C2D-4E9A-9804-865ED2B91973}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Misbah.Core", "Misbah.Core\Misbah.Core.csproj", "{377B69EA-038F-455C-8B6C-5CB27FF5EE24}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Misbah.Core.Tests", "Misbah.Core.Tests\Misbah.Core.Tests.csproj", "{19CCE827-DA28-43EB-A61A-5E5DB11889A5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Misbah.Web", "Misbah.Web\Misbah.Web.csproj", "{41288CB5-A1E7-44B8-BDA6-C63A0E456EFE}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Misbah.Android", "Misbah.Android\Misbah.Android.csproj", "{41288CB5-A1E7-44B8-BDA6-C63A0E456EFE}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
