@@ -1,0 +1,22 @@
+@namespace Misbah.Web.Components
+@code {
+    [Parameter] public EventCallback<string> OnHubPicked { get; set; }
+
+    private async Task PickHub()
+    {
+        // Use static helper to show dialog on UI thread
+        var folder = await Misbah.Web.FolderDialogHelper.ShowFolderDialog();
+        if (!string.IsNullOrEmpty(folder))
+        {
+            await OnHubPicked.InvokeAsync(folder);
+        }
+    }
+}
+
+@using Misbah.Web.Resources
+<div style="text-align:center;">
+    <h1>@AppStrings.WelcomeToMisbah</h1>
+    <h2>@AppStrings.NoHubLoaded</h2>
+    <!-- Language selector goes here -->
+    <button class="btn btn-primary" @onclick="PickHub">@AppStrings.LoadHub</button>
+</div>
