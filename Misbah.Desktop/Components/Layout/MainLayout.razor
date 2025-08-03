@@ -35,13 +35,16 @@
             JS.InvokeVoidAsync("eval", @"
                 window.addEventListener('misbah-nav', function(e) {
                     if (e.detail && e.detail.title) {
-                        DotNet.invokeMethodAsync('Misbah.UI', 'NavigateToNoteByTitle', e.detail.title);
+                        DotNet.invokeMethodAsync('Misbah.Desktop', 'NavigateToNoteByTitle', e.detail.title);
                     }
                 });
                 window.addEventListener('show-search-popup', function() {
-                    DotNet.invokeMethodAsync('Misbah.UI', 'ShowSearchPopup');
+                    DotNet.invokeMethodAsync('Misbah.Desktop', 'ShowSearchPopup');
                 });
             ");
+            
+            // Initialize the splitter
+            JS.InvokeVoidAsync("initializeSplitter");
         }
     }
 

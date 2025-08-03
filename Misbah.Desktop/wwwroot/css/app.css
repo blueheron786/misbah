@@ -342,3 +342,70 @@ h1:focus {
         color: #e5e7eb;
     }
 }
+
+/* Layout Container Styles */
+.layout-container {
+    display: flex;
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+}
+
+.sidebar-panel {
+    width: 300px;
+    min-width: 200px;
+    max-width: 500px;
+    background: #f8f9fa;
+    border-right: 1px solid #dee2e6;
+    overflow-y: auto;
+    flex-shrink: 0;
+}
+
+.splitter {
+    width: 5px;
+    background: #dee2e6;
+    cursor: col-resize;
+    border-left: 1px solid #adb5bd;
+    border-right: 1px solid #adb5bd;
+    position: relative;
+    flex-shrink: 0;
+}
+
+.splitter:hover {
+    background: #adb5bd;
+}
+
+.splitter:active {
+    background: #6c757d;
+}
+
+.main-content {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    overflow: hidden;
+}
+
+/* Dark mode support for layout */
+@media (prefers-color-scheme: dark) {
+    .sidebar-panel {
+        background: #2d3748;
+        border-right-color: #4a5568;
+        color: #e2e8f0;
+    }
+    
+    .splitter {
+        background: #4a5568;
+        border-left-color: #718096;
+        border-right-color: #718096;
+    }
+    
+    .splitter:hover {
+        background: #718096;
+    }
+    
+    .splitter:active {
+        background: #a0aec0;
+    }
+}
