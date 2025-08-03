@@ -447,6 +447,9 @@ window.wysiwygMarkdownEditor = {
         // Convert horizontal rules
         markdown = markdown.replace(/<hr[^>]*>/gi, '---\n\n');
         
+        // Convert highlight <mark> to ==text==
+        markdown = markdown.replace(/<mark[^>]*>(.*?)<\/mark>/gi, '==$1==');
+        
         // Clean up remaining HTML tags
         markdown = markdown.replace(/<[^>]*>/g, '');
         
