@@ -1,0 +1,304 @@
+/* True Live Markdown Editor Styles */
+
+.true-live-editor {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: #1f2937;
+    background: white;
+    position: relative;
+}
+
+.live-content {
+    min-height: 200px;
+}
+
+.live-block {
+    position: relative;
+    margin-bottom: 1rem;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    border: 2px solid transparent;
+}
+
+.live-block:hover .block-display {
+    background-color: rgba(59, 130, 246, 0.05);
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+.live-block[data-block-type="h1"] .block-display h1,
+.live-block[data-block-type="h2"] .block-display h2,
+.live-block[data-block-type="h3"] .block-display h3,
+.live-block[data-block-type="h4"] .block-display h4,
+.live-block[data-block-type="h5"] .block-display h5,
+.live-block[data-block-type="h6"] .block-display h6 {
+    margin: 0.5rem 0;
+    color: #2563eb;
+}
+
+.live-block[data-block-type="quote"] .block-display blockquote {
+    border-left: 4px solid #e5e7eb;
+    padding-left: 1rem;
+    margin: 1rem 0;
+    color: #6b7280;
+    font-style: italic;
+}
+
+.live-block[data-block-type="code"] .block-display pre {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 4px;
+    padding: 12px;
+    font-family: 'Consolas', 'Monaco', monospace;
+    overflow-x: auto;
+    margin: 0;
+}
+
+.live-block[data-block-type="code"] .block-display code {
+    background: transparent;
+    padding: 0;
+    border: none;
+    font-family: inherit;
+}
+
+.live-block[data-block-type="task"] .task-list {
+    list-style: none;
+    padding-left: 0;
+}
+
+.live-block[data-block-type="task"] .task-list li {
+    margin: 0.25rem 0;
+}
+
+.live-block[data-block-type="task"] .task-list input[type="checkbox"] {
+    margin-right: 0.5rem;
+    accent-color: #3b82f6;
+}
+
+.live-block[data-block-type="list"] ul,
+.live-block[data-block-type="ordered-list"] ol {
+    margin: 0.5rem 0;
+    padding-left: 2rem;
+}
+
+.live-block[data-block-type="list"] li,
+.live-block[data-block-type="ordered-list"] li {
+    margin: 0.25rem 0;
+}
+
+.live-block[data-block-type="hr"] hr {
+    border: none;
+    border-top: 2px solid #e5e7eb;
+    margin: 2rem 0;
+}
+
+.block-display {
+    padding: 8px;
+    min-height: 1.5rem;
+    position: relative;
+}
+
+.block-display p {
+    margin: 0.5rem 0;
+    line-height: 1.6;
+}
+
+.block-display p:first-child {
+    margin-top: 0;
+}
+
+.block-display p:last-child {
+    margin-bottom: 0;
+}
+
+.block-display strong {
+    font-weight: 600;
+}
+
+.block-display em {
+    font-style: italic;
+}
+
+.block-display code {
+    background: #f1f5f9;
+    color: #dc2626;
+    padding: 0.125rem 0.375rem;
+    border-radius: 0.25rem;
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 0.875rem;
+}
+
+.block-display a {
+    color: #3b82f6;
+    text-decoration: underline;
+}
+
+.block-display a:hover {
+    color: #1d4ed8;
+}
+
+.block-edit {
+    position: relative;
+    background: rgba(251, 146, 60, 0.1);
+    border: 2px solid #fb923c;
+    border-radius: 6px;
+    padding: 8px;
+}
+
+.block-textarea {
+    font-family: inherit;
+    font-size: inherit;
+    line-height: inherit;
+    color: inherit;
+    background: transparent;
+    border: none;
+    outline: none;
+    resize: none;
+    width: 100%;
+    min-height: 40px;
+    padding: 0;
+    margin: 0;
+}
+
+.edit-controls {
+    position: absolute;
+    top: -12px;
+    right: -12px;
+    display: flex;
+    gap: 4px;
+}
+
+.btn-save, .btn-cancel {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease;
+}
+
+.btn-save {
+    background: #10b981;
+    color: white;
+}
+
+.btn-save:hover {
+    background: #059669;
+    transform: scale(1.1);
+}
+
+.btn-cancel {
+    background: #ef4444;
+    color: white;
+}
+
+.btn-cancel:hover {
+    background: #dc2626;
+    transform: scale(1.1);
+}
+
+.add-new-block {
+    padding: 20px;
+    text-align: center;
+    color: #6b7280;
+    cursor: pointer;
+    border: 2px dashed #d1d5db;
+    border-radius: 8px;
+    margin-top: 20px;
+    transition: all 0.2s ease;
+}
+
+.add-new-block:hover {
+    color: #374151;
+    border-color: #9ca3af;
+    background-color: #f9fafb;
+}
+
+.empty-placeholder {
+    padding: 60px 20px;
+    text-align: center;
+    color: #9ca3af;
+    cursor: pointer;
+    border: 2px dashed #d1d5db;
+    border-radius: 8px;
+    font-style: italic;
+    transition: all 0.2s ease;
+}
+
+.empty-placeholder:hover {
+    color: #6b7280;
+    border-color: #9ca3af;
+    background-color: #f9fafb;
+}
+
+/* Smooth animations */
+.live-block {
+    animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Dark theme support */
+.true-live-editor.dark {
+    background: #1f2937;
+    color: #e5e7eb;
+}
+
+.true-live-editor.dark .live-block:hover .block-display {
+    background-color: rgba(59, 130, 246, 0.1);
+}
+
+.true-live-editor.dark .live-block[data-block-type="quote"] .block-display blockquote {
+    border-left-color: #4b5563;
+    color: #9ca3af;
+}
+
+.true-live-editor.dark .live-block[data-block-type="code"] .block-display pre {
+    background: #374151;
+    border-color: #4b5563;
+    color: #e5e7eb;
+}
+
+.true-live-editor.dark .block-display code {
+    background: #374151;
+    color: #fbbf24;
+}
+
+.true-live-editor.dark .block-edit {
+    background: rgba(251, 146, 60, 0.2);
+}
+
+.true-live-editor.dark .add-new-block {
+    color: #9ca3af;
+    border-color: #4b5563;
+}
+
+.true-live-editor.dark .add-new-block:hover {
+    color: #d1d5db;
+    border-color: #6b7280;
+    background-color: #374151;
+}
+
+.true-live-editor.dark .empty-placeholder {
+    color: #6b7280;
+    border-color: #4b5563;
+}
+
+.true-live-editor.dark .empty-placeholder:hover {
+    color: #9ca3af;
+    border-color: #6b7280;
+    background-color: #374151;
+}
