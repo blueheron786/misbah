@@ -1,13 +1,12 @@
 /* True Live Markdown Editor Styles */
 
-.true-live-editor {
+.true-live-markdown-editor {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    color: #1f2937;
-    background: white;
+    color: #e6e6e6;
+    background: #23272e;
     position: relative;
-}
-
-.live-content {
+    padding: 1rem;
+    border-radius: 8px;
     min-height: 200px;
 }
 
@@ -20,9 +19,14 @@
 }
 
 .live-block:hover .block-display {
-    background-color: rgba(59, 130, 246, 0.05);
+    background-color: rgba(248, 136, 0, 0.1);
     cursor: pointer;
     border-radius: 4px;
+}
+
+.live-block.editing {
+    border-color: #F80;
+    background-color: rgba(248, 136, 0, 0.05);
 }
 
 .live-block[data-block-type="h1"] .block-display h1,
@@ -32,32 +36,37 @@
 .live-block[data-block-type="h5"] .block-display h5,
 .live-block[data-block-type="h6"] .block-display h6 {
     margin: 0.5rem 0;
-    color: #2563eb;
+    color: #F80;
 }
 
 .live-block[data-block-type="quote"] .block-display blockquote {
-    border-left: 4px solid #e5e7eb;
+    border-left: 4px solid #444b53;
     padding-left: 1rem;
     margin: 1rem 0;
-    color: #6b7280;
+    color: #9ca3af;
     font-style: italic;
+    background: rgba(248, 136, 0, 0.05);
+    border-radius: 4px;
+    padding: 1rem;
 }
 
 .live-block[data-block-type="code"] .block-display pre {
-    background: #f8f9fa;
-    border: 1px solid #e9ecef;
+    background: #23272e !important;
+    border: 1px solid #444b53;
     border-radius: 4px;
     padding: 12px;
     font-family: 'Consolas', 'Monaco', monospace;
     overflow-x: auto;
     margin: 0;
+    color: #e6e6e6 !important;
 }
 
 .live-block[data-block-type="code"] .block-display code {
-    background: transparent;
+    background: transparent !important;
     padding: 0;
     border: none;
     font-family: inherit;
+    color: #e6e6e6 !important;
 }
 
 .live-block[data-block-type="task"] .task-list {
@@ -67,27 +76,30 @@
 
 .live-block[data-block-type="task"] .task-list li {
     margin: 0.25rem 0;
+    color: #e6e6e6;
 }
 
 .live-block[data-block-type="task"] .task-list input[type="checkbox"] {
     margin-right: 0.5rem;
-    accent-color: #3b82f6;
+    accent-color: #F80;
 }
 
 .live-block[data-block-type="list"] ul,
 .live-block[data-block-type="ordered-list"] ol {
     margin: 0.5rem 0;
     padding-left: 2rem;
+    color: #e6e6e6;
 }
 
 .live-block[data-block-type="list"] li,
 .live-block[data-block-type="ordered-list"] li {
     margin: 0.25rem 0;
+    color: #e6e6e6;
 }
 
 .live-block[data-block-type="hr"] hr {
     border: none;
-    border-top: 2px solid #e5e7eb;
+    border-top: 2px solid #444b53;
     margin: 2rem 0;
 }
 
@@ -95,11 +107,13 @@
     padding: 8px;
     min-height: 1.5rem;
     position: relative;
+    color: #e6e6e6;
 }
 
 .block-display p {
     margin: 0.5rem 0;
     line-height: 1.6;
+    color: #e6e6e6;
 }
 
 .block-display p:first-child {
@@ -112,51 +126,60 @@
 
 .block-display strong {
     font-weight: 600;
+    color: #e6e6e6;
 }
 
 .block-display em {
     font-style: italic;
+    color: #e6e6e6;
 }
 
 .block-display code {
-    background: #f1f5f9;
-    color: #dc2626;
+    background: #23272e !important;
+    color: #F80 !important;
     padding: 0.125rem 0.375rem;
     border-radius: 0.25rem;
     font-family: 'Consolas', 'Monaco', monospace;
     font-size: 0.875rem;
+    border: 1px solid #444b53;
 }
 
 .block-display a {
-    color: #3b82f6;
+    color: #F80;
     text-decoration: underline;
 }
 
 .block-display a:hover {
-    color: #1d4ed8;
+    color: color-mix(in srgb, #F80 85%, white);
 }
 
 .block-edit {
     position: relative;
-    background: rgba(251, 146, 60, 0.1);
-    border: 2px solid #fb923c;
+    background: rgba(248, 136, 0, 0.1);
+    border: 2px solid #F80;
     border-radius: 6px;
     padding: 8px;
 }
 
 .block-textarea {
-    font-family: inherit;
-    font-size: inherit;
-    line-height: inherit;
-    color: inherit;
-    background: transparent;
-    border: none;
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 14px;
+    line-height: 1.4;
+    color: #e6e6e6;
+    background: #23272e;
+    border: 1px solid #444b53;
+    border-radius: 4px;
     outline: none;
-    resize: none;
+    resize: vertical;
     width: 100%;
-    min-height: 40px;
-    padding: 0;
+    min-height: 50px;
+    padding: 8px;
     margin: 0;
+}
+
+.block-textarea:focus {
+    border-color: #F80;
+    box-shadow: 0 0 0 2px rgba(248, 136, 0, 0.2);
 }
 
 .edit-controls {
@@ -168,16 +191,16 @@
 }
 
 .btn-save, .btn-cancel {
-    width: 24px;
-    height: 24px;
+    width: 28px;
+    height: 28px;
     border-radius: 50%;
     border: none;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 10px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    font-size: 12px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
     transition: all 0.2s ease;
 }
 
@@ -201,21 +224,37 @@
     transform: scale(1.1);
 }
 
+.btn-save:hover {
+    background: #059669;
+    transform: scale(1.1);
+}
+
+.btn-cancel {
+    background: #ef4444;
+    color: white;
+}
+
+.btn-cancel:hover {
+    background: #dc2626;
+    transform: scale(1.1);
+}
+
 .add-new-block {
     padding: 20px;
     text-align: center;
-    color: #6b7280;
+    color: #9ca3af;
     cursor: pointer;
-    border: 2px dashed #d1d5db;
+    border: 2px dashed #444b53;
     border-radius: 8px;
     margin-top: 20px;
     transition: all 0.2s ease;
+    background: transparent;
 }
 
 .add-new-block:hover {
-    color: #374151;
-    border-color: #9ca3af;
-    background-color: #f9fafb;
+    color: #F80;
+    border-color: #F80;
+    background-color: rgba(248, 136, 0, 0.05);
 }
 
 .empty-placeholder {
@@ -223,16 +262,17 @@
     text-align: center;
     color: #9ca3af;
     cursor: pointer;
-    border: 2px dashed #d1d5db;
+    border: 2px dashed #444b53;
     border-radius: 8px;
     font-style: italic;
     transition: all 0.2s ease;
+    background: transparent;
 }
 
 .empty-placeholder:hover {
-    color: #6b7280;
-    border-color: #9ca3af;
-    background-color: #f9fafb;
+    color: #F80;
+    border-color: #F80;
+    background-color: rgba(248, 136, 0, 0.05);
 }
 
 /* Smooth animations */
@@ -251,30 +291,28 @@
     }
 }
 
-/* Dark theme support */
-.true-live-editor.dark {
-    background: #1f2937;
-    color: #e5e7eb;
+/* Ensure all markdown elements use proper dark theme colors */
+.true-live-markdown-editor .block-display * {
+    color: inherit;
 }
 
-.true-live-editor.dark .live-block:hover .block-display {
-    background-color: rgba(59, 130, 246, 0.1);
+.true-live-markdown-editor .block-display h1,
+.true-live-markdown-editor .block-display h2,
+.true-live-markdown-editor .block-display h3,
+.true-live-markdown-editor .block-display h4,
+.true-live-markdown-editor .block-display h5,
+.true-live-markdown-editor .block-display h6 {
+    color: #F80;
 }
 
-.true-live-editor.dark .live-block[data-block-type="quote"] .block-display blockquote {
-    border-left-color: #4b5563;
-    color: #9ca3af;
+.true-live-markdown-editor .block-display ul,
+.true-live-markdown-editor .block-display ol,
+.true-live-markdown-editor .block-display li {
+    color: #e6e6e6;
 }
 
-.true-live-editor.dark .live-block[data-block-type="code"] .block-display pre {
-    background: #374151;
-    border-color: #4b5563;
-    color: #e5e7eb;
-}
-
-.true-live-editor.dark .block-display code {
-    background: #374151;
-    color: #fbbf24;
+.true-live-markdown-editor .md-task {
+    accent-color: #F80;
 }
 
 .true-live-editor.dark .block-edit {
