@@ -3,14 +3,26 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using Misbah.Core.Models;
+using Microsoft.Extensions.Logging;
 
 namespace Misbah.Core.Services
 {
     public class NoteService : INoteService
     {
+        private readonly ILogger<NoteService> _logger;
+        private readonly IGitSyncService? _gitSyncService;
         private string _rootPath;
-        public NoteService(string rootPath)
+
+        public NoteService(ILogger<NoteService> logger, IGitSyncService? gitSyncService = null)
+        {
+            _logger = logger;
+            _gitSyncService = gitSyncService;
+            _rootPath = string.Empty;
+        }
+
+        public NoteService(string rootPath) : this(Microsoft.Extensions.Logging.Abstractions.NullLogger<NoteService>.Instance)
         {
             _rootPath = rootPath;
         }
@@ -57,6 +69,25 @@ namespace Misbah.Core.Services
             File.WriteAllText(note.FilePath, note.Content);
         }
 
+        public async Task SaveNoteAsync(Note note)
+        {
+            await File.WriteAllTextAsync(note.FilePath, note.Content);
+            
+            // Notify Git sync service if available
+            if (_gitSyncService != null && _gitSyncService.IsRunning)
+            {
+                try
+                {
+                    await _gitSyncService.AddFileAsync(note.FilePath);
+                    _logger.LogDebug("Added note to Git staging: {FilePath}", note.FilePath);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to add note to Git staging: {FilePath}", note.FilePath);
+                }
+            }
+        }
+
         public Note CreateNote(string folderPath, string title)
         {
             var filePath = Path.Combine(folderPath, title + ".md");
@@ -74,10 +105,51 @@ namespace Misbah.Core.Services
             return note;
         }
 
+        public async Task<Note> CreateNoteAsync(string folderPath, string title)
+        {
+            var filePath = Path.Combine(folderPath, title + ".md");
+            var note = new Note
+            {
+                Id = filePath,
+                Title = title,
+                Content = "# " + title + "\n",
+                Tags = new List<string>(),
+                Created = DateTime.Now,
+                Modified = DateTime.Now,
+                FilePath = filePath
+            };
+            await SaveNoteAsync(note);
+            return note;
+        }
+
         public void DeleteNote(string filePath)
         {
             if (File.Exists(filePath))
                 File.Delete(filePath);
+        }
+
+        public async Task DeleteNoteAsync(string filePath)
+        {
+            if (File.Exists(filePath))
+            {
+                File.Delete(filePath);
+                
+                // Notify Git sync service if available
+                if (_gitSyncService != null && _gitSyncService.IsRunning)
+                {
+                    try
+                    {
+                        // Git will detect the deletion when we stage changes
+                        _logger.LogDebug("Note deleted: {FilePath}", filePath);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "Error handling Git sync for deleted note: {FilePath}", filePath);
+                    }
+                }
+            }
+            
+            await Task.CompletedTask;
         }
 
         public List<string> ExtractTags(string content)
