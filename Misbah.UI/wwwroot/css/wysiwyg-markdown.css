@@ -245,3 +245,10 @@
 .wysiwyg-markdown-editor .editor-content th {
     color: #e6e6e6 !important;
 }
+
+.wysiwyg-markdown-editor .editor-content mark {
+    background: #fff59d;
+    color: #23272e;
+    border-radius: 2px;
+    padding: 0.1em 0.2em;
+}

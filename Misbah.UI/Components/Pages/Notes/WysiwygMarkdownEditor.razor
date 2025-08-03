@@ -16,6 +16,10 @@
         @((MarkupString)renderedContent)
     </div>
 </div>
+@if (_isSaved)
+{
+    <div class="wysiwyg-saved-indicator" style="color:#F80; font-size:0.95em; margin-top:6px; transition:opacity 0.5s;">Saved</div>
+}
 
 @code {
     [Parameter] public string Content { get; set; } = "";
@@ -28,6 +32,8 @@
     private string lastKnownContent = "";
     private ElementReference editorElement;
     private DotNetObjectReference<WysiwygMarkdownEditor>? dotNetRef;
+    private bool _isSaved = false;
+    private System.Timers.Timer? _saveTimer;
 
     protected override void OnInitialized()
     {
@@ -86,19 +92,32 @@
         }
     }
 
+    private void ShowSavedIndicator()
+    {
+        _isSaved = true;
+        StateHasChanged();
+        _saveTimer?.Dispose();
+        _saveTimer = new System.Timers.Timer(1200);
+        _saveTimer.Elapsed += (s, e) => {
+            _isSaved = false;
+            InvokeAsync(StateHasChanged);
+            _saveTimer?.Dispose();
+        };
+        _saveTimer.AutoReset = false;
+        _saveTimer.Start();
+    }
+
     private async Task ConvertHtmlToMarkdownAndNotify()
     {
         try
         {
-            var html = await JSRuntime.InvokeAsync<string>("wysiwygMarkdownEditor.getContent", 
-                $"wysiwyg-editor-{editorId}");
-            
+            var html = await JSRuntime.InvokeAsync<string>("wysiwygMarkdownEditor.getContent", $"wysiwyg-editor-{editorId}");
             var markdown = await JSRuntime.InvokeAsync<string>("wysiwygMarkdownEditor.htmlToMarkdown", html);
-            
             if (ContentChanged.HasDelegate && markdown != lastKnownContent)
             {
                 lastKnownContent = markdown;
                 await ContentChanged.InvokeAsync(markdown);
+                ShowSavedIndicator();
             }
         }
         catch (Exception ex)
@@ -113,11 +132,11 @@
         try
         {
             var markdown = await JSRuntime.InvokeAsync<string>("wysiwygMarkdownEditor.htmlToMarkdown", html);
-            
             if (ContentChanged.HasDelegate && markdown != lastKnownContent)
             {
                 lastKnownContent = markdown;
                 await ContentChanged.InvokeAsync(markdown);
+                ShowSavedIndicator();
             }
         }
         catch (Exception ex)
