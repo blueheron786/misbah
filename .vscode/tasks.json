@@ -12,9 +12,9 @@
 		},
 		{
 			"type": "shell",
-			"label": "build-desktop",
+			"label": "build-blazor-desktop",
 			"command": "dotnet build",
-			"args": ["Misbah.Desktop"],
+			"args": ["Misbah.BlazorDesktop"],
 			"group": "build",
 			"problemMatcher": [
 				"$msCompile"

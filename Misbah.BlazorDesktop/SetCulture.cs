@@ -2,7 +2,7 @@ using System.Globalization;
 using System.Threading;
 using Microsoft.JSInterop;
 
-namespace Misbah.UI
+namespace Misbah.BlazorDesktop
 {
     public static class SetCulture
     {

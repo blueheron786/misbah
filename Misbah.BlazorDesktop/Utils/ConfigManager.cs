@@ -1,7 +1,7 @@
 using System.IO;
 using System.Text.Json;
 
-namespace Misbah.Desktop.Utils
+namespace Misbah.BlazorDesktop.Utils
 {
     public class ConfigManager
     {
