@@ -3,7 +3,7 @@ html, body {
 }
 
 :root {
-    --primary-color: #F80;
+    --primary-color: #fb0;
     --primary-dark: color-mix(in srgb, var(--primary-color) 80%, black);
     --primary-light: color-mix(in srgb, var(--primary-color) 70%, white);
 }
@@ -12,6 +12,16 @@ a, .btn-link {
     color: var(--primary-color);
     text-decoration: underline;
     transition: color 0.2s;
+}
+
+/* Navigation menu specific overrides */
+.nav-scrollable .nav-link {
+    color: white !important;
+    text-decoration: none !important;
+}
+
+.nav-scrollable .nav-link:hover {
+    color: var(--primary-color) !important;
 }
 
 /* Style for missing wiki-style links in light mode */
@@ -124,7 +134,7 @@ h1:focus {
     cursor: pointer;
     padding: 2px 6px 2px 24px;
     user-select: none;
-    color: var(--primary-color);
+    color: white;
     border-radius: 3px;
 }.folder-tree .note-leaf:hover {
     color: var(--primary-dark);
