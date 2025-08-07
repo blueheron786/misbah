@@ -60,7 +60,7 @@
     }
 
     .nav-item ::deep .nav-link {
-        color: #d7d7d7;
+        color: white !important;
         background: none;
         border: none;
         border-radius: 4px;
@@ -69,16 +69,17 @@
         align-items: center;
         line-height: 3rem;
         width: 100%;
+        text-decoration: none;
     }
 
 .nav-item ::deep a.active {
     background-color: rgba(255,255,255,0.37);
-    color: white;
+    color: white !important;
 }
 
 .nav-item ::deep .nav-link:hover {
     background-color: rgba(255,255,255,0.1);
-    color: white;
+    color: orange !important;
 }
 
 .nav-scrollable {

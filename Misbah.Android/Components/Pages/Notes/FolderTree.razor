@@ -94,9 +94,9 @@ protected override void OnParametersSet()
             builder.OpenElement(seq++, "li");
             builder.AddAttribute(seq++, "class", "note-leaf");
             builder.AddAttribute(seq++, "onclick", EventCallback.Factory.Create<Microsoft.AspNetCore.Components.Web.MouseEventArgs>(this, async () => await OnNoteClicked(note.Id)));
-            // Unicode bullet point, shrunk and colored
+            // Unicode bullet point, shrunk and white
             builder.OpenElement(seq++, "span");
-            builder.AddAttribute(seq++, "style", "color:var(--primary-color);font-size:0.5em;vertical-align:middle;margin-right:0.5em;");
+            builder.AddAttribute(seq++, "style", "color:white;font-size:0.5em;vertical-align:middle;margin-right:0.5em;");
             builder.AddContent(seq++, "\u2022"); // unicode bullet point
             builder.CloseElement();
             builder.AddContent(seq++, " ");
