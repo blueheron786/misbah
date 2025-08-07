@@ -22,7 +22,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="..\Shared\wwwroot\**\*" LinkBase="wwwroot\" />
+    <Content Include="..\Shared\wwwroot\**\*" CopyToOutputDirectory="Always" />
   </ItemGroup>
 
   <ItemGroup>
