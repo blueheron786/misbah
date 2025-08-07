@@ -4,6 +4,6 @@
         xmlns:blazor="clr-namespace:Microsoft.AspNetCore.Components.WebView.Wpf;assembly=Microsoft.AspNetCore.Components.WebView.Wpf"
         Title="Misbah BlazorDesktop" Height="800" Width="1200">
     <Grid>
-        <blazor:BlazorWebView Name="blazorWebView" HostPage="wwwroot\index.html" />
+        <blazor:BlazorWebView x:Name="blazorWebView" HostPage="wwwroot\index.html" />
     </Grid>
 </Window>
