@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Components.WebView.Wpf;
-using Microsoft.Extensions.DependencyInjection;
 using System.Windows;
+using Misbah.BlazorDesktop.Components;
 
 namespace Misbah.BlazorDesktop
 {
@@ -9,16 +9,18 @@ namespace Misbah.BlazorDesktop
         public MainWindow()
         {
             InitializeComponent();
+            WindowState = WindowState.Maximized;
         }
 
         public IServiceProvider Services
         {
-            set { 
+            set 
+            { 
                 blazorWebView.Services = value;
                 blazorWebView.RootComponents.Add(new RootComponent
                 {
                     Selector = "#app",
-                    ComponentType = typeof(Components.Routes)
+                    ComponentType = typeof(Misbah.BlazorDesktop.Components.Routes)
                 });
             }
         }
