@@ -23,11 +23,33 @@
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="Resources\AppStrings.resx">
+    <Content Include="..\Shared\wwwroot\**\*" LinkBase="wwwroot\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="..\Shared\Resources\AppStrings.resx">
       <Generator>ResXFileCodeGenerator</Generator>
-      <LastGenOutput>AppStrings.Designer.cs</LastGenOutput>
+      <LastGenOutput>Resources\AppStrings.Designer.cs</LastGenOutput>
       <AccessModifier>Public</AccessModifier>
+      <Link>Resources\AppStrings.resx</Link>
     </EmbeddedResource>
+    <EmbeddedResource Include="..\Shared\Resources\AppStrings.ar.resx">
+      <Link>Resources\AppStrings.ar.resx</Link>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\Shared\Resources\AppStrings.es.resx">
+      <Link>Resources\AppStrings.es.resx</Link>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\Shared\Resources\AppStrings.ur.resx">
+      <Link>Resources\AppStrings.ur.resx</Link>
+    </EmbeddedResource>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="Resources\AppStrings.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>..\Shared\Resources\AppStrings.resx</DependentUpon>
+    </Compile>
   </ItemGroup>
 
 </Project>
