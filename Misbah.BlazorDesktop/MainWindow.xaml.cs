@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Components.WebView.Wpf;
 using System.Windows;
-using Misbah.BlazorDesktop.Components;
 
 namespace Misbah.BlazorDesktop
 {
@@ -17,11 +16,6 @@ namespace Misbah.BlazorDesktop
             set 
             { 
                 blazorWebView.Services = value;
-                blazorWebView.RootComponents.Add(new RootComponent
-                {
-                    Selector = "#app",
-                    ComponentType = typeof(Misbah.BlazorDesktop.Components.Routes)
-                });
             }
         }
     }
