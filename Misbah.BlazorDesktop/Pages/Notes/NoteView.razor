@@ -17,14 +17,14 @@ pre.misbah-code {
     overflow-x: auto;
 }
 </style>
-@namespace Misbah.Desktop.Components.Pages.Notes
+@namespace Misbah.BlazorDesktop.Components.Pages.Notes
 @page "/notes/{NoteId}"
 @using Misbah.Core.Models
-@using Misbah.Desktop.Resources
+@using Misbah.BlazorDesktop.Resources
 @using Microsoft.JSInterop
 @using Markdig
-@using Misbah.Desktop.Components.Pages.Notes
-@using Misbah.Desktop.Components
+@using Misbah.BlazorDesktop.Components.Pages.Notes
+@using Misbah.BlazorDesktop.Components
 @inject Misbah.Core.Services.INoteService NoteService
 @inject IJSRuntime JSRuntime
 @inject Misbah.Core.Services.MarkdownRenderer MarkdownRenderer

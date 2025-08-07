@@ -1,21 +1,19 @@
-@namespace Misbah.Desktop.Components.Layout
+@namespace Misbah.BlazorDesktop.Components.Layout
 @using Misbah.Core.Services
-@using Misbah.Desktop.Components.Layout
-@using Misbah.Desktop.Resources
-@using Misbah.Desktop.Utils
+@using Misbah.BlazorDesktop.Components.Layout
+@using Misbah.BlazorDesktop.Resources
+@using Misbah.BlazorDesktop.Utils
 @using Microsoft.JSInterop
 @using System.IO
-@using BlazorDesktop.Wpf
 
 @inherits LayoutComponentBase
 
 @inject Misbah.Core.Services.INoteService NoteService
 @inject IJSRuntime JS
-@inject BlazorDesktopWindow window
 
 @using Misbah.Core.Utils
-@using Misbah.Desktop.Components
-@using Misbah.Desktop.Components.Pages.Notes
+@using Misbah.BlazorDesktop.Components
+@using Misbah.BlazorDesktop.Components.Pages.Notes
 <link rel="stylesheet" href="css/search-popup.css" />
 <link rel="stylesheet" href="css/live-view-markdown.css" />
 <script src="search-popup.js"></script>
@@ -35,11 +33,11 @@
             JS.InvokeVoidAsync("eval", @"
                 window.addEventListener('misbah-nav', function(e) {
                     if (e.detail && e.detail.title) {
-                        DotNet.invokeMethodAsync('Misbah.Desktop', 'NavigateToNoteByTitle', e.detail.title);
+                        DotNet.invokeMethodAsync('Misbah.BlazorDesktop', 'NavigateToNoteByTitle', e.detail.title);
                     }
                 });
                 window.addEventListener('show-search-popup', function() {
-                    DotNet.invokeMethodAsync('Misbah.Desktop', 'ShowSearchPopup');
+                    DotNet.invokeMethodAsync('Misbah.BlazorDesktop', 'ShowSearchPopup');
                 });
             ");
             

@@ -1,4 +1,4 @@
-@namespace Misbah.Desktop.Components
+@namespace Misbah.BlazorDesktop.Components
 @using System.Globalization
 @using Microsoft.JSInterop
 @inject IJSRuntime JS
@@ -12,7 +12,7 @@
             var ci = new CultureInfo(culture);
             CultureInfo.DefaultThreadCurrentCulture = ci;
             CultureInfo.DefaultThreadCurrentUICulture = ci;
-            Misbah.Desktop.Resources.AppStrings.Culture = ci;
+            Misbah.BlazorDesktop.Resources.AppStrings.Culture = ci;
         }
     }
 }

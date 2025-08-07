@@ -5,7 +5,7 @@ Misbah is a note-taking application built with Blazor WebAssembly and wrapped fo
 ## Project Structure
 
 - `Misbah.Core/` - Core business logic and services
-- `Misbah.UI/` - Original desktop Blazor application
+- `Misbah.BlazorDesktop/` - Original desktop Blazor application
 - `Misbah.Web/` - Blazor WebAssembly version for mobile
 - `Misbah.Core.Tests/` - Unit tests
 - `android/` - Generated Android project (Capacitor)

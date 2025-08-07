@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Misbah.Desktop", "Misbah.Desktop\Misbah.Desktop.csproj", "{1EC6F7C9-1C2D-4E9A-9804-865ED2B91973}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Misbah.BlazorDesktop", "Misbah.BlazorDesktop\Misbah.BlazorDesktop.csproj", "{1EC6F7C9-1C2D-4E9A-9804-865ED2B91973}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Misbah.Core", "Misbah.Core\Misbah.Core.csproj", "{377B69EA-038F-455C-8B6C-5CB27FF5EE24}"
 EndProject

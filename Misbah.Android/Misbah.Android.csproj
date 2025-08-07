@@ -44,12 +44,4 @@
     </EmbeddedResource>
   </ItemGroup>
 
-  <ItemGroup>
-    <Compile Include="Resources\AppStrings.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>..\Shared\Resources\AppStrings.resx</DependentUpon>
-    </Compile>
-  </ItemGroup>
-
 </Project>

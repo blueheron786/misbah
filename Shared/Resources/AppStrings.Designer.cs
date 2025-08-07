@@ -1,5 +1,5 @@
 // Auto-generated for localization
-namespace Misbah.Desktop.Resources {
+namespace Misbah.BlazorDesktop.Resources {
     using System;
     using System.Reflection;
     using System.Resources;
@@ -12,7 +12,7 @@ namespace Misbah.Desktop.Resources {
         public static ResourceManager ResourceManager {
             get {
                 if (object.ReferenceEquals(resourceMan, null)) {
-                    resourceMan = new ResourceManager("Misbah.Desktop.Resources.AppStrings", typeof(AppStrings).Assembly);
+                    resourceMan = new ResourceManager("Misbah.BlazorDesktop.Resources.AppStrings", typeof(AppStrings).Assembly);
                 }
                 return resourceMan;
             }

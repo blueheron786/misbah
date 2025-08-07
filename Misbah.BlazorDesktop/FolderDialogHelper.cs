@@ -1,6 +1,6 @@
 using System.Windows.Forms;
 
-namespace Misbah.UI
+namespace Misbah.BlazorDesktop
 {
     public static class FolderDialogHelper
     {
