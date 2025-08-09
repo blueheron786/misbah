@@ -1,9 +1,10 @@
 <Window x:Class="Misbah.BlazorDesktop.MainWindow"
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:blazor="clr-namespace:Microsoft.AspNetCore.Components.WebView.Wpf;assembly=Microsoft.AspNetCore.Components.WebView.Wpf"
-        xmlns:local="clr-namespace:Misbah.BlazorDesktop.Components"
-        Title="Misbah BlazorDesktop" Height="800" Width="1200">
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:blazor="clr-namespace:Microsoft.AspNetCore.Components.WebView.Wpf;assembly=Microsoft.AspNetCore.Components.WebView.Wpf"
+    xmlns:local="clr-namespace:Misbah.BlazorDesktop.Components"
+    Title="Misbah BlazorDesktop" Height="800" Width="1200"
+    Icon="favicon.ico">
     <Grid>
         <blazor:BlazorWebView x:Name="blazorWebView" HostPage="index.html">
             <blazor:BlazorWebView.RootComponents>
