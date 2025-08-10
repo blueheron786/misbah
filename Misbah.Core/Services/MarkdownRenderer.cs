@@ -115,23 +115,15 @@ namespace Misbah.Core.Services
             // You may want to inject INoteService for real existence check, but for now, simulate with a static list or always missing for test
             return Regex.Replace(
                 html,
-                @"\[\[([^\]]+)\]\]",
+                @"\[\[([^\]|]+)(?:\|([^\]]+))?\]\]",
                 new MatchEvaluator(m =>
                 {
                     var page = m.Groups[1].Value.Replace("\"", "&quot;");
-                    // Normalize for existence check (trim, ignore case, etc.)
-                    var normalizedPage = page.Trim().Replace("&quot;", "\"");
-                    string cls = "";
-                    if (_existingPages != null)
-                    {
-                        var exists = _existingPages.Contains(normalizedPage) || _existingPages.Contains(page);
-                        if (!exists)
-                            cls = " class='missing-link'";
-                    }
-                    var linkHtml = $"<a href=\"#\" onclick=\"window.dispatchEvent(new CustomEvent('misbah-nav', {{ detail: {{ title: '{page}' }} }}));return false;\"{cls}>{page}</a>";
-                    return linkHtml;
+                    var display = m.Groups[2].Success ? m.Groups[2].Value : page;
+                    // For now, always treat as missing
+                    return $"<a href='{page}' target='_blank'>{display}</a>";
                 }),
-                RegexOptions.IgnoreCase);
+                RegexOptions.Compiled);
         }
 
         // For testing: set of existing pages

@@ -7,6 +7,22 @@ namespace Misbah.Core.Tests
     public class MarkdownRendererTests_LineBreaks
     {
         [Test]
+        public void Render_ShouldSupport_WikiLinks_With_DisplayText()
+        {
+            // Arrange
+            var renderer = new MarkdownRenderer();
+            var input = "[[CSharp|C#]]";
+
+            // Act
+            var html = renderer.Render(input, out _);
+
+            // Assert
+            Assert.That(html, Does.Contain("href='CSharp"));
+            Assert.That(html, Does.Contain(">C#<"));
+            // Should not display the page name if display text is present
+            Assert.That(html, Does.Not.Contain(">CSharp<"));
+        }
+        [Test]
         public void Render_ShouldPreserveLineBreaks_ForSimpleLines()
         {
             // Arrange
