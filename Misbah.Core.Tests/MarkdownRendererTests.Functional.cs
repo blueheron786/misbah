@@ -74,8 +74,11 @@ namespace Misbah.Core.Tests
             var renderer = new MarkdownRenderer();
             var md = "See [[My Note]] for details.";
             var html = renderer.RenderFull(md, out _);
-            Assert.That(html, Does.Contain("misbah-nav"));
-            Assert.That(html, Does.Contain("My Note"));
+            // Assert that the wiki link renders as an <a> tag with correct onclick and text
+            Assert.That(
+                html.Replace("\r", "").Replace("\n", ""),
+                Does.Contain("<a href=\"#\" onclick=\"window.dispatchEvent(new CustomEvent('misbah-nav', { detail: { title: 'My Note' } }));return false;\">My Note</a>")
+            );
         }
 
         [Test]
@@ -94,7 +97,11 @@ namespace Misbah.Core.Tests
             renderer.SetExistingPages(new[] { "My Note" });
             var md = "See [[My Note]] for details.";
             var html = renderer.RenderFull(md, out _);
-            Assert.That(html, Does.Contain(">My Note</a>"));
+            // Assert that the wiki link renders as a non-missing <a> tag
+            Assert.That(
+                html.Replace("\r", "").Replace("\n", ""),
+                Does.Contain("<a href=\"#\" onclick=\"window.dispatchEvent(new CustomEvent('misbah-nav', { detail: { title: 'My Note' } }));return false;\">My Note</a>")
+            );
             Assert.That(html, Does.Not.Contain("class='missing-link'"));
         }
 
