@@ -94,7 +94,8 @@ namespace Misbah.Core.Services
                 // Markdown links: [text](url)
                 processed = Regex.Replace(processed, @"\[([^\]]+)\]\(([^\)]+)\)", "<a href='$2' target='_blank'>$1</a>");
                 processed = RenderInlineCode(processed);
-                htmlLines.Add(processed);
+                // Add <br> after every normal line (not blank, not list, not code)
+                htmlLines.Add(processed + "<br>");
                 lastWasBlank = false;
             }
 
