@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using Misbah.Core.Models;
 
@@ -20,6 +22,7 @@ namespace Misbah.Core.Services
             };
             try
             {
+                Debug.WriteLine($"[FolderService] Enumerating directories in: {path}");
                 foreach (var dir in Directory.GetDirectories(path))
                 {
                     // Avoid symlink recursion
@@ -29,22 +32,24 @@ namespace Misbah.Core.Services
                     {
                         folder.Folders.Add(LoadFolder(dir));
                     }
-                    catch { /* skip inaccessible subfolder */ }
+                    catch (Exception ex) { Debug.WriteLine($"[FolderService] Skipped subfolder: {dir}, ex: {ex.Message}"); }
                 }
             }
-            catch { /* skip inaccessible folder */ }
+            catch (Exception ex) { Debug.WriteLine($"[FolderService] Failed to enumerate directories in {path}: {ex.Message}"); }
             try
             {
+                Debug.WriteLine($"[FolderService] Enumerating .md files in: {path}");
                 foreach (var file in Directory.GetFiles(path, "*.md"))
                 {
                     try
                     {
                         folder.Notes.Add(new Note { Id = file, Title = Path.GetFileNameWithoutExtension(file), FilePath = file });
+                        Debug.WriteLine($"[FolderService] Found .md file: {file}");
                     }
-                    catch { /* skip inaccessible file */ }
+                    catch (Exception ex) { Debug.WriteLine($"[FolderService] Skipped file: {file}, ex: {ex.Message}"); }
                 }
             }
-            catch { /* skip files if folder is inaccessible */ }
+            catch (Exception ex) { Debug.WriteLine($"[FolderService] Failed to enumerate files in {path}: {ex.Message}"); }
             return folder;
         }
 

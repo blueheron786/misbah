@@ -17,6 +17,7 @@ if ($LASTEXITCODE -ne 0) {
     exit 1
 }
 
+
 # Copy published wwwroot to android assets/public for Capacitor
 Set-Location ".."
 $publicAssets = "android/app/src/main/assets/public"
@@ -29,6 +30,19 @@ Get-ChildItem -Path "dist/wwwroot" | ForEach-Object {
         Copy-Item $_.FullName -Destination $dest -Recurse -Force
     } else {
         Copy-Item $_.FullName -Destination $publicAssets -Force
+    }
+}
+
+# ALSO copy to publish/wwwroot for Capacitor CLI compatibility
+$publishWwwroot = "Misbah.Android/bin/Debug/net8.0/publish/wwwroot"
+if (Test-Path $publishWwwroot) { Remove-Item -Path $publishWwwroot -Recurse -Force -ErrorAction SilentlyContinue }
+New-Item -ItemType Directory -Path $publishWwwroot -Force | Out-Null
+Get-ChildItem -Path "dist/wwwroot" | ForEach-Object {
+    $dest = Join-Path $publishWwwroot $_.Name
+    if ($_.PSIsContainer) {
+        Copy-Item $_.FullName -Destination $dest -Recurse -Force
+    } else {
+        Copy-Item $_.FullName -Destination $publishWwwroot -Force
     }
 }
 
