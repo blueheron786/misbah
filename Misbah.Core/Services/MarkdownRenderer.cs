@@ -13,11 +13,11 @@ namespace Misbah.Core.Services
         /// </summary>
         private string AddExternalLinkEmoji(string html)
         {
-            // Replace with Font Awesome external-link icon
+            // Replace with Font Awesome external-link icon (handle both single and double quotes for href)
             return Regex.Replace(
                 html,
-                "<a ([^>]*href=\\\"https?://[^\\\"]+\\\"[^>]*?)>(.*?)</a>",
-                m => "<a " + m.Groups[1].Value + ">" + m.Groups[2].Value + "</a> <i class='fa fa-external-link-alt' style='font-size:0.95em;vertical-align:middle;'></i>",
+                "<a ([^>]*href=(?:'|\")https?://[^'\\\"]+(?:'|\")[^>]*?)>(.*?)</a>",
+                m => "<a " + m.Groups[1].Value + ">" + m.Groups[2].Value + "</a><i class='fa fa-external-link-alt' style='font-size:0.95em;vertical-align:middle;'></i>",
                 RegexOptions.IgnoreCase);
         }
         /// <summary>
@@ -41,6 +41,7 @@ namespace Misbah.Core.Services
                 var line = lines[i];
                 // Highlight: ==text== to <mark>text</mark>
                 line = Regex.Replace(line, "==(.+?)==", m => $"<mark>{System.Net.WebUtility.HtmlEncode(m.Groups[1].Value)}</mark>");
+
                 if (IsCodeBlockDelimiter(line))
                 {
                     HandleCodeBlockDelimiter(ref inCodeBlock, htmlLines);
@@ -55,9 +56,10 @@ namespace Misbah.Core.Services
                 }
                 if (string.IsNullOrWhiteSpace(line))
                 {
+                    // Only insert a single <br> for consecutive blank lines
                     if (!lastWasBlank)
                     {
-                        htmlLines.Add("");
+                        htmlLines.Add("<br>");
                         lastWasBlank = true;
                     }
                     continue;
@@ -80,12 +82,22 @@ namespace Misbah.Core.Services
                     htmlLines.Add("</ul>");
                     inList = false;
                 }
-                var processed = RenderInlineCode(line);
-                if (processed.StartsWith("<p>") && processed.EndsWith("</p>"))
-                    processed = processed.Substring(3, processed.Length - 7);
+
+                // Markdown: bold+italic, bold, italic, links
+                var processed = line;
+                // Bold+italic: ***text***
+                processed = Regex.Replace(processed, @"\*\*\*(.+?)\*\*\*", "<em><strong>$1</strong></em>");
+                // Bold: **text**
+                processed = Regex.Replace(processed, @"\*\*(.+?)\*\*", "<strong>$1</strong>");
+                // Italic: *text*
+                processed = Regex.Replace(processed, @"\*(.+?)\*", "<em>$1</em>");
+                // Markdown links: [text](url)
+                processed = Regex.Replace(processed, @"\[([^\]]+)\]\(([^\)]+)\)", "<a href='$2' target='_blank'>$1</a>");
+                processed = RenderInlineCode(processed);
                 htmlLines.Add(processed);
                 lastWasBlank = false;
             }
+
             if (inList) htmlLines.Add("</ul>");
             if (inCodeBlock) htmlLines.Add("</code></pre>");
             var html = string.Join("\n", htmlLines);
