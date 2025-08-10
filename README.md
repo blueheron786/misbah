@@ -5,6 +5,10 @@
 
 An open-source note-taking app focused on storing and linking ideas.
 
+## What is Misbah?
+
+It's like Obsidian, but better? Built in C#, and FOSS.
+
 ## Getting Started
 
 To get started, create a "hub," a directory that will contain folders and files for your notes.
