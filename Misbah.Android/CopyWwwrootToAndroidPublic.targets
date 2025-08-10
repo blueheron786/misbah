@@ -1,0 +1,7 @@
+<!-- Copies wwwroot assets from Shared to the Android output directory as 'public' after build -->
+<Target Name="CopyWwwrootToAndroidPublic" AfterTargets="Build">
+  <ItemGroup>
+    <WwwrootFiles Include="..\Shared\wwwroot\**\*.*" />
+  </ItemGroup>
+  <Copy SourceFiles="@(WwwrootFiles)" DestinationFolder="$(OutDir)public\%(RecursiveDir)" SkipUnchangedFiles="true" />
+</Target>
