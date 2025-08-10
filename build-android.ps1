@@ -22,12 +22,29 @@ Set-Location ".."
 $publicAssets = "android/app/src/main/assets/public"
 if (Test-Path $publicAssets) { Remove-Item -Path $publicAssets -Recurse -Force -ErrorAction SilentlyContinue }
 New-Item -ItemType Directory -Path $publicAssets -Force | Out-Null
-Copy-Item -Path "dist/wwwroot/*" -Destination $publicAssets -Recurse -Force
+# Copy all files and folders, including those at the root of wwwroot
+Get-ChildItem -Path "dist/wwwroot" | ForEach-Object {
+    $dest = Join-Path $publicAssets $_.Name
+    if ($_.PSIsContainer) {
+        Copy-Item $_.FullName -Destination $dest -Recurse -Force
+    } else {
+        Copy-Item $_.FullName -Destination $publicAssets -Force
+    }
+}
+
 
 Write-Host ""
-Write-Host "[3/4] Syncing with Capacitor..." -ForegroundColor Yellow
-Set-Location ".."
-npx capacitor sync android
+Write-Host "[3/4] Copying assets with Capacitor..." -ForegroundColor Yellow
+Set-Location "."
+npx cap copy android
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "Error: Failed to copy assets with Capacitor" -ForegroundColor Red
+    Read-Host "Press Enter to exit"
+    exit 1
+}
+
+Write-Host "[4/5] Syncing with Capacitor..." -ForegroundColor Yellow
+npx cap sync android
 if ($LASTEXITCODE -ne 0) {
     Write-Host "Error: Failed to sync Capacitor" -ForegroundColor Red
     Read-Host "Press Enter to exit"
