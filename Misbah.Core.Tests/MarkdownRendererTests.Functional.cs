@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-using NUnit.Framework;
 using Misbah.Core.Services;
 
 namespace Misbah.Core.Tests
