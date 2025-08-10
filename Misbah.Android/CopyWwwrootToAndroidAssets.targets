@@ -1,0 +1,7 @@
+<!-- Copies wwwroot assets from Shared to the Android output directory after build -->
+<Target Name="CopyWwwrootToAndroidAssets" AfterTargets="Build">
+  <ItemGroup>
+    <WwwrootFiles Include="..\Shared\wwwroot\**\*.*" />
+  </ItemGroup>
+  <Copy SourceFiles="@(WwwrootFiles)" DestinationFolder="$(OutDir)wwwroot\%(RecursiveDir)" SkipUnchangedFiles="true" />
+</Target>
