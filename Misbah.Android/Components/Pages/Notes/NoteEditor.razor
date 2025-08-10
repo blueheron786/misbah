@@ -1,3 +1,5 @@
+@using Misbah.Android.Components.Pages.Notes
+@using Misbah.Android.Components.Pages.Notes
 @using Misbah.Core.Models
 @using Misbah.Android.Resources
 @using Misbah.Core.Services
@@ -11,7 +13,7 @@
     private bool isPreviewMode = false;
     private bool useLiveView = false; // New option for Obsidian-style editing
     private string currentTheme = "light";
-    private LiveMarkdownEditor? editorRef;
+    private TrueLiveMarkdownEditor? editorRef;
     private LiveViewMarkdownEditor? liveViewEditorRef;
 
     protected override void OnParametersSet()
@@ -56,21 +58,11 @@
         return Task.CompletedTask;
     }
 
-    private async Task ToggleTheme()
+    private Task ToggleTheme()
     {
         currentTheme = currentTheme == "light" ? "dark" : "light";
-        if (editorRef != null)
-        {
-            await editorRef.SetTheme(currentTheme);
-        }
-    }
-
-    private async Task FocusEditor()
-    {
-        if (editorRef != null)
-        {
-            await editorRef.Focus();
-        }
+        StateHasChanged();
+        return Task.CompletedTask;
     }
 }
 
@@ -96,13 +88,6 @@
                     <i class="fas @(currentTheme == "light" ? "fa-moon" : "fa-sun")"></i>
                     @(currentTheme == "light" ? "Dark" : "Light")
                 </button>
-                @if (!useLiveView)
-                {
-                    <button class="btn btn-sm btn-outline-secondary" @onclick="FocusEditor">
-                        <i class="fas fa-mouse-pointer"></i>
-                        Focus
-                    </button>
-                }
             </div>
         </div>
 
@@ -127,13 +112,11 @@
             else
             {
                 <!-- Traditional live markdown editor -->
-                <LiveMarkdownEditor @ref="editorRef"
-                                    Content="@(note.Content ?? "")"
-                                    ContentChanged="OnContentChanged"
-                                    Height="calc(100vh - 200px)"
-                                    Theme="@currentTheme"
-                                    AutoSave="true"
-                                    AutoSaveDelay="1000" />
+                <TrueLiveMarkdownEditor @ref="editorRef"
+                                        Content="@(note.Content ?? "")"
+                                        ContentChanged="OnContentChanged"
+                                        Height="calc(100vh - 200px)"
+                                        Theme="@currentTheme" />
             }
         </div>
     </div>

@@ -39,6 +39,8 @@ namespace Misbah.Core.Services
             for (int i = 0; i < lines.Length; i++)
             {
                 var line = lines[i];
+                // Highlight: ==text== to <mark>text</mark>
+                line = Regex.Replace(line, "==(.+?)==", m => $"<mark>{System.Net.WebUtility.HtmlEncode(m.Groups[1].Value)}</mark>");
                 if (IsCodeBlockDelimiter(line))
                 {
                     HandleCodeBlockDelimiter(ref inCodeBlock, htmlLines);

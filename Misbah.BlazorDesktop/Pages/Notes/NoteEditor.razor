@@ -1,3 +1,4 @@
+@using Misbah.BlazorDesktop.Pages.Notes
 @namespace Misbah.BlazorDesktop.Components.Pages.Notes
 @using Misbah.Core.Models
 @using Misbah.BlazorDesktop.Resources
@@ -12,14 +13,18 @@
     private bool isPreviewMode = false;
     private bool useLiveView = false; // New option for Obsidian-style editing
     private string currentTheme = "light";
-    private LiveMarkdownEditor? editorRef;
-    private LiveViewMarkdownEditor? liveViewEditorRef;
+    private TrueLiveMarkdownEditor? editorRef;
 
     protected override void OnParametersSet()
     {
         if (!string.IsNullOrEmpty(NoteId))
         {
             note = NoteService.LoadNote(NoteId);
+            if (note == null)
+            {
+                // Fallback: create a dummy note to avoid null reference and show error
+                note = new Note { Title = "(Note not found)", Content = "Could not load note with ID: " + NoteId };
+            }
         }
     }
 
@@ -57,25 +62,15 @@
         return Task.CompletedTask;
     }
 
-    private async Task ToggleTheme()
+    private Task ToggleTheme()
     {
         currentTheme = currentTheme == "light" ? "dark" : "light";
-        if (editorRef != null)
-        {
-            await editorRef.SetTheme(currentTheme);
-        }
-    }
-
-    private async Task FocusEditor()
-    {
-        if (editorRef != null)
-        {
-            await editorRef.Focus();
-        }
+        StateHasChanged();
+        return Task.CompletedTask;
     }
 }
 
-@if (note != null)
+@if (note != null && note.Title != "(Note not found)")
 {
     <div class="note-editor-container">
         <!-- Header with controls -->
@@ -97,28 +92,12 @@
                     <i class="fas @(currentTheme == "light" ? "fa-moon" : "fa-sun")"></i>
                     @(currentTheme == "light" ? "Dark" : "Light")
                 </button>
-                @if (!useLiveView)
-                {
-                    <button class="btn btn-sm btn-outline-secondary" @onclick="FocusEditor">
-                        <i class="fas fa-mouse-pointer"></i>
-                        Focus
-                    </button>
-                }
             </div>
         </div>
 
         <!-- Content area -->
         <div class="note-content">
-            @if (useLiveView)
-            {
-                <!-- Obsidian-style live view editor -->
-                <LiveViewMarkdownEditor @ref="liveViewEditorRef"
-                                        Content="@(note.Content ?? "")"
-                                        ContentChanged="OnContentChanged"
-                                        Height="calc(100vh - 200px)"
-                                        Theme="@currentTheme" />
-            }
-            else if (isPreviewMode)
+            @if (isPreviewMode)
             {
                 <!-- Pure HTML preview -->
                 <div class="markdown-preview">
@@ -127,16 +106,22 @@
             }
             else
             {
-                <!-- Traditional live markdown editor -->
-                <LiveMarkdownEditor @ref="editorRef"
-                                    Content="@(note.Content ?? "")"
-                                    ContentChanged="OnContentChanged"
-                                    Height="calc(100vh - 200px)"
-                                    Theme="@currentTheme"
-                                    AutoSave="true"
-                                    AutoSaveDelay="1000" />
+                <!-- Unified markdown editor -->
+                <TrueLiveMarkdownEditor @ref="editorRef"
+                                        Content="@(note.Content ?? "")"
+                                        ContentChanged="OnContentChanged"
+                                        Height="calc(100vh - 200px)"
+                                        Theme="@currentTheme" />
             }
         </div>
+    </div>
+}
+else if (note != null && note.Title == "(Note not found)")
+{
+    <div class="no-note-selected">
+        <i class="fas fa-exclamation-triangle fa-3x text-danger mb-3"></i>
+        <p class="text-danger">Note not found. Please check the note ID or your data source.</p>
+        <p class="text-muted">@note.Content</p>
     </div>
 }
 else
