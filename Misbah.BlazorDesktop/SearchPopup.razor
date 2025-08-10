@@ -3,8 +3,9 @@
 @inject Misbah.Core.Utils.SearchService SearchService
 @inject IJSRuntime JS
 
-<div class="search-popup" tabindex="0" @onkeydown="HandleKeyDown">
-<input @bind="_query" @oninput="OnInput" placeholder="Search notes... (Ctrl+O)" autofocus class="search-input" />
+<div class="modal-backdrop" @onclick="HandleBackdropClick" style="position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.4);z-index:9998;"></div>
+<div class="search-popup" tabindex="0" @onkeydown="HandleKeyDown" style="z-index:9999;position:fixed;top:15vh;left:50%;transform:translateX(-50%);">
+    <input @bind="_query" @oninput="OnInput" placeholder="Search notes... (Ctrl+O)" class="search-input" @ref="searchInput" />
     <ul class="search-results">
         @if (_results != null && _results.Count > 0)
         {
@@ -28,10 +29,22 @@
     private string _query = string.Empty;
     private List<Note> _results = new();
     private int _selectedIndex = 0;
+    private ElementReference searchInput;
     [Parameter] public EventCallback<string> OnNoteSelected { get; set; }
     [Parameter] public EventCallback OnClose { get; set; }
 
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender || _results != null)
+        {
+            await JS.InvokeVoidAsync("focusSearchInput", searchInput);
+        }
+    }
 
+    private void HandleBackdropClick()
+    {
+        OnClose.InvokeAsync();
+    }
 
     private void OnInput(ChangeEventArgs e)
     {
