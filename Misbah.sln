@@ -9,8 +9,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Misbah.Core", "Misbah.Core\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Misbah.Core.Tests", "Misbah.Core.Tests\Misbah.Core.Tests.csproj", "{19CCE827-DA28-43EB-A61A-5E5DB11889A5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Misbah.Android", "Misbah.Android\Misbah.Android.csproj", "{41288CB5-A1E7-44B8-BDA6-C63A0E456EFE}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -57,18 +55,6 @@ Global
 		{19CCE827-DA28-43EB-A61A-5E5DB11889A5}.Release|x64.Build.0 = Release|Any CPU
 		{19CCE827-DA28-43EB-A61A-5E5DB11889A5}.Release|x86.ActiveCfg = Release|Any CPU
 		{19CCE827-DA28-43EB-A61A-5E5DB11889A5}.Release|x86.Build.0 = Release|Any CPU
-		{41288CB5-A1E7-44B8-BDA6-C63A0E456EFE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{41288CB5-A1E7-44B8-BDA6-C63A0E456EFE}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{41288CB5-A1E7-44B8-BDA6-C63A0E456EFE}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{41288CB5-A1E7-44B8-BDA6-C63A0E456EFE}.Debug|x64.Build.0 = Debug|Any CPU
-		{41288CB5-A1E7-44B8-BDA6-C63A0E456EFE}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{41288CB5-A1E7-44B8-BDA6-C63A0E456EFE}.Debug|x86.Build.0 = Debug|Any CPU
-		{41288CB5-A1E7-44B8-BDA6-C63A0E456EFE}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{41288CB5-A1E7-44B8-BDA6-C63A0E456EFE}.Release|Any CPU.Build.0 = Release|Any CPU
-		{41288CB5-A1E7-44B8-BDA6-C63A0E456EFE}.Release|x64.ActiveCfg = Release|Any CPU
-		{41288CB5-A1E7-44B8-BDA6-C63A0E456EFE}.Release|x64.Build.0 = Release|Any CPU
-		{41288CB5-A1E7-44B8-BDA6-C63A0E456EFE}.Release|x86.ActiveCfg = Release|Any CPU
-		{41288CB5-A1E7-44B8-BDA6-C63A0E456EFE}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
