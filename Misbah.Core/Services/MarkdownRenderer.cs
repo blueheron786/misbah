@@ -9,11 +9,23 @@ namespace Misbah.Core.Services
     public class MarkdownRenderer
     {
         /// <summary>
-        /// Renders markdown content to HTML, extracting task list line numbers.
+        /// Adds 🌐 emoji to external links in the HTML.
+        /// </summary>
+        private string AddExternalLinkEmoji(string html)
+        {
+            // Replace with Font Awesome external-link icon
+            return Regex.Replace(
+                html,
+                "<a ([^>]*href=\\\"https?://[^\\\"]+\\\"[^>]*?)>(.*?)</a>",
+                m => "<a " + m.Groups[1].Value + ">" + m.Groups[2].Value + "</a> <i class='fa fa-external-link-alt' style='font-size:0.95em;vertical-align:middle;'></i>",
+                RegexOptions.IgnoreCase);
+        }
+        /// <summary>
+        /// Renders markdown content to HTML, applying all post-processing (wiki links, external link emoji), and extracts task list line numbers.
         /// </summary>
         /// <param name="content">The markdown content.</param>
         /// <param name="taskLineNumbers">Outputs the line numbers of markdown tasks.</param>
-        /// <returns>HTML string.</returns>
+        /// <returns>HTML string with all post-processing applied.</returns>
         public string Render(string? content, out List<int> taskLineNumbers)
         {
             // Custom renderer for lists, checkboxes, code blocks, and inline code
@@ -39,44 +51,34 @@ namespace Misbah.Core.Services
                     lastWasBlank = false;
                     continue;
                 }
-                // Custom task list rendering with sequential data-line
-                var match = Regex.Match(line, @"^- \[( |x)\] (.*)$", RegexOptions.IgnoreCase);
-                if (match.Success)
+                if (string.IsNullOrWhiteSpace(line))
                 {
-                    if (!inList) { htmlLines.Add("<ul>"); inList = true; }
-                    bool isChecked = match.Groups[1].Value.ToLower() == "x";
-                    string taskText = match.Groups[2].Value;
-                    string checkbox = $"<input type='checkbox' class='md-task' data-line='{i}'{(isChecked ? " checked" : "")} onclick=\"window.dispatchEvent(new CustomEvent('misbah-task-toggle',{{detail:{{line:{i}}}}}));\">";
-                    htmlLines.Add($"<li>{checkbox} {System.Net.WebUtility.HtmlEncode(taskText)}</li>");
-                    taskLineNumbers.Add(i);
+                    if (!lastWasBlank)
+                    {
+                        htmlLines.Add("");
+                        lastWasBlank = true;
+                    }
+                    continue;
+                }
+                if (IsTaskListLine(line))
+                {
+                    TryRenderTaskList(line, i, htmlLines, taskLineNumbers, ref inList);
                     lastWasBlank = false;
                     continue;
                 }
                 if (IsNormalListLine(line))
                 {
                     if (!inList) { htmlLines.Add("<ul>"); inList = true; }
-                    var item = line.Substring(2).Trim();
-                    var itemHtml = Markdown.ToHtml(item, pipeline).Trim();
-                    if (itemHtml.StartsWith("<p>") && itemHtml.EndsWith("</p>"))
-                        itemHtml = itemHtml.Substring(3, itemHtml.Length - 7);
-                    htmlLines.Add($"<li>{itemHtml}</li>");
+                    htmlLines.Add($"<li>{line.Substring(2).Trim()}</li>");
                     lastWasBlank = false;
                     continue;
                 }
-                if (inList) { htmlLines.Add("</ul>"); inList = false; }
-                // Collapse consecutive blank lines to a single <br>
-                if (string.IsNullOrWhiteSpace(line))
+                else if (inList)
                 {
-                    if (!lastWasBlank)
-                    {
-                        htmlLines.Add("<br>");
-                        lastWasBlank = true;
-                    }
-                    continue;
+                    htmlLines.Add("</ul>");
+                    inList = false;
                 }
-                // Inline code and Markdig for inline features
                 var processed = RenderInlineCode(line);
-                processed = Markdown.ToHtml(processed, pipeline).Trim();
                 if (processed.StartsWith("<p>") && processed.EndsWith("</p>"))
                     processed = processed.Substring(3, processed.Length - 7);
                 htmlLines.Add(processed);
@@ -84,36 +86,10 @@ namespace Misbah.Core.Services
             }
             if (inList) htmlLines.Add("</ul>");
             if (inCodeBlock) htmlLines.Add("</code></pre>");
-            return string.Join("\n", htmlLines);
-        }
-
-
-
-        /// <summary>
-        /// Renders markdown content to HTML, applying all post-processing (wiki links, external link emoji).
-        /// </summary>
-        /// <param name="content">The markdown content.</param>
-        /// <param name="taskLineNumbers">Outputs the line numbers of markdown tasks.</param>
-        /// <returns>HTML string with all post-processing applied.</returns>
-        public string RenderFull(string? content, out List<int> taskLineNumbers)
-        {
-            var html = Render(content, out taskLineNumbers);
+            var html = string.Join("\n", htmlLines);
             html = ReplaceWikiLinks(html);
             html = AddExternalLinkEmoji(html);
             return html;
-        }
-
-        /// <summary>
-        /// Adds 🌐 emoji to external links in the HTML.
-        /// </summary>
-        public string AddExternalLinkEmoji(string html)
-        {
-            // Replace with Font Awesome external-link icon
-            return Regex.Replace(
-                html,
-                "<a ([^>]*href=\\\"https?://[^\\\"]+\\\"[^>]*?)>(.*?)</a>",
-                m => "<a " + m.Groups[1].Value + ">" + m.Groups[2].Value + "</a> <i class='fa fa-external-link-alt' style='font-size:0.95em;vertical-align:middle;'></i>",
-                RegexOptions.IgnoreCase);
         }
 
         /// <summary>
@@ -122,7 +98,6 @@ namespace Misbah.Core.Services
         public string ReplaceWikiLinks(string html)
         {
             // You may want to inject INoteService for real existence check, but for now, simulate with a static list or always missing for test
-            var existingPages = _existingPages ?? new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             return Regex.Replace(
                 html,
                 @"\[\[([^\]]+)\]\]",
@@ -131,8 +106,13 @@ namespace Misbah.Core.Services
                     var page = m.Groups[1].Value.Replace("\"", "&quot;");
                     // Normalize for existence check (trim, ignore case, etc.)
                     var normalizedPage = page.Trim().Replace("&quot;", "\"");
-                    var exists = existingPages.Contains(normalizedPage) || existingPages.Contains(page);
-                    var cls = exists ? "" : " class='missing-link'";
+                    string cls = "";
+                    if (_existingPages != null)
+                    {
+                        var exists = _existingPages.Contains(normalizedPage) || _existingPages.Contains(page);
+                        if (!exists)
+                            cls = " class='missing-link'";
+                    }
                     var linkHtml = $"<a href=\"#\" onclick=\"window.dispatchEvent(new CustomEvent('misbah-nav', {{ detail: {{ title: '{page}' }} }}));return false;\"{cls}>{page}</a>";
                     return linkHtml;
                 }),

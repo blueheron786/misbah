@@ -12,7 +12,7 @@ namespace Misbah.Core.Tests
         {
             var renderer = new MarkdownRenderer();
             var md = "Hello ==World== !!!";
-            var html = renderer.RenderFull(md, out _);
+            var html = renderer.Render(md, out _);
             Assert.That(html, Does.Contain("Hello <mark>World</mark> !!!"));
         }
 
@@ -21,7 +21,7 @@ namespace Misbah.Core.Tests
         {
             var renderer = new MarkdownRenderer();
             var md = "This is ***bold and italic***, **bold**, and *italic*.";
-            var html = renderer.RenderFull(md, out _);
+            var html = renderer.Render(md, out _);
             Assert.That(html, Does.Contain("<em><strong>bold and italic</strong></em>"));
             Assert.That(html, Does.Contain("<strong>bold</strong>"));
             Assert.That(html, Does.Contain("<em>italic</em>"));
@@ -32,7 +32,7 @@ namespace Misbah.Core.Tests
         {
             var renderer = new MarkdownRenderer();
             var md = "This is `inline code`.";
-            var html = renderer.RenderFull(md, out _);
+            var html = renderer.Render(md, out _);
             Assert.That(html, Does.Contain("<code class='misbah-code'>inline code</code>"));
         }
 
@@ -41,7 +41,7 @@ namespace Misbah.Core.Tests
         {
             var renderer = new MarkdownRenderer();
             var md = "```\ncode block\n```";
-            var html = renderer.RenderFull(md, out _);
+            var html = renderer.Render(md, out _);
             Assert.That(html, Does.Contain("<pre class='misbah-code'><code class='misbah-code'>"));
             Assert.That(html, Does.Contain("code block"));
         }
@@ -51,7 +51,7 @@ namespace Misbah.Core.Tests
         {
             var renderer = new MarkdownRenderer();
             var md = "- [ ] Task one\n- [x] Task two";
-            var html = renderer.RenderFull(md, out var lines);
+            var html = renderer.Render(md, out var lines);
             Assert.That(html, Does.Contain("input type='checkbox' class='md-task' data-line='0'"));
             Assert.That(html, Does.Contain("input type='checkbox' class='md-task' data-line='1' checked"));
             Assert.That(lines, Is.EquivalentTo(new List<int> { 0, 1 }));
@@ -62,7 +62,7 @@ namespace Misbah.Core.Tests
         {
             var renderer = new MarkdownRenderer();
             var md = "- item one\n- item two";
-            var html = renderer.RenderFull(md, out _);
+            var html = renderer.Render(md, out _);
             Assert.That(html, Does.Contain("<ul>"));
             Assert.That(html, Does.Contain("<li>item one</li>"));
             Assert.That(html, Does.Contain("<li>item two</li>"));
@@ -73,7 +73,7 @@ namespace Misbah.Core.Tests
         {
             var renderer = new MarkdownRenderer();
             var md = "See [[My Note]] for details.";
-            var html = renderer.RenderFull(md, out _);
+            var html = renderer.Render(md, out _);
             // Assert that the wiki link renders as an <a> tag with correct onclick and text
             Assert.That(
                 html.Replace("\r", "").Replace("\n", ""),
@@ -86,7 +86,7 @@ namespace Misbah.Core.Tests
         {
             var renderer = new MarkdownRenderer();
             var md = "[Google](https://google.com)";
-            var html = renderer.RenderFull(md, out _);
+            var html = renderer.Render(md, out _);
             Assert.That(html, Does.Contain("<i class='fa fa-external-link-alt'"));
         }
 
@@ -96,7 +96,7 @@ namespace Misbah.Core.Tests
             var renderer = new MarkdownRenderer();
             renderer.SetExistingPages(new[] { "My Note" });
             var md = "See [[My Note]] for details.";
-            var html = renderer.RenderFull(md, out _);
+            var html = renderer.Render(md, out _);
             // Assert that the wiki link renders as a non-missing <a> tag
             Assert.That(
                 html.Replace("\r", "").Replace("\n", ""),
@@ -110,7 +110,7 @@ namespace Misbah.Core.Tests
         {
             var renderer = new MarkdownRenderer();
             var md = "Line1\n\n\nLine2";
-            var html = renderer.RenderFull(md, out _);
+            var html = renderer.Render(md, out _);
             Assert.That(html.Replace("\n", ""), Does.Contain("Line1<br>Line2"));
         }
     }
