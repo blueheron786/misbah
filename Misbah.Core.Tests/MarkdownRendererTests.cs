@@ -1,4 +1,3 @@
-using Misbah.Core.Services;
 using System.Collections.Generic;
 using NUnit.Framework;
 using Misbah.Core.Services;
@@ -42,7 +41,7 @@ Normal text with `inline` code.";
             var renderer = new MarkdownRenderer();
             var md = "[Google](https://google.com)";
             var html = renderer.Render(md, out _);
-            html = renderer.AddExternalLinkEmoji(html);
+            // AddExternalLinkEmoji is now always applied in Render
             Assert.That(html, Does.Contain("<i class='fa fa-external-link-alt'"));
         }
 
@@ -75,7 +74,7 @@ Normal text with `inline` code.";
             string markdown = "one\ntwo\nthree\nfour\n\nA list:\n- [x] zERO~!\n- [ ] one\n- [ ] two\n- [ ] three\n\nPlease ***bold and italicize*** this bad boi. And ==highlight== this bad boi.\nLinks are gud. HTML test: <b>strong here</b> and <mark>mark here</mark>!";
 
             // Act
-            var html = renderer.RenderFull(markdown, out var taskLines);
+            var html = renderer.Render(markdown, out var taskLines);
 
             // Assert
             // List items should be grouped in a single <ul>

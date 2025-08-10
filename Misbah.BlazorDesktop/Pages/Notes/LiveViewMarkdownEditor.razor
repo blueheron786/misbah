@@ -218,7 +218,7 @@
             return "<p><br></p>";
 
         // Use the existing MarkdownRenderer
-        var html = MarkdownRenderer.RenderFull(content, out var _);
+    var html = MarkdownRenderer.Render(content, out var _);
         
         // Clean up extra paragraph tags for inline elements
         if (type >= ContentBlockType.Heading1 && type <= ContentBlockType.Heading6)

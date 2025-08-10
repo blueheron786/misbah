@@ -202,8 +202,9 @@
 
     private string RenderBlockToHtml(MarkdownBlock block)
     {
-        // Use the existing MarkdownRenderer service
-        var html = MarkdownRenderer.Render(block.RawContent, out var taskLines);
+        // Use the existing MarkdownRenderer service (now always applies all post-processing)
+        List<int> taskLines;
+        var html = MarkdownRenderer.Render(block.RawContent, out taskLines);
         return html;
     }
 
