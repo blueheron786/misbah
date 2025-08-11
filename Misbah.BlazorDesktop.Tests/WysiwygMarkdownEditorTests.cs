@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 using Bunit;
 using Xunit;
-using Misbah.BlazorDesktop.Components.Pages.Notes;
-using Misbah.Core.Services;
+using Misbah.BlazorShared.Pages.Notes;
+using Misbah.Application.Services;
 using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
 

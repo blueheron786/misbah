@@ -3,9 +3,8 @@
 
 
   <PropertyGroup>
-    <TargetFramework>net8.0-windows10.0.22000</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <IsPackable>false</IsPackable>
-    <UseWPF>true</UseWPF>
   </PropertyGroup>
 
   <ItemGroup>
@@ -20,8 +19,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Misbah.BlazorDesktop\Misbah.BlazorDesktop.csproj" />
     <ProjectReference Include="..\Misbah.Core\Misbah.Core.csproj" />
+    <ProjectReference Include="..\Misbah.BlazorShared\Misbah.BlazorShared.csproj" />
   </ItemGroup>
 
 </Project>

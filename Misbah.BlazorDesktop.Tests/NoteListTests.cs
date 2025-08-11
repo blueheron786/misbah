@@ -3,8 +3,8 @@ using System.Linq;
 using Microsoft.AspNetCore.Components;
 using Bunit;
 using Xunit;
-using Misbah.BlazorDesktop.Components.Pages.Notes;
-using Misbah.Domain.Entities;
+using Misbah.BlazorShared.Pages.Notes;
+using Misbah.Application.DTOs;
 using Misbah.Application.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
@@ -17,15 +17,15 @@ public class NoteListTests : TestContext
     public void Renders_Notes_And_Selects_Note()
     {
         // Arrange
-        var notes = new List<Note>
+        var notes = new List<NoteDto>
         {
-            new Note { Id = "1", Title = "Note 1", Content = "A" },
-            new Note { Id = "2", Title = "Note 2", Content = "B" }
+            new NoteDto { Id = "1", Title = "Note 1", Content = "A" },
+            new NoteDto { Id = "2", Title = "Note 2", Content = "B" }
         };
         var noteService = Substitute.For<INoteService>();
-        noteService.GetAllNotes().Returns(notes);
+        noteService.GetAllNotesAsync().Returns(System.Threading.Tasks.Task.FromResult((IEnumerable<NoteDto>)notes));
         var folderService = Substitute.For<IFolderService>();
-        folderService.LoadFolderTree(Arg.Any<string>()).Returns(new FolderNode { Name = "root", Path = "root" });
+        folderService.GetFolderByPathAsync(Arg.Any<string>()).Returns(System.Threading.Tasks.Task.FromResult(new FolderNodeDto { Name = "root", Path = "root" }));
         Services.AddSingleton(noteService);
         Services.AddSingleton(folderService);
         Services.AddSingleton<NavigationManager>(new TestNavigationManager());

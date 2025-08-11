@@ -24,3 +24,19 @@ Custom Markdown syntax includes:
 - `==x==`: highlights `x` (the same as `<mark>x</mark>`)
 - `- [ ]` creates a checkbox in a list. `- [x]` checks it off. You can also click to toggle it.
 - `[[Page|Display]]` links to `[[Page]]` but appears as `Display`
+
+# Architecture
+
+Misbah tries to follow Clean Architecture as best we can. The main projects include:
+
+- `Misbah.BlazorShared`: The core (Blazor) functionality
+- `Misbah.BlazorDesktop`: The BlazorDesktop (WPF) wrapper around the core. Run this.
+- `Misbah.Infrastructure`: Externalities such as persistence, and external services (auto save to disk, Git, search, etc.)
+
+The internal layers of code:
+
+- `Misbah.Application`: DTOs, interfaces, and application services
+- `Misbah.Core`: Note rendering, mostly.
+- `Misbah.Domain`: Core entities and domain-level interfaces
+
+Test projects follow the name of their project under test, e.g. `Misbah.Core` and `Misbah.Core.Tests`.
