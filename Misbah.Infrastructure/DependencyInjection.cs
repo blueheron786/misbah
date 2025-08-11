@@ -4,6 +4,7 @@ using Misbah.Application.Interfaces;
 using Misbah.Application.Services;
 using Misbah.Domain.Interfaces;
 using Misbah.Infrastructure.Persistence.Repositories;
+using Misbah.Infrastructure.Services;
 
 namespace Misbah.Infrastructure
 {
@@ -11,10 +12,12 @@ namespace Misbah.Infrastructure
     {
         public static IServiceCollection AddInfrastructure(this IServiceCollection services, string basePath = null)
         {
-            // Register repositories - don't use subfolders for user-selected hubs
-            services.AddScoped<INoteRepository>(_ => new NoteRepository(basePath));
-                
-            services.AddScoped<IFolderRepository>(_ => new FolderRepository(basePath));
+            // Register hub path provider
+            services.AddScoped<IHubPathProvider, HubPathProvider>();
+            
+            // Register repositories - they'll use the hub path provider
+            services.AddScoped<INoteRepository, NoteRepository>();
+            services.AddScoped<IFolderRepository, FolderRepository>();
 
             // Register AutoMapper
             services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());

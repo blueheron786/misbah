@@ -10,6 +10,7 @@
 
 @inject Misbah.Application.Interfaces.INoteService NoteService
 @inject IJSRuntime JS
+@inject Misbah.Infrastructure.Services.IHubPathProvider HubPathProvider
 
 @using Misbah.Infrastructure.Services
 @using Misbah.BlazorDesktop.Components
@@ -77,6 +78,7 @@
         if (!string.IsNullOrEmpty(config.LastHubPath) && Directory.Exists(config.LastHubPath))
         {
             _hubRoot = config.LastHubPath;
+            HubPathProvider.SetCurrentHubPath(config.LastHubPath);
         }
     }
 
@@ -85,6 +87,10 @@
     {
         _hubRoot = path;
         _selectedNoteId = null;
+        
+        // Set in the hub path provider so repositories can use it
+        HubPathProvider.SetCurrentHubPath(path);
+        
         // Save to config
         var config = ConfigManager.Load();
         config.LastHubPath = path;
@@ -138,7 +144,7 @@
             <article class="content px-4" style="flex:1 1 auto; min-height:0;">
                 @if (!string.IsNullOrEmpty(_selectedNoteId))
                 {
-                    <NoteView NoteId="@_selectedNoteId" />
+                    <SimpleNoteViewer NoteId="@_selectedNoteId" />
                 }
                 else
                 {
