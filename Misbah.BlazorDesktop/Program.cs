@@ -47,6 +47,7 @@ namespace Misbah.BlazorDesktop
 
             using var scope = _host.Services.CreateScope();
             var mainWindow = scope.ServiceProvider.GetRequiredService<MainWindow>();
+            mainWindow.Services = _host.Services;
             mainWindow.Show();
         }
 
