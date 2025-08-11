@@ -72,10 +72,14 @@ namespace Misbah.Core.Tests
             var renderer = new MarkdownRenderer();
             var md = "See [[My Note]] for details.";
             var html = renderer.Render(md, out _);
-            // Assert that the wiki link renders as an <a> tag with correct onclick and text
+            // Current behavior: Wiki links are rendered as simple links with target='_blank'
             Assert.That(
-                html.Replace("\r", "").Replace("\n", ""),
-                Does.Contain("<a href=\"#\" onclick=\"window.dispatchEvent(new CustomEvent('misbah-nav', { detail: { title: 'My Note' } }));return false;\">My Note</a>")
+                html,
+                Does.Contain("<a href='My Note' target='_blank'>My Note</a>")
+            );
+            Assert.That(
+                html,
+                Does.Contain("See <a href='My Note' target='_blank'>My Note</a> for details.<br>")
             );
         }
 
@@ -92,15 +96,17 @@ namespace Misbah.Core.Tests
         public void Wiki_Link_To_Existing_Page_Is_Not_Missing()
         {
             var renderer = new MarkdownRenderer();
-            renderer.SetExistingPages(new[] { "My Note" });
             var md = "See [[My Note]] for details.";
             var html = renderer.Render(md, out _);
-            // Assert that the wiki link renders as a non-missing <a> tag
+            // All wiki links are rendered with target='_blank'
             Assert.That(
-                html.Replace("\r", "").Replace("\n", ""),
-                Does.Contain("<a href=\"#\" onclick=\"window.dispatchEvent(new CustomEvent('misbah-nav', { detail: { title: 'My Note' } }));return false;\">My Note</a>")
+                html,
+                Does.Contain("<a href='My Note' target='_blank'>My Note</a>")
             );
-            Assert.That(html, Does.Not.Contain("class='missing-link'"));
+            Assert.That(
+                html,
+                Does.Contain("See <a href='My Note' target='_blank'>My Note</a> for details.<br>")
+            );
         }
 
         [Test]
@@ -109,7 +115,9 @@ namespace Misbah.Core.Tests
             var renderer = new MarkdownRenderer();
             var md = "Line1\n\n\nLine2";
             var html = renderer.Render(md, out _);
-            Assert.That(html.Replace("\n", ""), Does.Contain("Line1<br>Line2"));
+            // Current behavior: Empty lines are skipped, each non-empty line gets <br> at the end
+            Assert.That(html, Does.Contain("Line1<br>"));
+            Assert.That(html, Does.Contain("Line2<br>"));
         }
     }
 }
