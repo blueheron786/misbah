@@ -1,11 +1,26 @@
 using Xunit;
 using Misbah.Infrastructure.Persistence.Repositories;
+using Misbah.Infrastructure.Services;
 using System.IO;
 using System.Threading.Tasks;
 using System.Linq;
 
 namespace Misbah.Infrastructure.Tests
 {
+    // Simple mock for testing
+    public class MockHubPathProvider : IHubPathProvider
+    {
+        private readonly string _path;
+        
+        public MockHubPathProvider(string path)
+        {
+            _path = path;
+        }
+        
+        public string GetCurrentHubPath() => _path;
+        public void SetCurrentHubPath(string path) { }
+    }
+
     public class NoteRepositoryTests
     {
         [Fact]
@@ -26,7 +41,8 @@ namespace Misbah.Infrastructure.Tests
                 await File.WriteAllTextAsync(file2, "# Another Note\n\nAnother test.");
                 await File.WriteAllTextAsync(file3, "# Note with Spaces\n\nSpaces test.");
 
-                var repository = new NoteRepository(tempDir);
+                var hubPathProvider = new MockHubPathProvider(tempDir);
+                var repository = new NoteRepository(hubPathProvider);
 
                 // Act
                 var notes = await repository.GetAllAsync();

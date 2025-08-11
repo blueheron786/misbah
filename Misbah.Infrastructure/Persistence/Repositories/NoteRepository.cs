@@ -17,25 +17,37 @@ namespace Misbah.Infrastructure.Persistence.Repositories
         public async Task<Note> GetByIdAsync(string id)
         {
             var basePath = _hubPathProvider.GetCurrentHubPath();
-            var filePath = Path.Combine(basePath, id + FileExtension);
-
+            
             Console.WriteLine($"DEBUG: Looking for note with ID: '{id}'");
-            Console.WriteLine($"DEBUG: Full file path: '{filePath}'");
-            Console.WriteLine($"DEBUG: File exists: {File.Exists(filePath)}");
+            Console.WriteLine($"DEBUG: Base path: '{basePath}'");
 
-            if (!File.Exists(filePath))
+            // Search for the note file recursively in all subdirectories
+            if (!Directory.Exists(basePath))
             {
-                Console.WriteLine($"DEBUG: Base path: '{basePath}'");
-                Console.WriteLine($"DEBUG: Files in base path:");
-                if (Directory.Exists(basePath))
-                {
-                    foreach (var file in Directory.GetFiles(basePath, "*.md"))
-                    {
-                        Console.WriteLine($"DEBUG:   - {Path.GetFileName(file)} (ID would be: {Path.GetFileNameWithoutExtension(file)})");
-                    }
-                }
-                return null;
+                Console.WriteLine($"DEBUG: Base path does not exist");
+                return null!;
             }
+
+            // Search for the note file with this ID in any subdirectory
+            var noteFileName = id + FileExtension;
+            var foundFiles = Directory.GetFiles(basePath, noteFileName, SearchOption.AllDirectories);
+            
+            Console.WriteLine($"DEBUG: Searching for file: '{noteFileName}'");
+            Console.WriteLine($"DEBUG: Found {foundFiles.Length} matching files:");
+            foreach (var file in foundFiles)
+            {
+                Console.WriteLine($"DEBUG:   - {file}");
+            }
+
+            if (foundFiles.Length == 0)
+            {
+                Console.WriteLine($"DEBUG: No files found with name '{noteFileName}'");
+                return null!;
+            }
+
+            // Use the first match (in case of duplicates)
+            var filePath = foundFiles[0];
+            Console.WriteLine($"DEBUG: Using file: '{filePath}'");
 
             var fileName = Path.GetFileNameWithoutExtension(filePath);
             var content = await File.ReadAllTextAsync(filePath);
@@ -58,15 +70,23 @@ namespace Misbah.Infrastructure.Persistence.Repositories
             var notes = new List<Note>();
             var basePath = _hubPathProvider.GetCurrentHubPath();
             
+            Console.WriteLine($"DEBUG: GetAllAsync - Base path: '{basePath}'");
+            
             if (!Directory.Exists(basePath))
             {
+                Console.WriteLine($"DEBUG: GetAllAsync - Base path does not exist");
                 return notes;
             }
 
-            var mdFiles = Directory.GetFiles(basePath, "*.md");
+            // Search recursively for all .md files in all subdirectories
+            var mdFiles = Directory.GetFiles(basePath, "*.md", SearchOption.AllDirectories);
+            
+            Console.WriteLine($"DEBUG: GetAllAsync - Found {mdFiles.Length} total .md files");
             
             foreach (var filePath in mdFiles)
             {
+                Console.WriteLine($"DEBUG: GetAllAsync - Processing file: '{filePath}'");
+                
                 var fileName = Path.GetFileNameWithoutExtension(filePath);
                 var content = await File.ReadAllTextAsync(filePath);
                 
@@ -83,6 +103,7 @@ namespace Misbah.Infrastructure.Persistence.Repositories
                 });
             }
 
+            Console.WriteLine($"DEBUG: GetAllAsync - Returning {notes.Count} notes");
             return notes;
         }
 

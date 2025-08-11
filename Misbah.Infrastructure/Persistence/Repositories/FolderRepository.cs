@@ -51,14 +51,28 @@ namespace Misbah.Infrastructure.Persistence.Repositories
 
             // Get notes from the NoteRepository
             var allNotes = await _noteRepo.GetAllAsync();
+            Console.WriteLine($"DEBUG: FolderRepository - Got {allNotes.Count()} total notes from repository");
+            Console.WriteLine($"DEBUG: FolderRepository - Looking for notes in directory: '{fullPath}'");
+            
             // Filter notes that are in this specific directory
             var notesInThisDir = allNotes.Where(note => 
             {
-                // Simple check: if note's directory matches this directory
-                var notePath = Path.GetDirectoryName(note.FilePath);
-                return string.Equals(notePath, fullPath, StringComparison.OrdinalIgnoreCase);
+                // Get the directory of the note file
+                var noteDir = Path.GetDirectoryName(note.FilePath);
+                Console.WriteLine($"DEBUG: FolderRepository - Note '{note.Id}' is in directory: '{noteDir}'");
+                
+                // Compare the directories (normalize path separators and case)
+                var normalizedNoteDir = noteDir?.Replace('\\', '/').TrimEnd('/');
+                var normalizedFullPath = fullPath.Replace('\\', '/').TrimEnd('/');
+                
+                var matches = string.Equals(normalizedNoteDir, normalizedFullPath, StringComparison.OrdinalIgnoreCase);
+                Console.WriteLine($"DEBUG: FolderRepository - Note '{note.Id}' matches directory: {matches}");
+                
+                return matches;
             }).ToList();
 
+            Console.WriteLine($"DEBUG: FolderRepository - Found {notesInThisDir.Count} notes in this directory");
+            
             folder.Notes = notesInThisDir.ToList();
 
             return folder;
