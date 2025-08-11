@@ -28,31 +28,25 @@ namespace Misbah.Infrastructure.Persistence.Repositories
         public async Task<Note> GetByIdAsync(string id)
         {
             var filePath = Path.Combine(_basePath, id + FileExtension);
+            var metaPath = GetMetaPath(id);
 
-            if (!File.Exists(filePath))
+            if (!File.Exists(filePath) || !File.Exists(metaPath))
             {
                 return null;
             }
 
             var content = await File.ReadAllTextAsync(filePath);
-            var fileName = Path.GetFileNameWithoutExtension(filePath);
-            
-            // Extract title from first line if it's a heading, otherwise use filename
-            var title = fileName;
-            var lines = content.Split('\n');
-            if (lines.Length > 0 && lines[0].StartsWith("# "))
-            {
-                title = lines[0].Substring(2).Trim();
-            }
+            var metaContent = await File.ReadAllTextAsync(metaPath);
+            var meta = JsonConvert.DeserializeObject<NoteMeta>(metaContent);
 
             return new Note
             {
                 Id = id,
-                Title = title,
+                Title = meta.Title,
                 Content = content,
-                Tags = new List<string>(), // No tags from plain markdown files
-                Created = File.GetCreationTime(filePath),
-                Modified = File.GetLastWriteTime(filePath),
+                Tags = meta.Tags ?? new List<string>(),
+                Created = meta.Created,
+                Modified = meta.Modified,
                 FilePath = filePath
             };
         }
@@ -73,8 +67,13 @@ namespace Misbah.Infrastructure.Persistence.Repositories
                 var fileName = Path.GetFileNameWithoutExtension(filePath);
                 var content = await File.ReadAllTextAsync(filePath);
                 
-                // Use filename as title
+                // Extract title from content (first line if it starts with #, otherwise use filename)
                 var title = fileName;
+                var lines = content.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+                if (lines.Length > 0 && lines[0].TrimStart().StartsWith("#"))
+                {
+                    title = lines[0].TrimStart('#').Trim();
+                }
                 
                 var fileInfo = new FileInfo(filePath);
                 notes.Add(new Note

@@ -30,7 +30,7 @@
 
     private async Task OnContentChanged(string content)
     {
-        if (note != null)
+        if (note != null && !string.IsNullOrEmpty(note.Id))
         {
             note.Content = content;
             // Auto-save after content changes
@@ -40,7 +40,7 @@
 
     private async Task SaveNote()
     {
-        if (note != null)
+        if (note != null && !string.IsNullOrEmpty(note.Id))
         {
             await NoteService.UpdateNoteAsync(note);
             StateHasChanged();

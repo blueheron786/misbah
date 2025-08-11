@@ -28,7 +28,7 @@ else
                 
                 <div class="row h-100">
                     <div class="col-md-4">
-                        <div class="card h-100 bg-dark text-light">
+                        <div class="card h-100">
                             <div class="card-body">
                                 <h5 class="card-title">Folders</h5>
                                 <FolderTree RootPath="@_hubPath" OnNoteSelected="OnNoteSelected" />
@@ -36,17 +36,10 @@ else
                         </div>
                     </div>
                     <div class="col-md-8">
-                        <div class="card h-100 bg-dark text-light">
+                        <div class="card h-100">
                             <div class="card-body">
-                                <h5 class="card-title">Notes</h5>
-                                @if (!string.IsNullOrEmpty(_selectedNoteId))
-                                {
-                                    <NoteView NoteId="@_selectedNoteId" />
-                                }
-                                else
-                                {
-                                    <p>Select a note from the folder tree</p>
-                                }
+                                <h5 class="card-title">Note Viewer</h5>
+                                <SimpleNoteViewer NoteId="@_selectedNoteId" />
                             </div>
                         </div>
                     </div>

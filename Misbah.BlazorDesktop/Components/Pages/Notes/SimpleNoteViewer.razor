@@ -1,0 +1,74 @@
+@namespace Misbah.BlazorDesktop.Components.Pages.Notes
+@using Misbah.Application.DTOs
+@using Misbah.Application.Interfaces
+@inject INoteService NoteService
+
+<div class="note-viewer">
+    @if (isLoading)
+    {
+        <p>Loading note...</p>
+    }
+    else if (currentNote != null)
+    {
+        <div class="note-header">
+            <h3>@currentNote.Title</h3>
+            <small class="text-muted">Last modified: @currentNote.Modified.ToString("yyyy-MM-dd HH:mm")</small>
+        </div>
+        <div class="note-content">
+            <pre>@currentNote.Content</pre>
+        </div>
+    }
+    else if (!string.IsNullOrEmpty(NoteId))
+    {
+        <p>Note not found: @NoteId</p>
+    }
+    else
+    {
+        <p>Select a note to view</p>
+    }
+</div>
+
+@code {
+    [Parameter] public string? NoteId { get; set; }
+    
+    private NoteDto? currentNote;
+    private bool isLoading = false;
+    private string? lastNoteId;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (NoteId != lastNoteId)
+        {
+            lastNoteId = NoteId;
+            await LoadNote();
+        }
+    }
+
+    private async Task LoadNote()
+    {
+        if (string.IsNullOrEmpty(NoteId))
+        {
+            currentNote = null;
+            return;
+        }
+
+        try
+        {
+            isLoading = true;
+            StateHasChanged();
+            
+            currentNote = await NoteService.GetNoteByIdAsync(NoteId);
+        }
+        catch (Exception ex)
+        {
+            // For now, just clear the note on error
+            currentNote = null;
+            Console.WriteLine($"Error loading note {NoteId}: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+}

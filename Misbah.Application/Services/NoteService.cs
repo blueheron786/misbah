@@ -44,6 +44,11 @@ namespace Misbah.Application.Services
 
         public async Task UpdateNoteAsync(NoteDto noteDto)
         {
+            if (noteDto == null || string.IsNullOrEmpty(noteDto.Id))
+            {
+                throw new ArgumentException("Note and Note ID cannot be null or empty.");
+            }
+
             var existingNote = await _noteRepository.GetByIdAsync(noteDto.Id);
             if (existingNote == null)
             {

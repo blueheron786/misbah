@@ -95,7 +95,7 @@ pre.misbah-code {
 
     private async Task OnContentChanged(string content)
     {
-        if (note != null)
+        if (note != null && !string.IsNullOrEmpty(note.Id))
         {
             note.Content = content;
             await NoteService.UpdateNoteAsync(note); // Auto-save
