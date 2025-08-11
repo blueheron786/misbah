@@ -1,5 +1,7 @@
 @using Misbah.Application.DTOs
 @using Misbah.Application.Interfaces
 @code {
-    // ...existing code from BlazorDesktop/Pages/Notes/FolderTree.razor...
+    [Parameter] public string? RootPath { get; set; }
+    [Parameter] public EventCallback<string> OnNoteSelected { get; set; }
+    // Placeholder FolderTree component - full implementation in BlazorDesktop
 }

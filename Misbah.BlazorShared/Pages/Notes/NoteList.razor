@@ -36,6 +36,13 @@
     private FolderNodeDto? _folderTree;
     private string? _selectedNoteId;
     private bool _showFolders = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var notesResult = await NoteService.GetAllNotesAsync();
+        _notes = notesResult.ToList();
+    }
+
     private void SelectNote(string noteId)
     {
         _selectedNoteId = noteId;

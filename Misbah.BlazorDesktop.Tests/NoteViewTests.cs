@@ -27,6 +27,6 @@ public class NoteViewTests : TestContext
 
         // Assert
         Assert.Contains("Test Note", cut.Markup);
-        Assert.Contains("WysiwygMarkdownEditor", cut.Markup);
+        Assert.Contains("wysiwyg-markdown-editor", cut.Markup);
     }
 }

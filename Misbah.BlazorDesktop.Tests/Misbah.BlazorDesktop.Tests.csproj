@@ -1,124 +1,25 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <IsPackable>false</IsPackable>
+    <EnableDefaultContentItems>false</EnableDefaultContentItems>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="AngleSharp.Css" Version="1.0.0-beta.139" />
-    <PackageReference Include="AngleSharp.Diffing" Version="0.18.2" />
-    <PackageReference Include="AutoMapper" Version="12.0.1" />
-    <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="12.0.1" />
     <PackageReference Include="bunit" Version="1.27.17" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="8.0.8" />
     <PackageReference Include="Microsoft.AspNetCore.Components" Version="8.0.18" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.1" />
     <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="8.0.18" />
     <PackageReference Include="NSubstitute" Version="5.0.0" />
-  <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="8.0.0" />
     <PackageReference Include="xunit" Version="2.4.2" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.4.5" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Misbah.Core\Misbah.Core.csproj" />
     <ProjectReference Include="..\Misbah.BlazorShared\Misbah.BlazorShared.csproj" />
   </ItemGroup>
-
-  <Target Name="CopyAngleSharpDlls" AfterTargets="Build">
-    <!-- PropertyGroup for DLL paths is required for the ItemGroup below. No duplication. -->
-    <PropertyGroup>
-      <AngleSharpDllPath>$(UserProfile)\.nuget\packages\anglesharp\1.1.0\lib\net8.0\AngleSharp.dll</AngleSharpDllPath>
-      <AngleSharpCssDllPath>$(UserProfile)\.nuget\packages\anglesharp.css\1.0.0-beta.139\lib\net8.0\AngleSharp.Css.dll</AngleSharpCssDllPath>
-      <AngleSharpDiffingDllPath>$(UserProfile)\.nuget\packages\anglesharp.diffing\0.18.2\lib\netstandard2.0\AngleSharp.Diffing.dll</AngleSharpDiffingDllPath>
-      <AutoMapperDllPath>$(UserProfile)\.nuget\packages\automapper\12.0.1\lib\netstandard2.1\AutoMapper.dll</AutoMapperDllPath>
-      <AutoMapperExtensionsDllPath>$(UserProfile)\.nuget\packages\automapper.extensions.microsoft.dependencyinjection\12.0.1\lib\netstandard2.1\AutoMapper.Extensions.Microsoft.DependencyInjection.dll</AutoMapperExtensionsDllPath>
-      <BunitCoreDllPath>$(UserProfile)\.nuget\packages\bunit.core\1.27.17\lib\net8.0\Bunit.Core.dll</BunitCoreDllPath>
-      <BunitWebDllPath>$(UserProfile)\.nuget\packages\bunit.web\1.27.17\lib\net8.0\Bunit.Web.dll</BunitWebDllPath>
-      <CastleCoreDllPath>$(UserProfile)\.nuget\packages\castle.core\5.0.0\lib\net6.0\Castle.Core.dll</CastleCoreDllPath>
-      <LibGit2SharpDllPath>$(UserProfile)\.nuget\packages\libgit2sharp\0.30.0\lib\net6.0\LibGit2Sharp.dll</LibGit2SharpDllPath>
-      <MarkdigDllPath>$(UserProfile)\.nuget\packages\markdig\0.41.3\lib\net8.0\Markdig.dll</MarkdigDllPath>
-      <AspNetCoreAuthorizationDllPath>$(UserProfile)\.nuget\packages\microsoft.aspnetcore.authorization\8.0.18\lib\net8.0\Microsoft.AspNetCore.Authorization.dll</AspNetCoreAuthorizationDllPath>
-      <AspNetCoreComponentsDllPath>$(UserProfile)\.nuget\packages\microsoft.aspnetcore.components\8.0.18\lib\net8.0\Microsoft.AspNetCore.Components.dll</AspNetCoreComponentsDllPath>
-      <AspNetCoreComponentsAuthDllPath>$(UserProfile)\.nuget\packages\microsoft.aspnetcore.components.authorization\8.0.2\lib\net8.0\Microsoft.AspNetCore.Components.Authorization.dll</AspNetCoreComponentsAuthDllPath>
-      <AspNetCoreComponentsFormsDllPath>$(UserProfile)\.nuget\packages\microsoft.aspnetcore.components.forms\8.0.18\lib\net8.0\Microsoft.AspNetCore.Components.Forms.dll</AspNetCoreComponentsFormsDllPath>
-      <AspNetCoreComponentsWebDllPath>$(UserProfile)\.nuget\packages\microsoft.aspnetcore.components.web\8.0.18\lib\net8.0\Microsoft.AspNetCore.Components.Web.dll</AspNetCoreComponentsWebDllPath>
-      <AspNetCoreComponentsWebAssemblyDllPath>$(UserProfile)\.nuget\packages\microsoft.aspnetcore.components.webassembly\8.0.8\lib\net8.0\Microsoft.AspNetCore.Components.WebAssembly.dll</AspNetCoreComponentsWebAssemblyDllPath>
-      <AspNetCoreComponentsWebAssemblyAuthDllPath>$(UserProfile)\.nuget\packages\microsoft.aspnetcore.components.webassembly.authentication\8.0.2\lib\net8.0\Microsoft.AspNetCore.Components.WebAssembly.Authentication.dll</AspNetCoreComponentsWebAssemblyAuthDllPath>
-      <AspNetCoreMetadataDllPath>$(UserProfile)\.nuget\packages\microsoft.aspnetcore.metadata\8.0.18\lib\net8.0\Microsoft.AspNetCore.Metadata.dll</AspNetCoreMetadataDllPath>
-      <ExtensionsCachingAbstractionsDllPath>$(UserProfile)\.nuget\packages\microsoft.extensions.caching.abstractions\8.0.0\lib\net8.0\Microsoft.Extensions.Caching.Abstractions.dll</ExtensionsCachingAbstractionsDllPath>
-      <ExtensionsCachingMemoryDllPath>$(UserProfile)\.nuget\packages\microsoft.extensions.caching.memory\8.0.0\lib\net8.0\Microsoft.Extensions.Caching.Memory.dll</ExtensionsCachingMemoryDllPath>
-      <ExtensionsConfigurationDllPath>$(UserProfile)\.nuget\packages\microsoft.extensions.configuration\8.0.0\lib\net8.0\Microsoft.Extensions.Configuration.dll</ExtensionsConfigurationDllPath>
-      <ExtensionsConfigurationAbstractionsDllPath>$(UserProfile)\.nuget\packages\microsoft.extensions.configuration.abstractions\8.0.0\lib\net8.0\Microsoft.Extensions.Configuration.Abstractions.dll</ExtensionsConfigurationAbstractionsDllPath>
-      <ExtensionsConfigurationBinderDllPath>$(UserProfile)\.nuget\packages\microsoft.extensions.configuration.binder\8.0.0\lib\net8.0\Microsoft.Extensions.Configuration.Binder.dll</ExtensionsConfigurationBinderDllPath>
-      <ExtensionsConfigurationJsonDllPath>$(UserProfile)\.nuget\packages\microsoft.extensions.configuration.json\8.0.0\lib\net8.0\Microsoft.Extensions.Configuration.Json.dll</ExtensionsConfigurationJsonDllPath>
-      <ExtensionsConfigurationFileExtensionsDllPath>$(UserProfile)\.nuget\packages\microsoft.extensions.configuration.fileextensions\8.0.0\lib\net8.0\Microsoft.Extensions.Configuration.FileExtensions.dll</ExtensionsConfigurationFileExtensionsDllPath>
-      <ExtensionsOptionsDllPath>$(UserProfile)\.nuget\packages\microsoft.extensions.options\8.0.0\lib\net8.0\Microsoft.Extensions.Options.dll</ExtensionsOptionsDllPath>
-      <ExtensionsPrimitivesDllPath>$(UserProfile)\.nuget\packages\microsoft.extensions.primitives\8.0.0\lib\net8.0\Microsoft.Extensions.Primitives.dll</ExtensionsPrimitivesDllPath>
-      <ExtensionsDependencyInjectionAbstractionsDllPath>$(UserProfile)\.nuget\packages\microsoft.extensions.dependencyinjection.abstractions\8.0.0\lib\net8.0\Microsoft.Extensions.DependencyInjection.Abstractions.dll</ExtensionsDependencyInjectionAbstractionsDllPath>
-      <ExtensionsDependencyInjectionDllPath>$(UserProfile)\.nuget\packages\microsoft.extensions.dependencyinjection\8.0.1\lib\net8.0\Microsoft.Extensions.DependencyInjection.dll</ExtensionsDependencyInjectionDllPath>
-      <ExtensionsLoggingAbstractionsDllPath>$(UserProfile)\.nuget\packages\microsoft.extensions.logging.abstractions\8.0.0\lib\net8.0\Microsoft.Extensions.Logging.Abstractions.dll</ExtensionsLoggingAbstractionsDllPath>
-      <ExtensionsLoggingDllPath>$(UserProfile)\.nuget\packages\microsoft.extensions.logging\8.0.0\lib\net8.0\Microsoft.Extensions.Logging.dll</ExtensionsLoggingDllPath>
-      <ExtensionsFileProvidersAbstractionsDllPath>$(UserProfile)\.nuget\packages\microsoft.extensions.fileproviders.abstractions\8.0.0\lib\net8.0\Microsoft.Extensions.FileProviders.Abstractions.dll</ExtensionsFileProvidersAbstractionsDllPath>
-      <ExtensionsFileProvidersPhysicalDllPath>$(UserProfile)\.nuget\packages\microsoft.extensions.fileproviders.physical\8.0.0\lib\net8.0\Microsoft.Extensions.FileProviders.Physical.dll</ExtensionsFileProvidersPhysicalDllPath>
-      <ExtensionsFileSystemGlobbingDllPath>$(UserProfile)\.nuget\packages\microsoft.extensions.filesystemglobbing\8.0.0\lib\net8.0\Microsoft.Extensions.FileSystemGlobbing.dll</ExtensionsFileSystemGlobbingDllPath>
-      <ExtensionsHostAbstractionsDllPath>$(UserProfile)\.nuget\packages\microsoft.extensions.hosting.abstractions\8.0.0\lib\net8.0\Microsoft.Extensions.Hosting.Abstractions.dll</ExtensionsHostAbstractionsDllPath>
-      <ExtensionsHostDllPath>$(UserProfile)\.nuget\packages\microsoft.extensions.hosting\8.0.0\lib\net8.0\Microsoft.Extensions.Hosting.dll</ExtensionsHostDllPath>
-      <ExtensionsConfigurationEnvironmentVariablesDllPath>$(UserProfile)\.nuget\packages\microsoft.extensions.configuration.environmentvariables\8.0.0\lib\net8.0\Microsoft.Extensions.Configuration.EnvironmentVariables.dll</ExtensionsConfigurationEnvironmentVariablesDllPath>
-      <ExtensionsConfigurationCommandLineDllPath>$(UserProfile)\.nuget\packages\microsoft.extensions.configuration.commandline\8.0.0\lib\net8.0\Microsoft.Extensions.Configuration.CommandLine.dll</ExtensionsConfigurationCommandLineDllPath>
-      <ExtensionsConfigurationUserSecretsDllPath>$(UserProfile)\.nuget\packages\microsoft.extensions.configuration.usersecrets\8.0.0\lib\net8.0\Microsoft.Extensions.Configuration.UserSecrets.dll</ExtensionsConfigurationUserSecretsDllPath>
-      <ExtensionsLocalizationAbstractionsDllPath>$(UserProfile)\.nuget\packages\microsoft.extensions.localization.abstractions\8.0.2\lib\net8.0\Microsoft.Extensions.Localization.Abstractions.dll</ExtensionsLocalizationAbstractionsDllPath>
-      <JSInteropDllPath>$(UserProfile)\.nuget\packages\microsoft.jsinterop\8.0.18\lib\net8.0\Microsoft.JSInterop.dll</JSInteropDllPath>
-      <JSInteropWebAssemblyDllPath>$(UserProfile)\.nuget\packages\microsoft.jsinterop.webassembly\8.0.8\lib\net8.0\Microsoft.JSInterop.WebAssembly.dll</JSInteropWebAssemblyDllPath>
-      <NSubstituteDllPath>$(UserProfile)\.nuget\packages\nsubstitute\5.0.0\lib\net6.0\NSubstitute.dll</NSubstituteDllPath>
-    </PropertyGroup>
-    <ItemGroup>
-      <_DllsToCopy Include="$(AngleSharpDllPath)" />
-      <_DllsToCopy Include="$(AngleSharpCssDllPath)" />
-      <_DllsToCopy Include="$(AngleSharpDiffingDllPath)" />
-      <_DllsToCopy Include="$(AutoMapperDllPath)" />
-      <_DllsToCopy Include="$(AutoMapperExtensionsDllPath)" />
-      <_DllsToCopy Include="$(BunitCoreDllPath)" />
-      <_DllsToCopy Include="$(BunitWebDllPath)" />
-      <_DllsToCopy Include="$(CastleCoreDllPath)" />
-      <_DllsToCopy Include="$(LibGit2SharpDllPath)" />
-      <_DllsToCopy Include="$(MarkdigDllPath)" />
-      <_DllsToCopy Include="$(AspNetCoreAuthorizationDllPath)" />
-      <_DllsToCopy Include="$(AspNetCoreComponentsDllPath)" />
-      <_DllsToCopy Include="$(AspNetCoreComponentsAuthDllPath)" />
-      <_DllsToCopy Include="$(AspNetCoreComponentsFormsDllPath)" />
-      <_DllsToCopy Include="$(AspNetCoreComponentsWebDllPath)" />
-      <_DllsToCopy Include="$(AspNetCoreComponentsWebAssemblyDllPath)" />
-      <_DllsToCopy Include="$(AspNetCoreComponentsWebAssemblyAuthDllPath)" />
-      <_DllsToCopy Include="$(AspNetCoreMetadataDllPath)" />
-      <_DllsToCopy Include="$(ExtensionsCachingAbstractionsDllPath)" />
-      <_DllsToCopy Include="$(ExtensionsCachingMemoryDllPath)" />
-      <_DllsToCopy Include="$(ExtensionsConfigurationDllPath)" />
-      <_DllsToCopy Include="$(ExtensionsConfigurationAbstractionsDllPath)" />
-      <_DllsToCopy Include="$(ExtensionsConfigurationBinderDllPath)" />
-  <_DllsToCopy Include="$(ExtensionsConfigurationJsonDllPath)" />
-      <_DllsToCopy Include="$(ExtensionsConfigurationFileExtensionsDllPath)" />
-      <_DllsToCopy Include="$(ExtensionsOptionsDllPath)" />
-      <_DllsToCopy Include="$(ExtensionsPrimitivesDllPath)" />
-      <_DllsToCopy Include="$(ExtensionsDependencyInjectionAbstractionsDllPath)" />
-      <_DllsToCopy Include="$(ExtensionsDependencyInjectionDllPath)" />
-      <_DllsToCopy Include="$(ExtensionsLoggingAbstractionsDllPath)" />
-      <_DllsToCopy Include="$(ExtensionsLoggingDllPath)" />
-      <_DllsToCopy Include="$(ExtensionsFileProvidersAbstractionsDllPath)" />
-      <_DllsToCopy Include="$(ExtensionsFileProvidersPhysicalDllPath)" />
-      <_DllsToCopy Include="$(ExtensionsFileSystemGlobbingDllPath)" />
-      <_DllsToCopy Include="$(ExtensionsHostAbstractionsDllPath)" />
-      <_DllsToCopy Include="$(ExtensionsHostDllPath)" />
-      <_DllsToCopy Include="$(ExtensionsConfigurationEnvironmentVariablesDllPath)" />
-      <_DllsToCopy Include="$(ExtensionsConfigurationCommandLineDllPath)" />
-      <_DllsToCopy Include="$(ExtensionsConfigurationUserSecretsDllPath)" />
-      <_DllsToCopy Include="$(ExtensionsLocalizationAbstractionsDllPath)" />
-      <_DllsToCopy Include="$(JSInteropDllPath)" />
-      <_DllsToCopy Include="$(JSInteropWebAssemblyDllPath)" />
-      <_DllsToCopy Include="$(NSubstituteDllPath)" />
-    </ItemGroup>
-    <Copy SourceFiles="@(_DllsToCopy)" DestinationFolder="$(OutDir)" SkipUnchangedFiles="true" />
-  </Target>
 </Project>
