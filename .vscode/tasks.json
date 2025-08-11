@@ -3,7 +3,7 @@
 	"tasks": [
 		{
 			"type": "shell",
-			"label": "Build RenderMarkdownCli",
+			"label": "build",
 			"command": "dotnet build Misbah.sln",
 			"group": "build",
 			"problemMatcher": [
@@ -15,16 +15,6 @@
 			"label": "build-blazor-desktop",
 			"command": "dotnet build",
 			"args": ["Misbah.BlazorDesktop"],
-			"group": "build",
-			"problemMatcher": [
-				"$msCompile"
-			]
-		},
-		{
-			"type": "shell",
-			"label": "build-android",
-			"command": "dotnet build",
-			"args": ["Misbah.Android"],
 			"group": "build",
 			"problemMatcher": [
 				"$msCompile"

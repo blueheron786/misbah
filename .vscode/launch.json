@@ -1,0 +1,23 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Launch WPF Application",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build",
+            "program": "${workspaceFolder}\\Misbah.BlazorDesktop\\bin\\Debug\\net8.0-windows10.0.22000.0\\Misbah.BlazorDesktop.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}\\Misbah.BlazorDesktop\\bin\\Debug\\net8.0-windows10.0.22000.0",
+            "console": "internalConsole",
+            "stopAtEntry": false,
+            "internalConsoleOptions": "openOnSessionStart"
+        },
+        {
+            "name": "Attach to WPF Process",
+            "type": "coreclr",
+            "request": "attach",
+            "processName": "Misbah.BlazorDesktop"
+        }
+    ]
+}
