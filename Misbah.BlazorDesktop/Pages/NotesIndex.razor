@@ -1,35 +1,88 @@
 @page "/notes"
+@using Misbah.BlazorDesktop.Components
+@using Misbah.BlazorDesktop.Components.Pages.Notes
+@using Misbah.BlazorDesktop.Utils
 
 <PageTitle>Notes - Misbah</PageTitle>
 
-<div class="container-fluid h-100">
-    <div class="row h-100">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h1>Notes</h1>
-                <button class="btn btn-primary">
-                    ➕ New Note
-                </button>
-            </div>
-            
-            <div class="row">
-                <div class="col-md-4">
-                    <div class="card">
-                        <div class="card-body">
-                            <h5 class="card-title">Folders</h5>
-                            <p>Folder tree will go here</p>
-                        </div>
+@if (string.IsNullOrEmpty(_hubPath))
+{
+    <HubPicker OnHubPicked="OnHubPicked" />
+}
+else
+{
+    <div class="container-fluid h-100">
+        <div class="row h-100">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h1>Notes</h1>
+                    <div>
+                        <button class="btn btn-secondary me-2" @onclick="ChangeHub">
+                            📁 Change Folder
+                        </button>
+                        <button class="btn btn-primary">
+                            ➕ New Note
+                        </button>
                     </div>
                 </div>
-                <div class="col-md-8">
-                    <div class="card">
-                        <div class="card-body">
-                            <h5 class="card-title">Notes</h5>
-                            <p>Note list will go here</p>
+                
+                <div class="row h-100">
+                    <div class="col-md-4">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">Folders</h5>
+                                <FolderTree RootPath="@_hubPath" OnNoteSelected="OnNoteSelected" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-8">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">Notes</h5>
+                                @if (!string.IsNullOrEmpty(_selectedNoteId))
+                                {
+                                    <p>Selected note: @_selectedNoteId</p>
+                                }
+                                else
+                                {
+                                    <p>Select a note from the folder tree</p>
+                                }
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
+}
+
+@code {
+    private string? _hubPath;
+    private string? _selectedNoteId;
+
+    protected override void OnInitialized()
+    {
+        var config = ConfigManager.Load();
+        _hubPath = config.LastHubPath;
+    }
+
+    private void OnHubPicked(string hubPath)
+    {
+        _hubPath = hubPath;
+        var config = new ConfigManager.Config { LastHubPath = hubPath };
+        ConfigManager.Save(config);
+        StateHasChanged();
+    }
+
+    private void ChangeHub()
+    {
+        _hubPath = null;
+        StateHasChanged();
+    }
+
+    private void OnNoteSelected(string noteId)
+    {
+        _selectedNoteId = noteId;
+        StateHasChanged();
+    }
+}

@@ -54,18 +54,40 @@ namespace Misbah.Infrastructure.Persistence.Repositories
         public async Task<IEnumerable<Note>> GetAllAsync()
         {
             var notes = new List<Note>();
-            var files = Directory.GetFiles(_basePath, $"*{FileExtension}");
-
-            foreach (var file in files)
+            
+            if (!Directory.Exists(_basePath))
             {
-                var id = Path.GetFileNameWithoutExtension(file);
-                var note = await GetByIdAsync(id);
-                if (note != null)
-                {
-                    notes.Add(note);
-                }
+                return notes;
             }
 
+            var mdFiles = Directory.GetFiles(_basePath, "*.md");
+            
+            foreach (var filePath in mdFiles)
+            {
+                var fileName = Path.GetFileNameWithoutExtension(filePath);
+                var content = await File.ReadAllTextAsync(filePath);
+                
+                // Extract title from content (first line if it starts with #, otherwise use filename)
+                var title = fileName;
+                var lines = content.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+                if (lines.Length > 0 && lines[0].TrimStart().StartsWith("#"))
+                {
+                    title = lines[0].TrimStart('#').Trim();
+                }
+                
+                var fileInfo = new FileInfo(filePath);
+                notes.Add(new Note
+                {
+                    Id = fileName,
+                    Title = title,
+                    Content = content,
+                    Tags = new List<string>(),
+                    Created = fileInfo.CreationTimeUtc,
+                    Modified = fileInfo.LastWriteTimeUtc,
+                    FilePath = filePath
+                });
+            }
+            
             return notes;
         }
 

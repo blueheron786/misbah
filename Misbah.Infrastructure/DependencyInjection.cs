@@ -11,12 +11,10 @@ namespace Misbah.Infrastructure
     {
         public static IServiceCollection AddInfrastructure(this IServiceCollection services, string basePath = null)
         {
-            // Register repositories
-            services.AddScoped<INoteRepository>(_ => new NoteRepository(
-                basePath != null ? Path.Combine(basePath, "Notes") : null));
+            // Register repositories - don't use subfolders for user-selected hubs
+            services.AddScoped<INoteRepository>(_ => new NoteRepository(basePath));
                 
-            services.AddScoped<IFolderRepository>(_ => new FolderRepository(
-                basePath != null ? Path.Combine(basePath, "Folders") : null));
+            services.AddScoped<IFolderRepository>(_ => new FolderRepository(basePath));
 
             // Register AutoMapper
             services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());

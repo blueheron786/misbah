@@ -18,7 +18,8 @@ namespace Misbah.Infrastructure.Persistence.Repositories
         public FolderRepository(string basePath = null)
         {
             _basePath = basePath ?? Path.Combine(AppDomain.CurrentDomain.BaseDirectory, FoldersDirectory);
-            if (!Directory.Exists(_basePath))
+            // Only create directory if it's the default path (not user-selected)
+            if (basePath == null && !Directory.Exists(_basePath))
             {
                 Directory.CreateDirectory(_basePath);
             }
@@ -26,27 +27,27 @@ namespace Misbah.Infrastructure.Persistence.Repositories
 
         public async Task<FolderNode> GetByPathAsync(string path)
         {
-            var fullPath = Path.Combine(_basePath, path.TrimStart(Path.DirectorySeparatorChar));
+            // For root folder, use _basePath directly, otherwise combine with _basePath
+            var fullPath = string.IsNullOrEmpty(path) || path == "/" ? _basePath : Path.Combine(_basePath, path.TrimStart(Path.DirectorySeparatorChar));
             if (!Directory.Exists(fullPath))
             {
                 return null;
             }
 
-            var metaPath = Path.Combine(fullPath, FolderMetaFile);
             var folderNode = new FolderNode
             {
-                Name = Path.GetFileName(fullPath),
+                Name = string.IsNullOrEmpty(path) || path == "/" ? Path.GetFileName(_basePath) : Path.GetFileName(fullPath),
                 Path = path
             };
 
-            // Load subfolders
+            // Load subfolders (skip hidden directories)
             var subDirs = Directory.GetDirectories(fullPath)
                 .Where(d => !Path.GetFileName(d).StartsWith("."));
             
             foreach (var dir in subDirs)
             {
-                var subPath = Path.Combine(path, Path.GetFileName(dir));
-                var subFolder = await GetByPathAsync(subPath);
+                var relativePath = Path.GetRelativePath(_basePath, dir).Replace(Path.DirectorySeparatorChar, '/');
+                var subFolder = await GetByPathAsync(relativePath);
                 if (subFolder != null)
                 {
                     folderNode.Folders.Add(subFolder);
