@@ -67,19 +67,11 @@ namespace Misbah.Infrastructure.Persistence.Repositories
                 var fileName = Path.GetFileNameWithoutExtension(filePath);
                 var content = await File.ReadAllTextAsync(filePath);
                 
-                // Extract title from content (first line if it starts with #, otherwise use filename)
-                var title = fileName;
-                var lines = content.Split('\n', StringSplitOptions.RemoveEmptyEntries);
-                if (lines.Length > 0 && lines[0].TrimStart().StartsWith("#"))
-                {
-                    title = lines[0].TrimStart('#').Trim();
-                }
-                
                 var fileInfo = new FileInfo(filePath);
                 notes.Add(new Note
                 {
                     Id = fileName,
-                    Title = title,
+                    Title = fileName, // Just use the filename
                     Content = content,
                     Tags = new List<string>(),
                     Created = fileInfo.CreationTimeUtc,

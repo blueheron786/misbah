@@ -41,10 +41,10 @@ namespace Misbah.Infrastructure.Tests
                 Assert.Contains(notesList, n => n.Id == "another-note");
                 Assert.Contains(notesList, n => n.Id == "note-with-spaces");
                 
-                // Verify titles come from markdown headers
-                Assert.Contains(notesList, n => n.Title == "Test Note");
-                Assert.Contains(notesList, n => n.Title == "Another Note");
-                Assert.Contains(notesList, n => n.Title == "Note with Spaces");
+                // Verify titles are also just filenames (no markdown header extraction)
+                Assert.Contains(notesList, n => n.Title == "test-note");
+                Assert.Contains(notesList, n => n.Title == "another-note");
+                Assert.Contains(notesList, n => n.Title == "note-with-spaces");
                 
                 // Verify no full paths in IDs or titles
                 Assert.All(notesList, note => 
