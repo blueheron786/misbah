@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using Bunit;
 using Xunit;
 using Misbah.BlazorShared.Pages.Notes;

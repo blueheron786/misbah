@@ -1,5 +1,45 @@
+@namespace Misbah.BlazorShared.Pages.Notes
+@using Misbah.Domain.Entities
 @using Misbah.Application.DTOs
-@using Misbah.Application.Interfaces
+@using Misbah.BlazorShared.Resources
+@inject Misbah.Application.Interfaces.INoteService NoteService
+@inject Misbah.Application.Interfaces.IFolderService FolderService
+@inject NavigationManager Navigation
+<div class="sidebar-panel-wrapper">
+    <button @onclick="() => _showFolders = !_showFolders" class="toggle-panel-btn">
+        @(_showFolders ? AppStrings.HideFolders : AppStrings.ShowFolders)
+    </button>
+    @if (_showFolders)
+    {
+        <FolderTree RootPath="@RootPath" OnNoteSelected="SelectNote" />
+    }
+    <h3>@AppStrings.Notes</h3>
+    <ul>
+        @if (_notes != null)
+        {
+            foreach (var note in _notes)
+            {
+                <li @onclick="() => SelectNote(note.Id)" class="@(_selectedNoteId == note.Id ? "selected" : "")">
+                    @note.Title
+                </li>
+            }
+        }
+        else
+        {
+            <li><em>@AppStrings.NoNotesFound</em></li>
+        }
+    </ul>
+</div>
 @code {
-    // ...existing code from BlazorDesktop/Pages/Notes/NoteList.razor...
+    [Parameter] public string? RootPath { get; set; }
+    private List<NoteDto>? _notes;
+    private FolderNodeDto? _folderTree;
+    private string? _selectedNoteId;
+    private bool _showFolders = true;
+    private void SelectNote(string noteId)
+    {
+        _selectedNoteId = noteId;
+        // Add navigation or callback logic as needed
+    }
+    // ...rest of logic as needed...
 }
