@@ -3,7 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 
-namespace Misbah.Core.Services
+namespace Misbah.Infrastructure.Services
 {
     public class AutoSaveService : IAutoSaveService, IDisposable
     {

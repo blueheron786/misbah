@@ -9,6 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="AutoMapper" Version="12.0.1" />
     <PackageReference Include="coverlet.collector" Version="6.0.2" />
     <PackageReference Include="Markdig" Version="0.41.3" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
@@ -22,7 +23,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Misbah.Core\Misbah.Core.csproj" />
+  <ProjectReference Include="..\Misbah.Core\Misbah.Core.csproj" />
+  <ProjectReference Include="..\Misbah.Application\Misbah.Application.csproj" />
   </ItemGroup>
 
 </Project>

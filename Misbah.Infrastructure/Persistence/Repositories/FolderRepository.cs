@@ -79,7 +79,7 @@ namespace Misbah.Infrastructure.Persistence.Repositories
             return folders;
         }
 
-        public async Task<FolderNode> AddAsync(FolderNode folder)
+    public async Task AddAsync(FolderNode folder)
         {
             var fullPath = Path.Combine(_basePath, folder.Path.TrimStart(Path.DirectorySeparatorChar));
             if (Directory.Exists(fullPath))
@@ -92,7 +92,7 @@ namespace Misbah.Infrastructure.Persistence.Repositories
                 Path.Combine(fullPath, FolderMetaFile), 
                 JsonConvert.SerializeObject(new { Created = DateTime.UtcNow }));
 
-            return folder;
+            return;
         }
 
         public async Task UpdateAsync(FolderNode folder)

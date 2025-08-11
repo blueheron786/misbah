@@ -4,8 +4,8 @@ using Microsoft.AspNetCore.Components;
 using Bunit;
 using Xunit;
 using Misbah.BlazorDesktop.Components.Pages.Notes;
-using Misbah.Core.Models;
-using Misbah.Core.Services;
+using Misbah.Domain.Entities;
+using Misbah.Application.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
 

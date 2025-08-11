@@ -1,29 +1,29 @@
 @using Misbah.BlazorDesktop.Pages.Notes
 @namespace Misbah.BlazorDesktop.Components.Pages.Notes
-@using Misbah.Core.Models
+@using Misbah.Application.DTOs
 @using Misbah.BlazorDesktop.Resources
-@using Misbah.Core.Services
+@using Misbah.Application.Interfaces
 @inject INoteService NoteService
 @inject IJSRuntime JS
 
 @code {
     [Parameter] public string NoteId { get; set; }
-    private Note note;
+    private NoteDto note;
     private bool isLiveEditMode = true;
     private bool isPreviewMode = false;
     private bool useLiveView = false; // New option for Obsidian-style editing
     private string currentTheme = "light";
     private TrueLiveMarkdownEditor? editorRef;
 
-    protected override void OnParametersSet()
+    protected override async Task OnParametersSetAsync()
     {
         if (!string.IsNullOrEmpty(NoteId))
         {
-            note = NoteService.LoadNote(NoteId);
+            note = await NoteService.GetNoteByIdAsync(NoteId);
             if (note == null)
             {
                 // Fallback: create a dummy note to avoid null reference and show error
-                note = new Note { Title = "(Note not found)", Content = "Could not load note with ID: " + NoteId };
+                note = new NoteDto { Title = "(Note not found)", Content = "Could not load note with ID: " + NoteId };
             }
         }
     }
@@ -38,14 +38,13 @@
         }
     }
 
-    private Task SaveNote()
+    private async Task SaveNote()
     {
         if (note != null)
         {
-            NoteService.SaveNote(note);
+            await NoteService.UpdateNoteAsync(note);
             StateHasChanged();
         }
-        return Task.CompletedTask;
     }
 
     private Task TogglePreviewMode()

@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace Misbah.Core.Services
+namespace Misbah.Infrastructure.Services
 {
     public interface IGitSyncService
     {

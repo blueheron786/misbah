@@ -2,8 +2,8 @@ using System.Collections.Generic;
 using Bunit;
 using Xunit;
 using Misbah.BlazorDesktop.Components.Pages.Notes;
-using Misbah.Core.Models;
-using Misbah.Core.Services;
+using Misbah.Domain.Entities;
+using Misbah.Application.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
 
@@ -19,7 +19,7 @@ public class NoteViewTests : TestContext
         var noteService = Substitute.For<INoteService>();
         noteService.LoadNote("n1").Returns(note);
         Services.AddSingleton(noteService);
-        Services.AddSingleton(new Misbah.Core.Services.MarkdownRenderer());
+    Services.AddSingleton(new Misbah.Application.Services.MarkdownRenderer());
         Services.AddSingleton<Microsoft.JSInterop.IJSRuntime>(Substitute.For<Microsoft.JSInterop.IJSRuntime>());
 
         // Act

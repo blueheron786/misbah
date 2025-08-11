@@ -36,8 +36,8 @@ namespace Misbah.Application.Services
         public async Task<FolderNodeDto> CreateFolderAsync(FolderNodeDto folderDto)
         {
             var folder = _mapper.Map<FolderNode>(folderDto);
-            var createdFolder = await _folderRepository.AddAsync(folder);
-            return _mapper.Map<FolderNodeDto>(createdFolder);
+            await _folderRepository.AddAsync(folder);
+            return folderDto;
         }
 
         public async Task UpdateFolderAsync(FolderNodeDto folderDto)

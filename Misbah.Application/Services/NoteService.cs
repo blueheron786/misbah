@@ -38,9 +38,8 @@ namespace Misbah.Application.Services
             var note = _mapper.Map<Note>(noteDto);
             note.Created = DateTime.UtcNow;
             note.Modified = DateTime.UtcNow;
-            
-            var createdNote = await _noteRepository.AddAsync(note);
-            return _mapper.Map<NoteDto>(createdNote);
+            await _noteRepository.AddAsync(note);
+            return noteDto;
         }
 
         public async Task UpdateNoteAsync(NoteDto noteDto)
@@ -53,7 +52,6 @@ namespace Misbah.Application.Services
 
             var note = _mapper.Map<Note>(noteDto);
             note.Modified = DateTime.UtcNow;
-            
             await _noteRepository.UpdateAsync(note);
         }
 

@@ -19,15 +19,15 @@ pre.misbah-code {
 </style>
 @namespace Misbah.BlazorDesktop.Components.Pages.Notes
 @page "/notes/{NoteId}"
-@using Misbah.Core.Models
+@using Misbah.Application.DTOs
 @using Misbah.BlazorDesktop.Resources
 @using Microsoft.JSInterop
 @using Markdig
 @using Misbah.BlazorDesktop.Components.Pages.Notes
 @using Misbah.BlazorDesktop.Components
-@inject Misbah.Core.Services.INoteService NoteService
+@inject Misbah.Application.Interfaces.INoteService NoteService
 @inject IJSRuntime JSRuntime
-@inject Misbah.Core.Services.MarkdownRenderer MarkdownRenderer
+@inject Misbah.Application.Services.MarkdownRenderer MarkdownRenderer
 
 <style>
 .misbah-code {
@@ -54,7 +54,7 @@ pre.misbah-code {
     private static bool _jsHandlerRegistered = false;
 
     [Parameter] public string? NoteId { get; set; }
-    private Note? note;
+    private NoteDto? note;
     private string? editedContent;
 
     [JSInvokable("ToggleTask")]
@@ -73,9 +73,9 @@ pre.misbah-code {
                     string newLine = isChecked ? "- [ ] " + match.Groups[2].Value : "- [x] " + match.Groups[2].Value;
                     lines[line] = newLine;
                     _instance.note.Content = string.Join("\n", lines);
-                    _instance.NoteService.SaveNote(_instance.note);
+                    await _instance.NoteService.UpdateNoteAsync(_instance.note);
                     // Reload the note from storage to ensure latest content
-                    _instance.note = _instance.NoteService.LoadNote(_instance.NoteId);
+                    _instance.note = await _instance.NoteService.GetNoteByIdAsync(_instance.NoteId);
                     _instance.editedContent = _instance.note.Content;
                     await _instance.InvokeAsync(_instance.StateHasChanged);
                 }
@@ -83,25 +83,24 @@ pre.misbah-code {
         }
     }
     
-    protected override void OnParametersSet()
+    protected override async Task OnParametersSetAsync()
     {
         _instance = this;
         if (!string.IsNullOrEmpty(NoteId))
         {
-            note = NoteService.LoadNote(NoteId);
+            note = await NoteService.GetNoteByIdAsync(NoteId);
             editedContent = note?.Content;
         }
     }
 
-    private Task OnContentChanged(string content)
+    private async Task OnContentChanged(string content)
     {
         if (note != null)
         {
             note.Content = content;
-            NoteService.SaveNote(note); // Auto-save
+            await NoteService.UpdateNoteAsync(note); // Auto-save
             StateHasChanged();
         }
-        return Task.CompletedTask;
     }
 
 

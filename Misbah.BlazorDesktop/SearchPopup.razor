@@ -1,6 +1,6 @@
 @namespace Misbah.BlazorDesktop.Components
-@using Misbah.Core.Models
-@inject Misbah.Core.Utils.SearchService SearchService
+@using Misbah.Application.DTOs
+@inject Misbah.Application.Interfaces.INoteService NoteService
 @inject IJSRuntime JS
 
 <div class="modal-backdrop" @onclick="HandleBackdropClick" style="position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.4);z-index:9998;"></div>
@@ -27,7 +27,7 @@
 
 @code {
     private string _query = string.Empty;
-    private List<Note> _results = new();
+    private List<NoteDto> _results = new();
     private int _selectedIndex = 0;
     private ElementReference searchInput;
     [Parameter] public EventCallback<string> OnNoteSelected { get; set; }
@@ -46,13 +46,13 @@
         OnClose.InvokeAsync();
     }
 
-    private void OnInput(ChangeEventArgs e)
+    private async Task OnInput(ChangeEventArgs e)
     {
         _query = e.Value?.ToString() ?? string.Empty;
-        UpdateResults();
+        await UpdateResultsAsync();
     }
 
-    private void UpdateResults()
+    private async Task UpdateResultsAsync()
     {
         if (string.IsNullOrWhiteSpace(_query))
         {
@@ -60,16 +60,14 @@
         }
         else
         {
-            _results = SearchService.Search(_query)
-                .OrderByDescending(n => Score(n, _query))
-                .Take(10)
-                .ToList();
+            var results = await NoteService.SearchNotesAsync(_query);
+            _results = results.OrderByDescending(n => Score(n, _query)).Take(10).ToList();
         }
         _selectedIndex = 0;
         StateHasChanged();
     }
 
-    private double Score(Note note, string query)
+    private double Score(NoteDto note, string query)
     {
         // Simple scoring: title match > tag match > content match
         query = query.ToLower();

@@ -69,7 +69,7 @@ namespace Misbah.Infrastructure.Persistence.Repositories
             return notes;
         }
 
-        public async Task<Note> AddAsync(Note note)
+    public async Task AddAsync(Note note)
         {
             var id = string.IsNullOrEmpty(note.Id) ? Guid.NewGuid().ToString() : note.Id;
             var filePath = Path.Combine(_basePath, id + FileExtension);
@@ -91,7 +91,7 @@ namespace Misbah.Infrastructure.Persistence.Repositories
             note.Created = meta.Created;
             note.Modified = meta.Modified;
 
-            return note;
+            return;
         }
 
         public async Task UpdateAsync(Note note)

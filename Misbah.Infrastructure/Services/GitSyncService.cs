@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 using LibGit2Sharp;
 using Microsoft.Extensions.Logging;
 
-namespace Misbah.Core.Services
+namespace Misbah.Infrastructure.Services
 {
     public class GitSyncService : IGitSyncService, IDisposable
     {

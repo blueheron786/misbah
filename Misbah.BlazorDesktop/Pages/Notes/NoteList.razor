@@ -1,9 +1,10 @@
 @namespace Misbah.BlazorDesktop.Components.Pages.Notes
-@using Misbah.Core.Models
+@using Misbah.Domain.Entities
+@using Misbah.Application.DTOs
 @using Misbah.BlazorDesktop.Components.Pages.Notes
 @using Misbah.BlazorDesktop.Resources
-@inject Misbah.Core.Services.INoteService NoteService
-@inject Misbah.Core.Services.IFolderService FolderService
+@inject Misbah.Application.Interfaces.INoteService NoteService
+@inject Misbah.Application.Interfaces.IFolderService FolderService
 @inject NavigationManager Navigation
 <div class="sidebar-panel-wrapper">
     <button @onclick="() => _showFolders = !_showFolders" class="toggle-panel-btn">
@@ -32,23 +33,24 @@
 </div>
 @code {
     [Parameter] public string? RootPath { get; set; }
-    private List<Note>? _notes;
-    private FolderNode? _folderTree;
+    private List<NoteDto>? _notes;
+    private FolderNodeDto? _folderTree;
     private string? _selectedNoteId;
     private bool _showFolders = true;
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         if (!string.IsNullOrEmpty(RootPath))
         {
-            _folderTree = FolderService.LoadFolderTree(RootPath);
-            _notes = NoteService.GetAllNotes().ToList();
+            _folderTree = await FolderService.GetFolderByPathAsync(RootPath);
+            var notes = await NoteService.GetAllNotesAsync();
+            _notes = notes.ToList();
         }
     }
 
     public void SelectNote(string id)
     {
         _selectedNoteId = id;
-        Navigation.NavigateTo($"/notes/{Uri.EscapeDataString(id)}");
+    Navigation.NavigateTo($"/notes/{Uri.EscapeDataString(id)}");
     }
 }

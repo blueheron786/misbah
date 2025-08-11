@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using NUnit.Framework;
-using Misbah.Core.Services;
+using Misbah.Application.Services;
 
 namespace Misbah.Core.Tests
 {

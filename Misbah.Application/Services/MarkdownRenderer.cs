@@ -4,7 +4,7 @@ using System.Text.RegularExpressions;
 using Markdig;
 using Markdig.Renderers;
 
-namespace Misbah.Core.Services
+namespace Misbah.Application.Services
 {
     public class MarkdownRenderer
     {

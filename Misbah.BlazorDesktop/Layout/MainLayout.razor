@@ -1,5 +1,5 @@
 @namespace Misbah.BlazorDesktop.Components.Layout
-@using Misbah.Core.Services
+@using Misbah.Application.Interfaces
 @using Misbah.BlazorDesktop.Components.Layout
 @using Misbah.BlazorDesktop.Resources
 @using Misbah.BlazorDesktop.Utils
@@ -8,10 +8,10 @@
 
 @inherits LayoutComponentBase
 
-@inject Misbah.Core.Services.INoteService NoteService
+@inject Misbah.Application.Interfaces.INoteService NoteService
 @inject IJSRuntime JS
 
-@using Misbah.Core.Utils
+@using Misbah.Infrastructure.Services
 @using Misbah.BlazorDesktop.Components
 @using Misbah.BlazorDesktop.Components.Pages.Notes
 <link rel="stylesheet" href="css/search-popup.css" />
@@ -77,10 +77,6 @@
         if (!string.IsNullOrEmpty(config.LastHubPath) && Directory.Exists(config.LastHubPath))
         {
             _hubRoot = config.LastHubPath;
-            if (NoteService is Misbah.Core.Services.NoteService concrete)
-            {
-                concrete.SetRootPath(_hubRoot);
-            }
         }
     }
 
@@ -89,11 +85,6 @@
     {
         _hubRoot = path;
         _selectedNoteId = null;
-        // Update NoteService root path if possible
-        if (NoteService is Misbah.Core.Services.NoteService concrete)
-        {
-            concrete.SetRootPath(path);
-        }
         // Save to config
         var config = ConfigManager.Load();
         config.LastHubPath = path;
@@ -113,9 +104,10 @@
         _instance?.NavigateToNoteByTitleInstance(title);
     }
 
-    private void NavigateToNoteByTitleInstance(string title)
+    private async void NavigateToNoteByTitleInstance(string title)
     {
-        var note = NoteService.GetAllNotes().FirstOrDefault(n => n.Title == title);
+        var notes = await NoteService.GetAllNotesAsync();
+        var note = notes.FirstOrDefault(n => n.Title == title);
         if (note != null)
         {
             _selectedNoteId = note.Id;
