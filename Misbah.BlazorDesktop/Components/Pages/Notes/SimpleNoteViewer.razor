@@ -57,9 +57,7 @@
             isLoading = true;
             StateHasChanged();
             
-            Console.WriteLine($"Loading note with ID: {NoteId}");
             currentNote = await NoteService.GetNoteByIdAsync(NoteId);
-            Console.WriteLine($"Note loaded successfully: {currentNote?.Title}");
         }
         catch (Exception ex)
         {

@@ -49,31 +49,32 @@ namespace Misbah.Infrastructure.Persistence.Repositories
                 }
             }
 
-            // Get notes from the NoteRepository
-            var allNotes = await _noteRepo.GetAllAsync();
-            Console.WriteLine($"DEBUG: FolderRepository - Got {allNotes.Count()} total notes from repository");
-            Console.WriteLine($"DEBUG: FolderRepository - Looking for notes in directory: '{fullPath}'");
+            // Get notes directly from this specific directory only (no reading file contents)
+            var notesInThisDir = new List<Note>();
             
-            // Filter notes that are in this specific directory
-            var notesInThisDir = allNotes.Where(note => 
+            if (Directory.Exists(fullPath))
             {
-                // Get the directory of the note file
-                var noteDir = Path.GetDirectoryName(note.FilePath);
-                Console.WriteLine($"DEBUG: FolderRepository - Note '{note.Id}' is in directory: '{noteDir}'");
+                var mdFiles = Directory.GetFiles(fullPath, "*.md", SearchOption.TopDirectoryOnly);
                 
-                // Compare the directories (normalize path separators and case)
-                var normalizedNoteDir = noteDir?.Replace('\\', '/').TrimEnd('/');
-                var normalizedFullPath = fullPath.Replace('\\', '/').TrimEnd('/');
-                
-                var matches = string.Equals(normalizedNoteDir, normalizedFullPath, StringComparison.OrdinalIgnoreCase);
-                Console.WriteLine($"DEBUG: FolderRepository - Note '{note.Id}' matches directory: {matches}");
-                
-                return matches;
-            }).ToList();
-
-            Console.WriteLine($"DEBUG: FolderRepository - Found {notesInThisDir.Count} notes in this directory");
+                foreach (var filePath in mdFiles)
+                {
+                    var fileName = Path.GetFileNameWithoutExtension(filePath);
+                    var fileInfo = new FileInfo(filePath);
+                    
+                    notesInThisDir.Add(new Note
+                    {
+                        Id = fileName,
+                        Title = fileName,
+                        Content = string.Empty, // Don't read content for tree view
+                        Tags = new List<string>(),
+                        Created = fileInfo.CreationTimeUtc,
+                        Modified = fileInfo.LastWriteTimeUtc,
+                        FilePath = filePath
+                    });
+                }
+            }
             
-            folder.Notes = notesInThisDir.ToList();
+            folder.Notes = notesInThisDir;
 
             return folder;
         }
