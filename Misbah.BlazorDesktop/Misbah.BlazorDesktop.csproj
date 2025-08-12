@@ -19,6 +19,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Misbah.Core\Misbah.Core.csproj" />
+    <ProjectReference Include="..\Misbah.Domain\Misbah.Domain.csproj" />
     <ProjectReference Include="..\Misbah.Application\Misbah.Application.csproj" />
     <ProjectReference Include="..\Misbah.Infrastructure\Misbah.Infrastructure.csproj" />
   </ItemGroup>
