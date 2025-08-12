@@ -31,6 +31,10 @@ namespace Misbah.BlazorDesktop
             // Register Clean Architecture services (new)
             services.AddScoped<INoteRepository, NoteRepositoryAdapter>();
             services.AddScoped<INoteApplicationService, NoteApplicationService>();
+            
+            // Register Folder Clean Architecture services
+            services.AddScoped<IFolderRepository, FolderRepositoryAdapter>();
+            services.AddScoped<IFolderApplicationService, FolderApplicationService>();
 
             var serviceProvider = services.BuildServiceProvider();
 

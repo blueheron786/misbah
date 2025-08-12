@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Misbah.Core.Services;
 using Misbah.Domain.Entities;
@@ -82,7 +83,7 @@ namespace Misbah.Infrastructure.Repositories
                 Id = legacyNote.Id,
                 Title = legacyNote.Title,
                 Content = legacyNote.Content,
-                Tags = new List<string>(legacyNote.Tags),
+                Tags = ExtractTags(legacyNote.Content ?? string.Empty), // Extract tags from content
                 Created = legacyNote.Created,
                 Modified = legacyNote.Modified,
                 FilePath = legacyNote.FilePath
@@ -111,6 +112,21 @@ namespace Misbah.Infrastructure.Repositories
                 Modified = note.Modified,
                 FilePath = note.FilePath
             };
+        }
+
+        /// <summary>
+        /// Extracts tags from content using regex pattern #tagname
+        /// </summary>
+        private List<string> ExtractTags(string content)
+        {
+            if (string.IsNullOrWhiteSpace(content))
+                return new List<string>();
+
+            var tagMatches = System.Text.RegularExpressions.Regex.Matches(content, @"#(\w+)");
+            return tagMatches.Cast<System.Text.RegularExpressions.Match>()
+                           .Select(m => m.Groups[1].Value)
+                           .Distinct()
+                           .ToList();
         }
     }
 }

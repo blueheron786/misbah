@@ -4,7 +4,7 @@ using Misbah.Core.Services;
 namespace Misbah.Core.Tests
 {
     [TestFixture]
-    public class MarkdownRendererGoldenMasterTests
+    public class MarkdownRendererGoldStandardTests
     {
         private MarkdownRenderer _renderer;
 
