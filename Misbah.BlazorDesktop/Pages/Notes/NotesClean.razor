@@ -26,7 +26,7 @@
             else if (notes != null)
             {
                 <div class="row">
-                    <div class="col-md-6">
+                    <div class="col-md-4">
                         <div class="card">
                             <div class="card-header">
                                 <h5 class="card-title mb-0">📚 Available Notes (@notes.Count)</h5>
@@ -58,7 +58,19 @@
                         </div>
                     </div>
                     
-                    <div class="col-md-6">
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">🗂️ Folder Tree (Clean Architecture)</h5>
+                            </div>
+                            <div class="card-body">
+                                <p class="text-muted small">This shows the new FolderTreeClean component using Clean Architecture services:</p>
+                                <FolderTreeClean RootPath="@CurrentRootPath" OnNoteSelected="OnNoteSelectedFromTree" />
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
                         @if (selectedNote != null)
                         {
                             <div class="card">
@@ -123,6 +135,7 @@
     private Misbah.Domain.Entities.Note? selectedNote;
     private bool loading = true;
     private string? error;
+    private string? CurrentRootPath => @"C:\"; // For demonstration - would come from config
 
     protected override async Task OnInitializedAsync()
     {
@@ -157,5 +170,12 @@
         {
             error = $"Error loading note details: {ex.Message}";
         }
+    }
+
+    private async Task OnNoteSelectedFromTree(string noteId)
+    {
+        // Handle note selection from the folder tree
+        await LoadNoteDetails(noteId);
+        StateHasChanged();
     }
 }
