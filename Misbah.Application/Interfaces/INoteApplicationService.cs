@@ -8,6 +8,7 @@ namespace Misbah.Application.Interfaces
     {
         IEnumerable<Note> GetAllNotes();
         Note LoadNote(string filePath);
+        Task<Note> LoadNoteAsync(string filePath);
         void SaveNote(Note note);
         Task SaveNoteAsync(Note note);
         Note CreateNote(string folderPath, string title);

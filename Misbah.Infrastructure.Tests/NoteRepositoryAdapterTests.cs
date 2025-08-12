@@ -1,7 +1,8 @@
 using Misbah.Core.Services;
-using Misbah.Domain.Entities;
 using Misbah.Infrastructure.Repositories;
 using NSubstitute;
+using CoreNote = Misbah.Core.Models.Note;
+using DomainNote = Misbah.Domain.Entities.Note;
 
 namespace Misbah.Infrastructure.Tests;
 
@@ -19,94 +20,83 @@ public class NoteRepositoryAdapterTests
     }
 
     [Test]
-    public async Task GetByIdAsync_ValidId_ReturnsNote()
+    public async Task GetNoteAsync_ValidFilePath_ReturnsNote()
     {
         // Arrange
-        var noteId = "test-note";
-        var coreNote = new Misbah.Core.Models.Note 
+        var filePath = "test-note.md";
+        var coreNote = new CoreNote 
         { 
-            Id = noteId, 
+            Id = "test-note", 
             Title = "Test Note", 
             Content = "# Test Content",
-            LastModified = DateTime.UtcNow
+            Modified = DateTime.UtcNow,
+            FilePath = filePath
         };
         
-        _noteService.GetNote(noteId).Returns(coreNote);
+        _noteService.LoadNote(filePath).Returns(coreNote);
 
         // Act
-        var result = await _adapter.GetByIdAsync(noteId);
+        var result = await _adapter.GetNoteAsync(filePath);
 
         // Assert
         Assert.That(result, Is.Not.Null);
-        Assert.That(result!.Id, Is.EqualTo(noteId));
+        Assert.That(result!.Id, Is.EqualTo("test-note"));
         Assert.That(result.Title, Is.EqualTo("Test Note"));
         Assert.That(result.Content, Is.EqualTo("# Test Content"));
+        Assert.That(result.FilePath, Is.EqualTo(filePath));
     }
 
     [Test]
-    public async Task GetByIdAsync_NonExistentId_ReturnsNull()
+    public void GetNote_ValidFilePath_ReturnsNote()
     {
         // Arrange
-        var noteId = "non-existent";
-        _noteService.GetNote(noteId).Returns((Misbah.Core.Models.Note?)null);
+        var filePath = "test-note.md";
+        var coreNote = new CoreNote 
+        { 
+            Id = "test-note", 
+            Title = "Test Note", 
+            Content = "# Test Content",
+            Modified = DateTime.UtcNow
+        };
+        
+        _noteService.LoadNote(filePath).Returns(coreNote);
 
         // Act
-        var result = await _adapter.GetByIdAsync(noteId);
+        var result = _adapter.GetNote(filePath);
 
         // Assert
-        Assert.That(result, Is.Null);
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result.Id, Is.EqualTo("test-note"));
+        Assert.That(result.Title, Is.EqualTo("Test Note"));
     }
 
     [Test]
-    public async Task SaveAsync_ValidNote_CallsCoreServiceSave()
+    public async Task SaveNoteAsync_ValidNote_CallsCoreServiceSave()
     {
         // Arrange
-        var domainNote = new Note 
+        var domainNote = new DomainNote 
         { 
             Id = "test-note", 
             Title = "Test Note", 
             Content = "Updated content",
-            LastModified = DateTime.UtcNow
+            Modified = DateTime.UtcNow
         };
 
         // Act
-        await _adapter.SaveAsync(domainNote);
+        await _adapter.SaveNoteAsync(domainNote);
 
         // Assert
-        _noteService.Received(1).SaveNote(Arg.Is<Misbah.Core.Models.Note>(n => 
+        await _noteService.Received(1).SaveNoteAsync(Arg.Is<CoreNote>(n => 
             n.Id == domainNote.Id && 
             n.Title == domainNote.Title && 
             n.Content == domainNote.Content));
     }
 
     [Test]
-    public async Task SearchAsync_ValidQuery_ReturnsMatchingNotes()
+    public void GetAllNotes_ReturnsAllNotes()
     {
         // Arrange
-        var query = "markdown";
-        var coreNotes = new List<Misbah.Core.Models.Note>
-        {
-            new() { Id = "note1", Title = "Markdown Guide", Content = "# Markdown basics" },
-            new() { Id = "note2", Title = "Other", Content = "This mentions markdown too" }
-        };
-        
-        _noteService.SearchNotes(query).Returns(coreNotes);
-
-        // Act
-        var results = await _adapter.SearchAsync(query);
-
-        // Assert
-        Assert.That(results, Is.Not.Null);
-        Assert.That(results.Count(), Is.EqualTo(2));
-        Assert.That(results.First().Title, Is.EqualTo("Markdown Guide"));
-        Assert.That(results.Last().Content, Contains.Substring("markdown"));
-    }
-
-    [Test]
-    public async Task GetAllAsync_ReturnsAllNotes()
-    {
-        // Arrange
-        var coreNotes = new List<Misbah.Core.Models.Note>
+        var coreNotes = new List<CoreNote>
         {
             new() { Id = "note1", Title = "Note 1", Content = "Content 1" },
             new() { Id = "note2", Title = "Note 2", Content = "Content 2" },
@@ -116,7 +106,7 @@ public class NoteRepositoryAdapterTests
         _noteService.GetAllNotes().Returns(coreNotes);
 
         // Act
-        var results = await _adapter.GetAllAsync();
+        var results = _adapter.GetAllNotes();
 
         // Assert
         Assert.That(results, Is.Not.Null);
@@ -126,5 +116,31 @@ public class NoteRepositoryAdapterTests
         Assert.That(resultList[0].Id, Is.EqualTo("note1"));
         Assert.That(resultList[1].Id, Is.EqualTo("note2"));
         Assert.That(resultList[2].Id, Is.EqualTo("note3"));
+    }
+
+    [Test]
+    public async Task CreateNoteAsync_ValidParameters_CallsCoreService()
+    {
+        // Arrange
+        var folderPath = "/notes";
+        var title = "New Note";
+        var expectedCoreNote = new CoreNote
+        {
+            Id = "new-note",
+            Title = title,
+            Content = "",
+            Created = DateTime.UtcNow,
+            Modified = DateTime.UtcNow
+        };
+        
+        _noteService.CreateNoteAsync(folderPath, title).Returns(expectedCoreNote);
+
+        // Act
+        var result = await _adapter.CreateNoteAsync(folderPath, title);
+
+        // Assert
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result.Title, Is.EqualTo(title));
+        await _noteService.Received(1).CreateNoteAsync(folderPath, title);
     }
 }

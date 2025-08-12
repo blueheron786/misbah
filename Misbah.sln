@@ -17,6 +17,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Misbah.Infrastructure", "Mi
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Misbah.Application.Tests", "Misbah.Application.Tests\Misbah.Application.Tests.csproj", "{A856C830-F51D-45EF-BFC7-7E9EAC82BCE2}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Misbah.Infrastructure.Tests", "Misbah.Infrastructure.Tests\Misbah.Infrastructure.Tests.csproj", "{EB050990-2C02-4075-A8AB-951821C479AA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -87,6 +89,18 @@ Global
 		{A856C830-F51D-45EF-BFC7-7E9EAC82BCE2}.Release|x64.Build.0 = Release|Any CPU
 		{A856C830-F51D-45EF-BFC7-7E9EAC82BCE2}.Release|x86.ActiveCfg = Release|Any CPU
 		{A856C830-F51D-45EF-BFC7-7E9EAC82BCE2}.Release|x86.Build.0 = Release|Any CPU
+		{EB050990-2C02-4075-A8AB-951821C479AA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EB050990-2C02-4075-A8AB-951821C479AA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EB050990-2C02-4075-A8AB-951821C479AA}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{EB050990-2C02-4075-A8AB-951821C479AA}.Debug|x64.Build.0 = Debug|Any CPU
+		{EB050990-2C02-4075-A8AB-951821C479AA}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{EB050990-2C02-4075-A8AB-951821C479AA}.Debug|x86.Build.0 = Debug|Any CPU
+		{EB050990-2C02-4075-A8AB-951821C479AA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EB050990-2C02-4075-A8AB-951821C479AA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EB050990-2C02-4075-A8AB-951821C479AA}.Release|x64.ActiveCfg = Release|Any CPU
+		{EB050990-2C02-4075-A8AB-951821C479AA}.Release|x64.Build.0 = Release|Any CPU
+		{EB050990-2C02-4075-A8AB-951821C479AA}.Release|x86.ActiveCfg = Release|Any CPU
+		{EB050990-2C02-4075-A8AB-951821C479AA}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

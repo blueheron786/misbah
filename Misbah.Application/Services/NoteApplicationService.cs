@@ -27,6 +27,11 @@ namespace Misbah.Application.Services
             return _noteRepository.GetNote(filePath);
         }
 
+        public async Task<Note> LoadNoteAsync(string filePath)
+        {
+            return await _noteRepository.GetNoteAsync(filePath);
+        }
+
         public void SaveNote(Note note)
         {
             _noteRepository.SaveNote(note);
