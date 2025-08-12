@@ -4,6 +4,10 @@ using Microsoft.Extensions.DependencyInjection;
 using Misbah.BlazorDesktop.Components;
 using Misbah.Core.Services;
 using Misbah.Core.Utils;
+using Misbah.Application.Interfaces;
+using Misbah.Application.Services;
+using Misbah.Domain.Interfaces;
+using Misbah.Infrastructure.Repositories;
 using System.Windows;
 
 namespace Misbah.BlazorDesktop
@@ -18,11 +22,15 @@ namespace Misbah.BlazorDesktop
             services.AddWpfBlazorWebView();
             services.AddLocalization(options => options.ResourcesPath = "Resources");
 
-            // Register services for DI
+            // Register Core services (legacy - for backward compatibility)
             services.AddSingleton<INoteService>(sp => new NoteService("Notes")); // TODO: set actual notes root path
             services.AddSingleton<IFolderService, FolderService>();
             services.AddSingleton<SearchService>();
             services.AddSingleton<MarkdownRenderer>();
+
+            // Register Clean Architecture services (new)
+            services.AddScoped<INoteRepository, NoteRepositoryAdapter>();
+            services.AddScoped<INoteApplicationService, NoteApplicationService>();
 
             var serviceProvider = services.BuildServiceProvider();
 

@@ -7,6 +7,7 @@ namespace Misbah.Application.Interfaces
     public interface INoteApplicationService
     {
         IEnumerable<Note> GetAllNotes();
+        Task<IEnumerable<Note>> GetAllNotesAsync();
         Note LoadNote(string filePath);
         Task<Note> LoadNoteAsync(string filePath);
         void SaveNote(Note note);
