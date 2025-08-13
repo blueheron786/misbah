@@ -1,4 +1,6 @@
 @namespace Misbah.Web.Components.Layout
+@inherits LayoutComponentBase
+
 @using Misbah.Core.Services
 @using Misbah.Web.Components.Layout
 @using Misbah.Web.Resources
@@ -6,14 +8,13 @@
 @using Microsoft.JSInterop
 @using System.IO
 
-@inherits LayoutComponentBase
+@using Misbah.Core.Utils
+@using Misbah.Web.Components
+@using Misbah.Web.Components.Pages.Notes
 
 @inject Misbah.Core.Services.INoteService NoteService
 @inject IJSRuntime JS
 
-@using Misbah.Core.Utils
-@using Misbah.Web.Components
-@using Misbah.Web.Components.Pages.Notes
 <link rel="stylesheet" href="css/search-popup.css" />
 <link rel="stylesheet" href="css/live-view-markdown.css" />
 <script src="search-popup.js"></script>

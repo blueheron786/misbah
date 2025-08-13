@@ -1,22 +1,143 @@
 @namespace Misbah.Web.Components
+@rendermode InteractiveServer
+
 @code {
     [Parameter] public EventCallback<string> OnHubPicked { get; set; }
+    
+    private bool showFolderInput = false;
+    private string folderPath = "";
+    private string errorMessage = "";
 
-    private async Task PickHub()
+    private void ShowFolderInput()
     {
-        // Use static helper to show dialog on UI thread
-        var folder = Misbah.Web.FolderDialogHelper.ShowFolderDialog();
-        if (!string.IsNullOrEmpty(folder))
+        showFolderInput = true;
+        folderPath = @"C:\Notes"; // Default suggestion
+        errorMessage = "";
+        StateHasChanged();
+    }
+
+    private async Task ConfirmPath()
+    {
+        if (string.IsNullOrWhiteSpace(folderPath))
         {
-            await OnHubPicked.InvokeAsync(folder);
+            errorMessage = "Please enter a folder path";
+            return;
+        }
+
+        if (!Directory.Exists(folderPath))
+        {
+            errorMessage = "Folder does not exist. Please check the path.";
+            return;
+        }
+
+        showFolderInput = false;
+        await OnHubPicked.InvokeAsync(folderPath);
+    }
+
+    private void CancelInput()
+    {
+        showFolderInput = false;
+        errorMessage = "";
+    }
+
+    private async Task OnKeyPress(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await ConfirmPath();
+        }
+        else if (e.Key == "Escape")
+        {
+            CancelInput();
         }
     }
 }
 
 @using Misbah.Web.Resources
+@using Microsoft.AspNetCore.Components.Web
+
 <div style="text-align:center;">
     <h1>@AppStrings.WelcomeToMisbah</h1>
     <h2>@AppStrings.NoHubLoaded</h2>
     <!-- Language selector goes here -->
-    <button class="btn btn-primary" @onclick="PickHub">@AppStrings.LoadHub</button>
+    
+    @if (!showFolderInput)
+    {
+        <button class="btn btn-primary" @onclick="ShowFolderInput">@AppStrings.LoadHub</button>
+    }
+    else
+    {
+        <div class="folder-input-popup">
+            <div class="popup-content">
+                <h3>Enter Folder Path</h3>
+                <p>Please enter the full path to your notes folder:</p>
+                <input type="text" 
+                       class="form-control" 
+                       @bind="folderPath" 
+                       @onkeydown="OnKeyPress"
+                       placeholder="C:\Notes" 
+                       style="margin: 10px 0; width: 100%; max-width: 400px;" />
+                
+                @if (!string.IsNullOrEmpty(errorMessage))
+                {
+                    <div class="alert alert-danger" style="margin: 10px 0;">
+                        @errorMessage
+                    </div>
+                }
+                
+                <div style="margin-top: 15px;">
+                    <button class="btn btn-primary" @onclick="ConfirmPath">OK</button>
+                    <button class="btn btn-secondary" @onclick="CancelInput" style="margin-left: 10px;">@AppStrings.Cancel</button>
+                </div>
+                
+                <div style="margin-top: 10px; font-size: 0.9em; color: #666;">
+                    <p><strong>Tip:</strong> Examples of valid paths:</p>
+                    <p>Windows: <code>C:\Users\YourName\Documents\Notes</code></p>
+                    <p>Windows: <code>D:\MyNotes</code></p>
+                </div>
+            </div>
+        </div>
+    }
 </div>
+
+<style>
+.folder-input-popup {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.popup-content {
+    background: white;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    max-width: 500px;
+    width: 90%;
+    text-align: center;
+}
+
+.popup-content h3 {
+    margin-bottom: 15px;
+    color: #333;
+}
+
+.popup-content p {
+    margin-bottom: 10px;
+    color: #666;
+}
+
+.popup-content code {
+    background-color: #f8f9fa;
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-family: monospace;
+}
+</style>
