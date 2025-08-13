@@ -41,7 +41,7 @@ public class NoteApplicationServiceTests
         Assert.That(result, Is.Not.Null);
         Assert.That(result.Id, Is.EqualTo("test-note"));
         Assert.That(result.Title, Is.EqualTo("Test Note"));
-        Assert.That(result.Content, Contains.Substring("**bold**"));
+        Assert.That(result.Content.RawContent, Contains.Substring("**bold**"));
         Assert.That(result.FilePath, Is.EqualTo(filePath));
     }
 
@@ -68,7 +68,7 @@ public class NoteApplicationServiceTests
         Assert.That(result, Is.Not.Null);
         Assert.That(result.Id, Is.EqualTo("test-note"));
         Assert.That(result.Title, Is.EqualTo("Test Note"));
-        Assert.That(result.Content, Is.EqualTo("# Test Content"));
+        Assert.That(result.Content.RawContent, Is.EqualTo("# Test Content"));
     }
 
     [Test]

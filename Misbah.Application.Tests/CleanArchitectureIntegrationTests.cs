@@ -64,7 +64,7 @@ public class CleanArchitectureIntegrationTests
         Assert.That(notesList, Has.Count.EqualTo(1));
         Assert.That(notesList[0].Id, Is.EqualTo("test-note"));
         Assert.That(notesList[0].Title, Is.EqualTo("Test Note"));
-        Assert.That(notesList[0].Content, Is.EqualTo("# Test Content"));
+        Assert.That(notesList[0].Content.RawContent, Is.EqualTo("# Test Content"));
     }
     
     [Test]
@@ -119,14 +119,14 @@ public class CleanArchitectureIntegrationTests
         // Assert - Verify transformation from Core.Note to Domain.Note
         Assert.That(domainNote.Id, Is.EqualTo(coreNote.Id));
         Assert.That(domainNote.Title, Is.EqualTo(coreNote.Title));
-        Assert.That(domainNote.Content, Is.EqualTo(coreNote.Content));
+        Assert.That(domainNote.Content.RawContent, Is.EqualTo(coreNote.Content));
         Assert.That(domainNote.Modified, Is.EqualTo(coreNote.Modified));
         Assert.That(domainNote.FilePath, Is.EqualTo(coreNote.FilePath));
         
-        // Verify tags are extracted
-        Assert.That(domainNote.Tags, Has.Count.EqualTo(2));
-        Assert.That(domainNote.Tags, Contains.Item("tag1"));
-        Assert.That(domainNote.Tags, Contains.Item("tag2"));
+        // Verify tags are extracted from content
+        Assert.That(domainNote.ExtractedTags, Has.Count.EqualTo(2));
+        Assert.That(domainNote.ExtractedTags, Contains.Item("tag1"));
+        Assert.That(domainNote.ExtractedTags, Contains.Item("tag2"));
     }
     
     [Test]

@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebView.Wpf;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Misbah.BlazorDesktop.Components;
 using Misbah.Core.Services;
 using Misbah.Core.Utils;
@@ -8,6 +9,7 @@ using Misbah.Application.Interfaces;
 using Misbah.Application.Services;
 using Misbah.Domain.Interfaces;
 using Misbah.Infrastructure.Repositories;
+using Misbah.Infrastructure.Configuration;
 using System.Windows;
 
 namespace Misbah.BlazorDesktop
@@ -21,18 +23,16 @@ namespace Misbah.BlazorDesktop
             var services = new ServiceCollection();
             services.AddWpfBlazorWebView();
             services.AddLocalization(options => options.ResourcesPath = "Resources");
+            services.AddLogging(builder => builder.AddConsole().AddDebug());
 
-            // Register Core services (legacy - for backward compatibility)
-            services.AddSingleton<INoteService>(sp => new NoteService("Notes")); // TODO: set actual notes root path
-            services.AddSingleton<IFolderService, FolderService>();
+            // Legacy services (maintained for backward compatibility)
             services.AddSingleton<SearchService>();
             services.AddSingleton<MarkdownRenderer>();
 
-            // Register Clean Architecture services (new)
-            services.AddScoped<INoteRepository, NoteRepositoryAdapter>();
-            services.AddScoped<INoteApplicationService, NoteApplicationService>();
+            // Advanced Clean Architecture with CQRS and Domain Events
+            services.AddAdvancedCleanArchitecture("Notes");
             
-            // Register Folder Clean Architecture services
+            // Keep legacy clean architecture services for existing components
             services.AddScoped<IFolderRepository, FolderRepositoryAdapter>();
             services.AddScoped<IFolderApplicationService, FolderApplicationService>();
 

@@ -361,13 +361,13 @@
 
     private int GetWordCount()
     {
-        if (string.IsNullOrEmpty(note?.Content)) return 0;
-        return note.Content.Split(new[] { ' ', '\t', '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries).Length;
+        if (note?.Content?.IsEmpty != false) return 0;
+        return note.Content.WordCount;
     }
 
     private int GetCharCount()
     {
-        return note?.Content?.Length ?? 0;
+        return note?.Content?.CharacterCount ?? 0;
     }
 
     public void Dispose()

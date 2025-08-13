@@ -9,7 +9,7 @@ using Misbah.Domain.Interfaces;
 namespace Misbah.Infrastructure.Repositories
 {
     /// <summary>
-    /// Adapter that wraps the existing NoteService to implement the new repository interface
+    /// Enhanced adapter that wraps the existing NoteService to implement the new repository interface
     /// This allows us to use Clean Architecture while keeping existing functionality intact
     /// </summary>
     public class NoteRepositoryAdapter : INoteRepository
@@ -39,6 +39,71 @@ namespace Misbah.Infrastructure.Repositories
             // In a real refactor, you'd want to add the async version to the legacy service
             var legacyNote = _legacyNoteService.LoadNote(filePath);
             return await Task.FromResult(MapToNewNote(legacyNote));
+        }
+        
+        // New enhanced methods for rich domain support
+        public async Task<Note?> GetNoteByIdAsync(string noteId)
+        {
+            var allNotes = GetAllNotes();
+            return await Task.FromResult(allNotes.FirstOrDefault(n => n.Id == noteId));
+        }
+        
+        public Note? GetNoteById(string noteId)
+        {
+            return GetAllNotes().FirstOrDefault(n => n.Id == noteId);
+        }
+        
+        public async Task<IEnumerable<Note>> SearchNotesAsync(string searchTerm)
+        {
+            var allNotes = GetAllNotes();
+            var searchTermLower = searchTerm.ToLowerInvariant();
+            
+            var results = allNotes.Where(note =>
+                note.Title.ToLowerInvariant().Contains(searchTermLower) ||
+                note.Content.RawContent.ToLowerInvariant().Contains(searchTermLower));
+                
+            return await Task.FromResult(results);
+        }
+        
+        public IEnumerable<Note> SearchNotes(string searchTerm)
+        {
+            var allNotes = GetAllNotes();
+            var searchTermLower = searchTerm.ToLowerInvariant();
+            
+            return allNotes.Where(note =>
+                note.Title.ToLowerInvariant().Contains(searchTermLower) ||
+                note.Content.RawContent.ToLowerInvariant().Contains(searchTermLower));
+        }
+        
+        public async Task<IEnumerable<Note>> GetNotesByTagAsync(string tag)
+        {
+            var allNotes = GetAllNotes();
+            var results = allNotes.Where(note => note.ExtractedTags.Contains(tag, StringComparer.OrdinalIgnoreCase));
+            return await Task.FromResult(results);
+        }
+        
+        public IEnumerable<Note> GetNotesByTag(string tag)
+        {
+            return GetAllNotes().Where(note => note.ExtractedTags.Contains(tag, StringComparer.OrdinalIgnoreCase));
+        }
+        
+        public async Task<IEnumerable<string>> GetAllTagsAsync()
+        {
+            var allNotes = GetAllNotes();
+            var tags = allNotes
+                .SelectMany(note => note.ExtractedTags)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderBy(tag => tag);
+                
+            return await Task.FromResult(tags);
+        }
+        
+        public IEnumerable<string> GetAllTags()
+        {
+            return GetAllNotes()
+                .SelectMany(note => note.ExtractedTags)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderBy(tag => tag);
         }
 
         public void SaveNote(Note note)
@@ -78,16 +143,14 @@ namespace Misbah.Infrastructure.Repositories
         // Mapping methods to convert between legacy and new models
         private Note MapToNewNote(Misbah.Core.Models.Note legacyNote)
         {
-            return new Note
-            {
-                Id = legacyNote.Id,
-                Title = legacyNote.Title,
-                Content = legacyNote.Content,
-                Tags = ExtractTags(legacyNote.Content ?? string.Empty), // Extract tags from content
-                Created = legacyNote.Created,
-                Modified = legacyNote.Modified,
-                FilePath = legacyNote.FilePath
-            };
+            return Note.FromExisting(
+                legacyNote.Id,
+                legacyNote.Title,
+                legacyNote.FilePath,
+                legacyNote.Content ?? "",
+                legacyNote.Created,
+                legacyNote.Modified
+            );
         }
 
         private IEnumerable<Note> MapToNewNotes(IEnumerable<Misbah.Core.Models.Note> legacyNotes)
@@ -106,7 +169,7 @@ namespace Misbah.Infrastructure.Repositories
             {
                 Id = note.Id,
                 Title = note.Title,
-                Content = note.Content,
+                Content = note.Content.RawContent,
                 Tags = new List<string>(note.Tags),
                 Created = note.Created,
                 Modified = note.Modified,
