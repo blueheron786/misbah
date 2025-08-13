@@ -29,6 +29,42 @@
 			"problemMatcher": [
 				"$msCompile"
 			]
+		},
+		{
+			"label": "build-web",
+			"command": "dotnet",
+			"type": "process",
+			"args": [
+				"build",
+				"${workspaceFolder}/Misbah.Web/Misbah.Web.csproj",
+				"/property:GenerateFullPaths=true",
+				"/consoleloggerparameters:NoSummary"
+			],
+			"problemMatcher": "$msCompile"
+		},
+		{
+			"label": "build-desktop",
+			"command": "dotnet",
+			"type": "process",
+			"args": [
+				"build",
+				"${workspaceFolder}/Misbah.BlazorDesktop/Misbah.BlazorDesktop.csproj",
+				"/property:GenerateFullPaths=true",
+				"/consoleloggerparameters:NoSummary"
+			],
+			"problemMatcher": "$msCompile"
+		},
+		{
+			"label": "watch-web",
+			"command": "dotnet",
+			"type": "process",
+			"args": [
+				"watch",
+				"run",
+				"--project",
+				"${workspaceFolder}/Misbah.Web/Misbah.Web.csproj"
+			],
+			"problemMatcher": "$msCompile"
 		}
 	]
 }

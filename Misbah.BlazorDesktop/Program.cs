@@ -1,16 +1,7 @@
-﻿using Microsoft.AspNetCore.Components.Web;
-using Microsoft.AspNetCore.Components.WebView.Wpf;
+﻿using Microsoft.AspNetCore.Components.WebView.Wpf;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Misbah.BlazorDesktop.Components;
-using Misbah.Core.Services;
-using Misbah.Core.Utils;
-using Misbah.Application.Interfaces;
-using Misbah.Application.Services;
-using Misbah.Domain.Interfaces;
-using Misbah.Infrastructure.Repositories;
-using Misbah.Infrastructure.Configuration;
 using System.Windows;
+using Misbah.Web.Components;
 
 namespace Misbah.BlazorDesktop
 {
@@ -22,19 +13,9 @@ namespace Misbah.BlazorDesktop
 
             var services = new ServiceCollection();
             services.AddWpfBlazorWebView();
-            services.AddLocalization(options => options.ResourcesPath = "Resources");
-            services.AddLogging(builder => builder.AddConsole().AddDebug());
-
-            // Legacy services (maintained for backward compatibility)
-            services.AddSingleton<SearchService>();
-            services.AddSingleton<MarkdownRenderer>();
-
-            // Advanced Clean Architecture with CQRS and Domain Events
-            services.AddAdvancedCleanArchitecture("Notes");
             
-            // Keep legacy clean architecture services for existing components
-            services.AddScoped<IFolderRepository, FolderRepositoryAdapter>();
-            services.AddScoped<IFolderApplicationService, FolderApplicationService>();
+            // Import all services from the Web project
+            Misbah.Web.Program.ConfigureServices(services);
 
             var serviceProvider = services.BuildServiceProvider();
 

@@ -1,0 +1,181 @@
+@page "/notes-clean"
+@inject Misbah.Application.Interfaces.INoteApplicationService NoteAppService
+@inject NavigationManager Navigation
+
+<PageTitle>Notes (Clean Architecture)</PageTitle>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col">
+            <h1>📝 Notes - Clean Architecture Version</h1>
+            <p class="text-muted">This page demonstrates Clean Architecture services working alongside legacy services.</p>
+            
+            @if (loading)
+            {
+                <div class="d-flex align-items-center">
+                    <strong>Loading notes...</strong>
+                    <div class="spinner-border spinner-border-sm ms-2" role="status" aria-hidden="true"></div>
+                </div>
+            }
+            else if (error != null)
+            {
+                <div class="alert alert-danger" role="alert">
+                    <strong>Error:</strong> @error
+                </div>
+            }
+            else if (notes != null)
+            {
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">📚 Available Notes (@notes.Count)</h5>
+                            </div>
+                            <div class="card-body">
+                                @if (notes.Count == 0)
+                                {
+                                    <p class="text-muted">No notes found. Try creating some notes in the main application.</p>
+                                }
+                                else
+                                {
+                                    @foreach (var note in notes)
+                                    {
+                                        <div class="card mb-2">
+                                            <div class="card-body">
+                                                <h6 class="card-title">@note.Title</h6>
+                                                <p class="card-text text-muted small">
+                                                    ID: @note.Id<br>
+                                                    Modified: @note.Modified.ToString("yyyy-MM-dd HH:mm:ss")
+                                                </p>
+                                                <button class="btn btn-primary btn-sm" @onclick="() => LoadNoteDetails(note.Id)">
+                                                    View Details
+                                                </button>
+                                            </div>
+                                        </div>
+                                    }
+                                }
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">🗂️ Folder Tree (Clean Architecture)</h5>
+                            </div>
+                            <div class="card-body">
+                                <p class="text-muted small">This shows the new FolderTreeClean component using Clean Architecture services:</p>
+                                <FolderTreeClean RootPath="@CurrentRootPath" OnNoteSelected="OnNoteSelectedFromTree" />
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        @if (selectedNote != null)
+                        {
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="card-title mb-0">📄 Note Details</h5>
+                                </div>
+                                <div class="card-body">
+                                    <h6>@selectedNote.Title</h6>
+                                    <p class="text-muted small">
+                                        <strong>File:</strong> @selectedNote.FilePath<br>
+                                        <strong>Modified:</strong> @selectedNote.Modified.ToString("yyyy-MM-dd HH:mm:ss")
+                                    </p>
+                                    <div class="mt-3">
+                                        <strong>Content Preview:</strong>
+                                        <pre class="bg-light p-2 mt-2 rounded" style="max-height: 300px; overflow-y: auto;">@selectedNote.Content</pre>
+                                    </div>
+                                    
+                                    @if (selectedNote.Tags?.Count > 0)
+                                    {
+                                        <div class="mt-3">
+                                            <strong>Tags:</strong>
+                                            <div class="mt-1">
+                                                @foreach (var tag in selectedNote.Tags)
+                                                {
+                                                    <span class="badge bg-secondary me-1">@tag</span>
+                                                }
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="card">
+                                <div class="card-body text-center text-muted">
+                                    <p>Select a note to view details</p>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+            
+            <div class="mt-4">
+                <div class="alert alert-info" role="alert">
+                    <h6 class="alert-heading">🏗️ Clean Architecture Demo</h6>
+                    <p class="mb-0">
+                        This page uses the new Clean Architecture services:
+                        <code>INoteApplicationService</code> and <code>INoteRepository</code>.
+                        Compare this with the <a href="/notes" class="alert-link">legacy Notes page</a> 
+                        which uses the old <code>INoteService</code> from Core.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<Misbah.Domain.Entities.Note>? notes;
+    private Misbah.Domain.Entities.Note? selectedNote;
+    private bool loading = true;
+    private string? error;
+    private string? CurrentRootPath => @"C:\"; // For demonstration - would come from config
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            await LoadNotes();
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+
+    private async Task LoadNotes()
+    {
+        // This uses Clean Architecture - Application Service
+        var result = await NoteAppService.GetAllNotesAsync();
+        notes = result.ToList();
+    }
+
+    private async Task LoadNoteDetails(string noteId)
+    {
+        try
+        {
+            selectedNote = await NoteAppService.LoadNoteAsync(noteId);
+        }
+        catch (Exception ex)
+        {
+            error = $"Error loading note details: {ex.Message}";
+        }
+    }
+
+    private async Task OnNoteSelectedFromTree(string noteId)
+    {
+        // Handle note selection from the folder tree
+        await LoadNoteDetails(noteId);
+        StateHasChanged();
+    }
+}

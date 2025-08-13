@@ -1,0 +1,65 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Launch Misbah.Web",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build-web",
+            "program": "${workspaceFolder}/Misbah.Web/bin/Debug/net8.0/Misbah.Web.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/Misbah.Web",
+            "console": "internalConsole",
+            "stopAtEntry": false,
+            "serverReadyAction": {
+                "action": "openExternally",
+                "pattern": "\\bNow listening on:\\s+(https?://\\S+)"
+            },
+            "env": {
+                "ASPNETCORE_ENVIRONMENT": "Development"
+            }
+        },
+        {
+            "name": "Launch Misbah.Web (No Build)",
+            "type": "coreclr",
+            "request": "launch",
+            "program": "${workspaceFolder}/Misbah.Web/bin/Debug/net8.0/Misbah.Web.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/Misbah.Web",
+            "console": "internalConsole",
+            "stopAtEntry": false,
+            "serverReadyAction": {
+                "action": "openExternally",
+                "pattern": "\\bNow listening on:\\s+(https?://\\S+)"
+            },
+            "env": {
+                "ASPNETCORE_ENVIRONMENT": "Development"
+            }
+        },
+        {
+            "name": "Launch Misbah.BlazorDesktop",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build-desktop",
+            "program": "${workspaceFolder}/Misbah.BlazorDesktop/bin/Debug/net8.0-windows10.0.22000.0/Misbah.BlazorDesktop.exe",
+            "args": [],
+            "cwd": "${workspaceFolder}/Misbah.BlazorDesktop",
+            "console": "internalConsole",
+            "stopAtEntry": false,
+            "env": {
+                "ASPNETCORE_ENVIRONMENT": "Development"
+            }
+        },
+        {
+            "name": "Attach to Process",
+            "type": "coreclr",
+            "request": "attach"
+        }
+    ],
+    "compounds": [
+        {
+            "name": "Launch Both Projects",
+            "configurations": ["Launch Misbah.Web (No Build)", "Launch Misbah.BlazorDesktop"]
+        }
+    ]
+}

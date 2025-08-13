@@ -1,0 +1,15 @@
+@using Misbah.Web.Components
+@using Misbah.Web.Components.Layout
+@using Microsoft.AspNetCore.Components.Routing
+
+<Router AppAssembly="typeof(Misbah.Web.Program).Assembly">
+    <Found Context="routeData">
+        <RouteView RouteData="routeData" DefaultLayout="typeof(Misbah.Web.Components.Layout.MainLayout)" />
+        <FocusOnNavigate RouteData="routeData" Selector="h1" />
+    </Found>
+    <NotFound>
+        <LayoutView Layout="typeof(Misbah.Web.Components.Layout.MainLayout)">
+            <p role="alert">Sorry, there's nothing at this address.</p>
+        </LayoutView>
+    </NotFound>
+</Router>

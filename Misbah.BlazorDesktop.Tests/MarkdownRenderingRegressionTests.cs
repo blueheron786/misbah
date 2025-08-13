@@ -1,7 +1,8 @@
 using Bunit;
 using Microsoft.Extensions.DependencyInjection;
 using NUnit.Framework;
-using Misbah.BlazorDesktop.Components.Pages.Notes;
+using Misbah.Web.Components.Pages.Notes;
+using Misbah.Web.Components;
 using Misbah.Core.Services;
 using Microsoft.JSInterop;
 using System.Collections.Generic;

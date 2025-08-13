@@ -1,0 +1,308 @@
+@namespace Misbah.Web.Components.Pages.Notes
+@using Misbah.Core.Models
+@using Misbah.Core.Services
+@using Microsoft.AspNetCore.Components.Web
+@using Microsoft.JSInterop
+@inject IJSRuntime JSRuntime
+@inject MarkdownRenderer MarkdownRenderer
+@implements IAsyncDisposable
+
+<div id="live-content-@editorId" class="true-live-markdown-editor" style="height: @Height; overflow-y: auto;">
+    @if (string.IsNullOrEmpty(Content))
+    {
+        <div class="empty-placeholder" @onclick="() => CreateNewBlock()">
+            <i class="fas fa-edit"></i> Click here to start writing...
+        </div>
+    }
+    else
+    {
+        @foreach (var block in markdownBlocks)
+        {
+            <div class="live-block @(editingBlockIndex == block.Index ? "editing" : "")" 
+                 data-block-index="@block.Index" 
+                 data-block-type="@block.Type">
+                
+                @if (editingBlockIndex == block.Index)
+                {
+                    <!-- Edit mode -->
+                    <div class="block-edit">
+                        <textarea @bind="editingContent" 
+                                  @onkeydown="HandleKeyDown"
+                                  @ref="editTextarea"
+                                  class="block-textarea"
+                                  style="@GetTextareaStyle(block.Type)"
+                                  placeholder="Enter @block.Type content..."></textarea>
+                        <div class="edit-controls">
+                            <button class="btn-save" @onclick="SaveBlock">
+                                <i class="fas fa-check"></i>
+                            </button>
+                            <button class="btn-cancel" @onclick="CancelEdit">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <!-- Display mode -->
+                    <div class="block-display" @onclick="() => StartEditing(block.Index)">
+                        @((MarkupString)block.RenderedHtml)
+                    </div>
+                }
+            </div>
+        }
+        
+        <div class="add-new-block" @onclick="CreateNewBlock">
+            <i class="fas fa-plus"></i> Add content
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public string Content { get; set; } = "";
+    [Parameter] public EventCallback<string> ContentChanged { get; set; }
+    [Parameter] public string Height { get; set; } = "600px";
+    [Parameter] public string Theme { get; set; } = "light";
+
+    private string editorId = Guid.NewGuid().ToString("N")[..8];
+    private List<MarkdownBlock> markdownBlocks = new();
+    private int editingBlockIndex = -1;
+    private string editingContent = "";
+    private string originalEditingContent = "";
+    private ElementReference? editTextarea;
+
+    public class MarkdownBlock
+    {
+        public int Index { get; set; }
+        public string Type { get; set; } = "paragraph";
+        public string RawContent { get; set; } = "";
+        public string RenderedHtml { get; set; } = "";
+        public int StartLine { get; set; }
+        public int EndLine { get; set; }
+    }
+
+    protected override void OnParametersSet()
+    {
+        if (Content != null)
+        {
+            ParseContentIntoBlocks();
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (editingBlockIndex >= 0 && editTextarea.HasValue)
+        {
+            await editTextarea.Value.FocusAsync();
+        }
+    }
+
+    private void ParseContentIntoBlocks()
+    {
+        markdownBlocks.Clear();
+        
+        if (string.IsNullOrWhiteSpace(Content))
+        {
+            return;
+        }
+
+        var lines = Content.Split('\n');
+        var blocks = new List<MarkdownBlock>();
+        var currentBlock = new List<string>();
+        var currentType = "paragraph";
+        var currentStartLine = 0;
+        var inCodeBlock = false;
+        
+        for (int i = 0; i < lines.Length; i++)
+        {
+            var line = lines[i];
+            
+            // Handle code blocks
+            if (line.Trim().StartsWith("```"))
+            {
+                if (currentBlock.Count > 0)
+                {
+                    blocks.Add(CreateBlock(currentType, currentBlock, currentStartLine, i - 1));
+                    currentBlock.Clear();
+                }
+                inCodeBlock = !inCodeBlock;
+                currentType = inCodeBlock ? "code" : "paragraph";
+                currentStartLine = i;
+                currentBlock.Add(line);
+                continue;
+            }
+
+            if (inCodeBlock)
+            {
+                currentBlock.Add(line);
+                continue;
+            }
+
+            var blockType = GetBlockType(line);
+            
+            // If block type changed or we hit an empty line, save current block
+            if ((blockType != currentType || string.IsNullOrWhiteSpace(line)) && currentBlock.Count > 0)
+            {
+                blocks.Add(CreateBlock(currentType, currentBlock, currentStartLine, i - 1));
+                currentBlock.Clear();
+                currentStartLine = i;
+            }
+
+            if (!string.IsNullOrWhiteSpace(line))
+            {
+                currentType = blockType;
+                currentBlock.Add(line);
+            }
+        }
+
+        // Add final block if any
+        if (currentBlock.Count > 0)
+        {
+            blocks.Add(CreateBlock(currentType, currentBlock, currentStartLine, lines.Length - 1));
+        }
+
+        // Assign indices and render
+        for (int i = 0; i < blocks.Count; i++)
+        {
+            blocks[i].Index = i;
+            blocks[i].RenderedHtml = RenderBlockToHtml(blocks[i]);
+        }
+
+        markdownBlocks = blocks;
+    }
+
+    private MarkdownBlock CreateBlock(string type, List<string> content, int startLine, int endLine)
+    {
+        return new MarkdownBlock
+        {
+            Type = type,
+            RawContent = string.Join("\n", content),
+            StartLine = startLine,
+            EndLine = endLine
+        };
+    }
+
+    private string GetBlockType(string line)
+    {
+        var trimmed = line.Trim();
+        if (trimmed.StartsWith("# ")) return "h1";
+        if (trimmed.StartsWith("## ")) return "h2";
+        if (trimmed.StartsWith("### ")) return "h3";
+        if (trimmed.StartsWith("#### ")) return "h4";
+        if (trimmed.StartsWith("##### ")) return "h5";
+        if (trimmed.StartsWith("###### ")) return "h6";
+        if (trimmed.StartsWith("> ")) return "quote";
+        if (trimmed.StartsWith("- [ ]") || trimmed.StartsWith("- [x]")) return "task";
+        if (trimmed.StartsWith("- ") || trimmed.StartsWith("* ") || trimmed.StartsWith("+ ")) return "list";
+        if (System.Text.RegularExpressions.Regex.IsMatch(trimmed, @"^\d+\.\s")) return "ordered-list";
+        if (trimmed.StartsWith("```")) return "code";
+        if (trimmed == "---" || trimmed == "***") return "hr";
+        return "paragraph";
+    }
+
+    private string RenderBlockToHtml(MarkdownBlock block)
+    {
+        // Use the existing MarkdownRenderer service (now always applies all post-processing)
+        List<int> taskLines;
+        var html = MarkdownRenderer.Render(block.RawContent, out taskLines);
+        return html;
+    }
+
+    private void StartEditing(int blockIndex)
+    {
+        if (blockIndex >= 0 && blockIndex < markdownBlocks.Count)
+        {
+            editingBlockIndex = blockIndex;
+            editingContent = markdownBlocks[blockIndex].RawContent;
+            originalEditingContent = editingContent;
+            StateHasChanged();
+        }
+    }
+
+    private async Task SaveBlock()
+    {
+        if (editingBlockIndex >= 0 && editingBlockIndex < markdownBlocks.Count)
+        {
+            // Update the block
+            markdownBlocks[editingBlockIndex].RawContent = editingContent;
+            markdownBlocks[editingBlockIndex].RenderedHtml = RenderBlockToHtml(markdownBlocks[editingBlockIndex]);
+            
+            // Rebuild the full content
+            var newContent = string.Join("\n\n", markdownBlocks.Select(b => b.RawContent));
+            
+            // Cancel editing
+            editingBlockIndex = -1;
+            editingContent = "";
+            
+            // Notify parent
+            if (ContentChanged.HasDelegate)
+            {
+                await ContentChanged.InvokeAsync(newContent);
+            }
+            
+            StateHasChanged();
+        }
+    }
+
+    private void CancelEdit()
+    {
+        editingContent = originalEditingContent;
+        editingBlockIndex = -1;
+        StateHasChanged();
+    }
+
+    private void CreateNewBlock()
+    {
+        var newBlock = new MarkdownBlock
+        {
+            Index = markdownBlocks.Count,
+            Type = "paragraph",
+            RawContent = "",
+            RenderedHtml = ""
+        };
+        
+        markdownBlocks.Add(newBlock);
+        editingBlockIndex = newBlock.Index;
+        editingContent = "";
+        originalEditingContent = "";
+        
+        StateHasChanged();
+        
+        // Focus will be handled in OnAfterRenderAsync
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && (e.CtrlKey || e.MetaKey))
+        {
+            await SaveBlock();
+        }
+        else if (e.Key == "Escape")
+        {
+            CancelEdit();
+        }
+    }
+
+    private string GetTextareaStyle(string blockType)
+    {
+        var baseStyle = "width: 100%; border: 1px solid #ddd; border-radius: 4px; padding: 8px; font-family: inherit; resize: vertical; min-height: 50px;";
+        
+        return blockType switch
+        {
+            "h1" => baseStyle + " font-size: 2em; font-weight: bold;",
+            "h2" => baseStyle + " font-size: 1.5em; font-weight: bold;",
+            "h3" => baseStyle + " font-size: 1.3em; font-weight: bold;",
+            "h4" => baseStyle + " font-size: 1.1em; font-weight: bold;",
+            "h5" => baseStyle + " font-size: 1em; font-weight: bold;",
+            "h6" => baseStyle + " font-size: 0.9em; font-weight: bold;",
+            "code" => baseStyle + " font-family: 'Consolas', 'Monaco', monospace; background: #f5f5f5;",
+            _ => baseStyle
+        };
+    }
+
+    public ValueTask DisposeAsync()
+    {
+        // Cleanup if needed
+        return ValueTask.CompletedTask;
+    }
+}

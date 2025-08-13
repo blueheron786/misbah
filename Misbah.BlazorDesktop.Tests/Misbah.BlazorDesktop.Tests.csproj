@@ -23,6 +23,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Misbah.BlazorDesktop\Misbah.BlazorDesktop.csproj" />
+    <ProjectReference Include="..\Misbah.Web\Misbah.Web.csproj" />
     <ProjectReference Include="..\Misbah.Core\Misbah.Core.csproj" />
   </ItemGroup>
 
