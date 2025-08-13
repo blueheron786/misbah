@@ -75,20 +75,33 @@
 }
 
 .live-block[data-block-type="task"] .task-list li {
-    margin: 0.25rem 0;
+    margin: 0; /* no vertical spacing */
+    padding: 0; /* no padding */
     color: #e6e6e6;
+    display: flex;
+    align-items: center;
+    line-height: 1.2; /* compact line height */
 }
 
 .live-block[data-block-type="task"] .task-list input[type="checkbox"] {
     margin-right: 0.5rem;
     accent-color: #F80;
+    width: 1.3em;
+    height: 1.3em;
 }
 
-.live-block[data-block-type="list"] ul,
+.live-block[data-block-type="list"] ul {
+    margin: 0.5rem 0;
+    padding-left: 2rem;
+    color: #e6e6e6;
+    list-style: disc;
+}
+
 .live-block[data-block-type="ordered-list"] ol {
     margin: 0.5rem 0;
     padding-left: 2rem;
     color: #e6e6e6;
+    list-style: decimal;
 }
 
 .live-block[data-block-type="list"] li,
@@ -96,7 +109,6 @@
     margin: 0.25rem 0;
     color: #e6e6e6;
 }
-
 .live-block[data-block-type="hr"] hr {
     border: none;
     border-top: 2px solid #444b53;

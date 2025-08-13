@@ -190,11 +190,17 @@
 /* Better formatting for task lists */
 .wysiwyg-markdown-editor .editor-content ul li {
     position: relative;
+    min-height: 2.2em;
+    display: flex;
+    align-items: center;
+    margin: 0.1rem 0;
 }
 
 .wysiwyg-markdown-editor .editor-content ul li input[type="checkbox"] {
     position: relative;
     top: 2px;
+    width: 1.3em;
+    height: 1.3em;
 }
 
 /* Placeholder */
