@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using Bunit;
-using Xunit;
+using NUnit.Framework;
 using Misbah.BlazorDesktop.Components.Pages.Notes;
 using Misbah.Core.Services;
 using Microsoft.Extensions.DependencyInjection;
@@ -8,9 +8,10 @@ using NSubstitute;
 
 namespace Misbah.BlazorDesktop.Tests;
 
-public class WysiwygMarkdownEditorTests : TestContext
+[TestFixture]
+public class WysiwygMarkdownEditorTests : Bunit.TestContext
 {
-    [Fact]
+    [Test]
     public void Renders_Placeholder_When_Empty()
     {
         // Arrange
@@ -19,10 +20,10 @@ public class WysiwygMarkdownEditorTests : TestContext
         // Act
         var cut = RenderComponent<WysiwygMarkdownEditor>(parameters => parameters.Add(p => p.Content, ""));
         // Assert
-        Assert.Contains("Click here to start writing", cut.Markup);
+        Assert.That(cut.Markup, Does.Contain("Click here to start writing"));
     }
 
-    [Fact]
+    [Test]
     public void Renders_Markdown_Content()
     {
         // Arrange
@@ -31,6 +32,6 @@ public class WysiwygMarkdownEditorTests : TestContext
         // Act
         var cut = RenderComponent<WysiwygMarkdownEditor>(parameters => parameters.Add(p => p.Content, "# Title"));
         // Assert
-        Assert.Contains("Title", cut.Markup);
+        Assert.That(cut.Markup, Does.Contain("Title"));
     }
 }

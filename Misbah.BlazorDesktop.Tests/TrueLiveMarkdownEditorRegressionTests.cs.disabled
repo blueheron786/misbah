@@ -1,0 +1,311 @@
+using Bunit;
+using Microsoft.Extensions.DependencyInjection;
+using Misbah.BlazorDesktop.Components.Pages.Notes;
+using Misbah.Core.Services;
+using NUnit.Framework;
+using System.Collections.Generic;
+using System.Linq;
+using Microsoft.JSInterop;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace Misbah.BlazorDesktop.Tests;
+
+[TestFixture]
+public class TrueLiveMarkdownEditorRegressionTests : Bunit.TestContext
+{
+    [SetUp]
+    public void Setup()
+    {
+        // Mock MarkdownRenderer service
+        Services.AddSingleton<MarkdownRenderer>(sp => new MarkdownRenderer());
+    }
+
+    [Test]
+    public void EmptyNote_ShouldBeEditable_PreventRegressionBug()
+    {
+        // Arrange & Act
+        var component = RenderComponent<TrueLiveMarkdownEditor>(parameters => parameters
+            .Add(p => p.Content, "")
+            .Add(p => p.Height, "400px"));
+
+        // Assert - Empty note should show editable placeholder
+        var placeholder = component.Find(".empty-placeholder");
+        Assert.That(placeholder, Is.Not.Null, "Empty note should show clickable placeholder");
+        Assert.That(placeholder.TextContent, Does.Contain("Click here to start writing"), 
+            "Placeholder should indicate editability");
+    }
+
+    [Test]
+    public void SingleParagraphNote_ShouldParseAndRenderCorrectly()
+    {
+        // Arrange
+        var content = "This is a simple paragraph.";
+
+        // Act
+        var component = RenderComponent<TrueLiveMarkdownEditor>(parameters => parameters
+            .Add(p => p.Content, content));
+
+        // Assert
+        var blocks = component.FindAll(".live-block");
+        Assert.That(blocks.Count, Is.EqualTo(1), "Should create exactly one block");
+        
+        var blockDisplay = component.Find(".block-display");
+        Assert.That(blockDisplay, Is.Not.Null, "Block should be in display mode");
+        Assert.That(blockDisplay.InnerHtml, Does.Contain("This is a simple paragraph"), 
+            "Content should be rendered");
+    }
+
+    [Test]
+    public void MultipleBlockTypes_ShouldParseCorrectly()
+    {
+        // Arrange
+        var content = @"# Heading 1
+
+This is a paragraph.
+
+## Heading 2
+
+> This is a quote
+
+- List item 1
+- List item 2
+
+```csharp
+var code = ""example"";
+```";
+
+        // Act
+        var component = RenderComponent<TrueLiveMarkdownEditor>(parameters => parameters
+            .Add(p => p.Content, content));
+
+        // Assert
+        var blocks = component.FindAll(".live-block");
+        Assert.That(blocks.Count, Is.GreaterThan(3), "Should create multiple blocks for different types");
+
+        // Check that different block types are recognized
+        var h1Block = blocks.FirstOrDefault(b => b.GetAttribute("data-block-type") == "h1");
+        var paragraphBlock = blocks.FirstOrDefault(b => b.GetAttribute("data-block-type") == "paragraph");
+        var quoteBlock = blocks.FirstOrDefault(b => b.GetAttribute("data-block-type") == "quote");
+        var listBlock = blocks.FirstOrDefault(b => b.GetAttribute("data-block-type") == "list");
+        var codeBlock = blocks.FirstOrDefault(b => b.GetAttribute("data-block-type") == "code");
+
+        Assert.That(h1Block, Is.Not.Null, "Should create H1 block");
+        Assert.That(paragraphBlock, Is.Not.Null, "Should create paragraph block");
+        Assert.That(quoteBlock, Is.Not.Null, "Should create quote block");
+        Assert.That(listBlock, Is.Not.Null, "Should create list block");
+        Assert.That(codeBlock, Is.Not.Null, "Should create code block");
+    }
+
+    [Test]
+    public void BlockClicking_ShouldEnterEditMode()
+    {
+        // Arrange
+        var content = "Click me to edit";
+        var component = RenderComponent<TrueLiveMarkdownEditor>(parameters => parameters
+            .Add(p => p.Content, content));
+
+        // Act
+        var blockDisplay = component.Find(".block-display");
+        blockDisplay.Click();
+
+        // Assert
+        var editingBlock = component.Find(".block-edit");
+        Assert.That(editingBlock, Is.Not.Null, "Should enter edit mode when block is clicked");
+        
+        var textarea = component.Find("textarea.block-textarea");
+        Assert.That(textarea, Is.Not.Null, "Should show textarea in edit mode");
+        Assert.That(textarea.GetAttribute("value") ?? textarea.TextContent, Does.Contain("Click me to edit"),
+            "Textarea should contain the original content");
+    }
+
+    [Test]
+    public void EditingAndSaving_ShouldUpdateContent()
+    {
+        // Arrange
+        var originalContent = "Original content";
+        var newContent = "Updated content";
+        var contentChangedCalled = false;
+        var updatedContent = "";
+
+        var component = RenderComponent<TrueLiveMarkdownEditor>(parameters => parameters
+            .Add(p => p.Content, originalContent)
+            .Add(p => p.ContentChanged, (string content) => {
+                contentChangedCalled = true;
+                updatedContent = content;
+            }));
+
+        // Act - Click to edit
+        var blockDisplay = component.Find(".block-display");
+        blockDisplay.Click();
+
+        // Update textarea content
+        var textarea = component.Find("textarea.block-textarea");
+        textarea.Change(newContent);
+
+        // Save the changes
+        var saveButton = component.Find("button.btn-save");
+        saveButton.Click();
+
+        // Assert
+        Assert.That(contentChangedCalled, Is.True, "ContentChanged callback should be invoked");
+        Assert.That(updatedContent, Is.EqualTo(newContent), "Updated content should match edited text");
+        
+        // Should exit edit mode
+        var editingBlocks = component.FindAll(".block-edit");
+        Assert.That(editingBlocks.Count, Is.EqualTo(0), "Should exit edit mode after saving");
+    }
+
+    [Test]
+    public void CancelEditing_ShouldRevertChanges()
+    {
+        // Arrange
+        var originalContent = "Original content";
+        var component = RenderComponent<TrueLiveMarkdownEditor>(parameters => parameters
+            .Add(p => p.Content, originalContent));
+
+        // Act - Click to edit
+        var blockDisplay = component.Find(".block-display");
+        blockDisplay.Click();
+
+        // Update textarea content
+        var textarea = component.Find("textarea.block-textarea");
+        textarea.Change("Modified content");
+
+        // Cancel the changes
+        var cancelButton = component.Find("button.btn-cancel");
+        cancelButton.Click();
+
+        // Assert
+        // Should exit edit mode
+        var editingBlocks = component.FindAll(".block-edit");
+        Assert.That(editingBlocks.Count, Is.EqualTo(0), "Should exit edit mode after canceling");
+
+        // Content should remain unchanged
+        var blockDisplay2 = component.Find(".block-display");
+        Assert.That(blockDisplay2.InnerHtml, Does.Contain("Original content"), 
+            "Content should revert to original after cancel");
+    }
+
+    [Test]
+    public void CreateNewBlock_ShouldEnterEditMode()
+    {
+        // Arrange
+        var component = RenderComponent<TrueLiveMarkdownEditor>(parameters => parameters
+            .Add(p => p.Content, "Existing content"));
+
+        // Act
+        var addButton = component.Find(".add-new-block");
+        addButton.Click();
+
+        // Assert
+        var editingBlocks = component.FindAll(".block-edit");
+        Assert.That(editingBlocks.Count, Is.EqualTo(1), "Should enter edit mode for new block");
+        
+        var textarea = component.Find("textarea.block-textarea");
+        Assert.That(textarea, Is.Not.Null, "Should show textarea for new block");
+        Assert.That(string.IsNullOrEmpty(textarea.GetAttribute("value")), Is.True, 
+            "New block textarea should be empty");
+    }
+
+    [Test]
+    public void CodeBlockParsing_ShouldHandleMultilineCodeBlocks()
+    {
+        // Arrange - This is a common source of rendering bugs
+        var content = @"```csharp
+var example = ""test"";
+if (example != null)
+{
+    Console.WriteLine(example);
+}
+```";
+
+        // Act
+        var component = RenderComponent<TrueLiveMarkdownEditor>(parameters => parameters
+            .Add(p => p.Content, content));
+
+        // Assert
+        var blocks = component.FindAll(".live-block");
+        Assert.That(blocks.Count, Is.EqualTo(1), "Should create single code block");
+        
+        var codeBlock = blocks.First();
+        Assert.That(codeBlock.GetAttribute("data-block-type"), Is.EqualTo("code"), 
+            "Block should be identified as code type");
+    }
+
+    [Test]
+    public void MixedEmptyLinesAndContent_ShouldNotBreakParsing()
+    {
+        // Arrange - Another common edge case that causes parsing issues
+        var content = @"# Title
+
+
+Paragraph with empty lines above.
+
+
+
+Another paragraph.
+
+";
+
+        // Act
+        var component = RenderComponent<TrueLiveMarkdownEditor>(parameters => parameters
+            .Add(p => p.Content, content));
+
+        // Assert
+        var blocks = component.FindAll(".live-block");
+        Assert.That(blocks.Count, Is.GreaterThan(0), "Should parse content despite empty lines");
+        
+        // Should not crash or fail to render
+        var blockDisplays = component.FindAll(".block-display");
+        Assert.That(blockDisplays.Count, Is.EqualTo(blocks.Count), 
+            "All blocks should be in display mode initially");
+    }
+
+    [Test]
+    public void VeryLongContent_ShouldNotCausePerformanceIssues()
+    {
+        // Arrange - Generate a large document
+        var paragraphs = new List<string>();
+        for (int i = 0; i < 50; i++)
+        {
+            paragraphs.Add($"This is paragraph number {i + 1} with some content to make it realistic.");
+        }
+        var content = string.Join("\n\n", paragraphs);
+
+        // Act & Assert - Should not throw or hang
+        Assert.DoesNotThrow(() =>
+        {
+            var component = RenderComponent<TrueLiveMarkdownEditor>(parameters => parameters
+                .Add(p => p.Content, content));
+            
+            var blocks = component.FindAll(".live-block");
+            Assert.That(blocks.Count, Is.EqualTo(50), "Should create all blocks");
+        });
+    }
+
+    [Test]
+    public void SpecialCharacters_ShouldNotBreakRendering()
+    {
+        // Arrange - Test with various special characters that might break rendering
+        var content = @"# Title with émojis 🚀 and spéciál chars
+
+Content with <script>alert('xss')</script> tags.
+
+And some unicode: ñáéíóú and symbols: © ® ™ € £ ¥
+
+```javascript
+const regex = /[.*+?^${}()|[\]\\]/g;
+```";
+
+        // Act & Assert - Should not crash
+        Assert.DoesNotThrow(() =>
+        {
+            var component = RenderComponent<TrueLiveMarkdownEditor>(parameters => parameters
+                .Add(p => p.Content, content));
+            
+            var blocks = component.FindAll(".live-block");
+            Assert.That(blocks.Count, Is.GreaterThan(0), "Should handle special characters");
+        });
+    }
+}

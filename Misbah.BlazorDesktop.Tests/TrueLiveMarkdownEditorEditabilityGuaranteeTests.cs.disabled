@@ -1,0 +1,308 @@
+using Bunit;
+using Microsoft.Extensions.DependencyInjection;
+using Misbah.BlazorDesktop.Components.Pages.Notes;
+using Misbah.Core.Services;
+using NUnit.Framework;
+using Microsoft.AspNetCore.Components.Web;
+
+namespace Misbah.BlazorDesktop.Tests;
+
+[TestFixture]
+public class TrueLiveMarkdownEditorEditabilityGuaranteeTests : Bunit.TestContext
+{
+    [SetUp]
+    public void Setup()
+    {
+        Services.AddSingleton<MarkdownRenderer>(sp => new MarkdownRenderer());
+    }
+
+    [Test]
+    public void EmptyNote_AlwaysEditableWithoutClick_CriticalRegression()
+    {
+        // This test prevents the critical regression where empty notes are not editable
+        
+        // Act
+        var component = RenderComponent<TrueLiveMarkdownEditor>(parameters => parameters
+            .Add(p => p.Content, ""));
+
+        // Assert - Empty notes should show a way to start editing
+        var placeholder = component.Find(".empty-placeholder");
+        Assert.That(placeholder, Is.Not.Null, 
+            "CRITICAL: Empty notes must show an editable placeholder to prevent editability regression");
+        
+        Assert.That(placeholder.TextContent, Does.Contain("Click here to start writing").IgnoreCase, 
+            "Placeholder must clearly indicate how to start editing");
+    }
+
+    [Test]
+    public void EmptyNotePlaceholder_ClickCreatesEditableBlock()
+    {
+        // Arrange
+        var component = RenderComponent<TrueLiveMarkdownEditor>(parameters => parameters
+            .Add(p => p.Content, ""));
+
+        // Act - Click the placeholder
+        var placeholder = component.Find(".empty-placeholder");
+        placeholder.Click();
+
+        // Assert - Should create a new block in edit mode
+        var textarea = component.Find("textarea.block-textarea");
+        Assert.That(textarea, Is.Not.Null, 
+            "Clicking placeholder should create editable textarea");
+        
+        var editControls = component.Find(".edit-controls");
+        Assert.That(editControls, Is.Not.Null, 
+            "Edit controls (save/cancel) should be visible");
+    }
+
+    [Test]
+    public void NonEmptyNote_AllBlocksClickableForEditing()
+    {
+        // Arrange
+        var content = @"# Heading
+        
+Paragraph 1
+
+Paragraph 2";
+
+        var component = RenderComponent<TrueLiveMarkdownEditor>(parameters => parameters
+            .Add(p => p.Content, content));
+
+        // Act & Assert - Each block should be clickable
+        var blockDisplays = component.FindAll(".block-display");
+        Assert.That(blockDisplays.Count, Is.GreaterThan(0), "Should have displayable blocks");
+
+        foreach (var block in blockDisplays)
+        {
+            // Click the block
+            block.Click();
+            
+            // Should enter edit mode
+            var textarea = component.Find("textarea.block-textarea");
+            Assert.That(textarea, Is.Not.Null, 
+                $"Block should become editable when clicked");
+            
+            // Cancel edit to test next block
+            var cancelButton = component.Find("button.btn-cancel");
+            cancelButton.Click();
+        }
+    }
+
+    [Test]
+    public void EditMode_TextareaHasCorrectContent()
+    {
+        // Arrange
+        var originalContent = "Test content to edit";
+        var component = RenderComponent<TrueLiveMarkdownEditor>(parameters => parameters
+            .Add(p => p.Content, originalContent));
+
+        // Act
+        var blockDisplay = component.Find(".block-display");
+        blockDisplay.Click();
+
+        // Assert
+        var textarea = component.Find("textarea.block-textarea");
+        var textareaValue = textarea.GetAttribute("value") ?? textarea.TextContent;
+        
+        Assert.That(textareaValue, Does.Contain("Test content to edit"),
+            "Textarea should contain the original block content");
+    }
+
+    [Test]
+    public void EditMode_SaveButtonUpdatesContent()
+    {
+        // Arrange
+        var originalContent = "Original";
+        var newContent = "Updated content";
+        var contentChanged = false;
+        var updatedContent = "";
+
+        var component = RenderComponent<TrueLiveMarkdownEditor>(parameters => parameters
+            .Add(p => p.Content, originalContent)
+            .Add(p => p.ContentChanged, (string content) => {
+                contentChanged = true;
+                updatedContent = content;
+            }));
+
+        // Act - Enter edit mode
+        var blockDisplay = component.Find(".block-display");
+        blockDisplay.Click();
+
+        // Change content
+        var textarea = component.Find("textarea.block-textarea");
+        textarea.Change(newContent);
+
+        // Save
+        var saveButton = component.Find("button.btn-save");
+        saveButton.Click();
+
+        // Assert
+        Assert.That(contentChanged, Is.True, "ContentChanged should be triggered");
+        Assert.That(updatedContent, Is.EqualTo(newContent), "Content should be updated");
+        
+        // Should exit edit mode
+        var editBlocks = component.FindAll(".block-edit");
+        Assert.That(editBlocks.Count, Is.EqualTo(0), "Should exit edit mode after save");
+    }
+
+    [Test]
+    public void EditMode_CancelButtonRevertsChanges()
+    {
+        // Arrange
+        var originalContent = "Original content";
+        var component = RenderComponent<TrueLiveMarkdownEditor>(parameters => parameters
+            .Add(p => p.Content, originalContent));
+
+        // Act - Enter edit mode
+        var blockDisplay = component.Find(".block-display");
+        blockDisplay.Click();
+
+        // Make changes
+        var textarea = component.Find("textarea.block-textarea");
+        textarea.Change("Modified content");
+
+        // Cancel
+        var cancelButton = component.Find("button.btn-cancel");
+        cancelButton.Click();
+
+        // Assert - Should exit edit mode and keep original content
+        var editBlocks = component.FindAll(".block-edit");
+        Assert.That(editBlocks.Count, Is.EqualTo(0), "Should exit edit mode after cancel");
+
+        var blockDisplay2 = component.Find(".block-display");
+        Assert.That(blockDisplay2.InnerHtml, Does.Contain("Original content"),
+            "Should revert to original content");
+    }
+
+    [Test]
+    public void EditMode_CtrlEnterSavesContent()
+    {
+        // Arrange
+        var originalContent = "Original";
+        var newContent = "Updated via keyboard";
+        var contentChanged = false;
+
+        var component = RenderComponent<TrueLiveMarkdownEditor>(parameters => parameters
+            .Add(p => p.Content, originalContent)
+            .Add(p => p.ContentChanged, (string content) => contentChanged = true));
+
+        // Act - Enter edit mode
+        var blockDisplay = component.Find(".block-display");
+        blockDisplay.Click();
+
+        // Change content
+        var textarea = component.Find("textarea.block-textarea");
+        textarea.Change(newContent);
+
+        // Press Ctrl+Enter
+        textarea.KeyDown(new KeyboardEventArgs
+        {
+            Key = "Enter",
+            CtrlKey = true
+        });
+
+        // Assert
+        Assert.That(contentChanged, Is.True, "Ctrl+Enter should save content");
+        
+        var editBlocks = component.FindAll(".block-edit");
+        Assert.That(editBlocks.Count, Is.EqualTo(0), "Should exit edit mode after Ctrl+Enter");
+    }
+
+    [Test]
+    public void EditMode_EscapeCancelsEditing()
+    {
+        // Arrange
+        var component = RenderComponent<TrueLiveMarkdownEditor>(parameters => parameters
+            .Add(p => p.Content, "Test content"));
+
+        // Act - Enter edit mode
+        var blockDisplay = component.Find(".block-display");
+        blockDisplay.Click();
+
+        // Press Escape
+        var textarea = component.Find("textarea.block-textarea");
+        textarea.KeyDown(new KeyboardEventArgs { Key = "Escape" });
+
+        // Assert
+        var editBlocks = component.FindAll(".block-edit");
+        Assert.That(editBlocks.Count, Is.EqualTo(0), "Escape should exit edit mode");
+    }
+
+    [Test]
+    public void AddNewBlockButton_CreatesEditableBlock()
+    {
+        // Arrange
+        var component = RenderComponent<TrueLiveMarkdownEditor>(parameters => parameters
+            .Add(p => p.Content, "Existing content"));
+
+        // Act
+        var addButton = component.Find(".add-new-block");
+        addButton.Click();
+
+        // Assert
+        var textarea = component.Find("textarea.block-textarea");
+        Assert.That(textarea, Is.Not.Null, "Should create editable textarea for new block");
+        
+        var saveButton = component.Find("button.btn-save");
+        Assert.That(saveButton, Is.Not.Null, "Should show save button for new block");
+    }
+
+    [Test]
+    public void MultipleBlocks_OnlyOneEditableAtTime()
+    {
+        // Arrange
+        var content = @"Block 1
+
+Block 2
+
+Block 3";
+
+        var component = RenderComponent<TrueLiveMarkdownEditor>(parameters => parameters
+            .Add(p => p.Content, content));
+
+        // Act - Click first block
+        var blocks = component.FindAll(".block-display");
+        blocks[0].Click();
+
+        // Assert - Only one block should be in edit mode
+        var editBlocks = component.FindAll(".block-edit");
+        Assert.That(editBlocks.Count, Is.EqualTo(1), "Only one block should be editable at a time");
+        
+        var textareas = component.FindAll("textarea.block-textarea");
+        Assert.That(textareas.Count, Is.EqualTo(1), "Only one textarea should exist");
+    }
+
+    [Test]
+    public void TextareaStyle_ChangesBasedOnBlockType()
+    {
+        // Arrange - Test different block types have different textarea styles
+        var content = @"# Heading 1
+
+Regular paragraph
+
+```code
+var x = 1;
+```";
+
+        var component = RenderComponent<TrueLiveMarkdownEditor>(parameters => parameters
+            .Add(p => p.Content, content));
+
+        // Act & Assert - Click each block type and check textarea style
+        var blocks = component.FindAll(".block-display");
+        
+        foreach (var block in blocks)
+        {
+            block.Click();
+            
+            var textarea = component.Find("textarea.block-textarea");
+            var style = textarea.GetAttribute("style");
+            
+            Assert.That(style, Is.Not.Null.And.Not.Empty, 
+                "Textarea should have styling based on block type");
+            
+            // Cancel to test next block
+            var cancelButton = component.Find("button.btn-cancel");
+            cancelButton.Click();
+        }
+    }
+}

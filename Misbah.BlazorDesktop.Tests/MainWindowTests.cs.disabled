@@ -1,5 +1,5 @@
 using Bunit;
-using Xunit;
+using NUnit.Framework;
 using Misbah.BlazorDesktop.Components.Pages.Notes;
 using Misbah.Core.Services;
 using Microsoft.Extensions.DependencyInjection;
@@ -9,10 +9,10 @@ namespace Misbah.BlazorDesktop.Tests;
 
 public class MainWindowTests
 {
-    [Fact]
+    [Test]
     public void MainWindow_Can_Be_Created()
     {
         var window = new Misbah.BlazorDesktop.MainWindow();
-        Assert.NotNull(window);
+        Assert.That(window, Is.Not.Null);
     }
 }

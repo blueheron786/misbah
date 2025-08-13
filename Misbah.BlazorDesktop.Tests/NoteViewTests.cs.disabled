@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using Bunit;
-using Xunit;
+using NUnit.Framework;
 using Misbah.BlazorDesktop.Components.Pages.Notes;
 using Misbah.Core.Models;
 using Misbah.Core.Services;
@@ -9,9 +9,10 @@ using NSubstitute;
 
 namespace Misbah.BlazorDesktop.Tests;
 
-public class NoteViewTests : TestContext
+[TestFixture]
+public class NoteViewTests : Bunit.TestContext
 {
-    [Fact]
+    [Test]
     public void Renders_Note_And_Editor()
     {
         // Arrange
@@ -26,7 +27,7 @@ public class NoteViewTests : TestContext
         var cut = RenderComponent<NoteView>(parameters => parameters.Add(p => p.NoteId, "n1"));
 
         // Assert
-        Assert.Contains("Test Note", cut.Markup);
-        Assert.Contains("WysiwygMarkdownEditor", cut.Markup);
+        Assert.That(cut.Markup, Does.Contain("Test Note"));
+        Assert.That(cut.Markup, Does.Contain("WysiwygMarkdownEditor"));
     }
 }

@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using Bunit;
-using Xunit;
+using NUnit.Framework;
 using Misbah.BlazorDesktop.Components.Pages.Notes;
 using Misbah.Core.Services;
 using Microsoft.Extensions.DependencyInjection;
@@ -8,9 +8,10 @@ using NSubstitute;
 
 namespace Misbah.BlazorDesktop.Tests;
 
-public class TrueLiveMarkdownEditorTests : TestContext
+[TestFixture]
+public class TrueLiveMarkdownEditorTests : Bunit.TestContext
 {
-    [Fact]
+    [Test]
     public void Renders_Empty_Placeholder()
     {
         // Arrange
@@ -19,10 +20,10 @@ public class TrueLiveMarkdownEditorTests : TestContext
         // Act
         var cut = RenderComponent<TrueLiveMarkdownEditor>(parameters => parameters.Add(p => p.Content, ""));
         // Assert
-        Assert.Contains("Click here to start writing", cut.Markup);
+        Assert.That(cut.Markup, Does.Contain("Click here to start writing"));
     }
 
-    [Fact]
+    [Test]
     public void Renders_Markdown_Blocks()
     {
         // Arrange
@@ -31,7 +32,7 @@ public class TrueLiveMarkdownEditorTests : TestContext
         // Act
         var cut = RenderComponent<TrueLiveMarkdownEditor>(parameters => parameters.Add(p => p.Content, "# Heading\n\nSome text"));
         // Assert
-        Assert.Contains("Heading", cut.Markup);
-        Assert.Contains("Some text", cut.Markup);
+        Assert.That(cut.Markup, Does.Contain("Heading"));
+        Assert.That(cut.Markup, Does.Contain("Some text"));
     }
 }

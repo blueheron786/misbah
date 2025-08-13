@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Microsoft.AspNetCore.Components;
 using Bunit;
-using Xunit;
+using NUnit.Framework;
 using Misbah.BlazorDesktop.Components.Pages.Notes;
 using Misbah.Core.Models;
 using Misbah.Core.Services;
@@ -11,9 +11,10 @@ using NSubstitute;
 
 namespace Misbah.BlazorDesktop.Tests;
 
-public class NoteListTests : TestContext
+[TestFixture]
+public class NoteListTests : Bunit.TestContext
 {
-    [Fact]
+    [Test]
     public void Renders_Notes_And_Selects_Note()
     {
         // Arrange
@@ -34,11 +35,11 @@ public class NoteListTests : TestContext
         var cut = RenderComponent<NoteList>(parameters => parameters.Add(p => p.RootPath, "root"));
 
         // Assert
-        Assert.Contains("Note 1", cut.Markup);
-        Assert.Contains("Note 2", cut.Markup);
+        Assert.That(cut.Markup, Does.Contain("Note 1"));
+        Assert.That(cut.Markup, Does.Contain("Note 2"));
         // Simulate click
         cut.FindAll("li").First().Click();
-        Assert.Contains("selected", cut.FindAll("li").First().GetAttribute("class"));
+        Assert.That(cut.FindAll("li", Does.Contain("selected")).First().GetAttribute("class"));
     }
 }
 

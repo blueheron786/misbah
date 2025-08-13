@@ -1,0 +1,453 @@
+using Bunit;
+using Microsoft.Extensions.DependencyInjection;
+using NUnit.Framework;
+using Misbah.BlazorDesktop.Pages.Notes;
+using Misbah.Application.Interfaces;
+using Misbah.Domain.Entities;
+using Microsoft.JSInterop;
+using Microsoft.Extensions.Logging;
+using System.Threading.Tasks;
+using System.Threading;
+using Misbah.Core.Services;
+using System.Collections.Generic;
+
+namespace Misbah.BlazorDesktop.Tests
+{
+    /// <summary>
+    /// Critical integration tests for NoteEditorClean to ensure notes remain editable
+    /// and prevent crashes when switching between notes or editing content.
+    /// </summary>
+    public class NoteEditorCriticalTests : Bunit.TestContext
+    {
+        private MockNoteApplicationService _mockNoteService;
+
+        public NoteEditorCriticalTests()
+        {
+            _mockNoteService = new MockNoteApplicationService();
+            
+            Services.AddSingleton<INoteApplicationService>(_mockNoteService);
+            Services.AddSingleton<MarkdownRenderer>(new MockMarkdownRenderer());
+            Services.AddSingleton<IJSRuntime>(new MockJSRuntime());
+            Services.AddLogging(builder => builder.AddConsole());
+        }
+
+        #region Critical Editor Rendering Tests
+
+        [Test]
+        public void NoteEditorClean_WithNote_RendersEditor_NotPreview()
+        {
+            // This test prevents regression where notes show preview instead of editor
+            var testNote = new Note
+            {
+                Id = "test-id",
+                Title = "Test Note",
+                Content = "# Test Content\n\nThis is test content.",
+                FilePath = "/path/to/test.md"
+            };
+
+            var component = RenderComponent<NoteEditorClean>(parameters => parameters
+                .Add(p => p.Note, testNote));
+
+            // Should render the editor container, not loading or error
+            Assert.That(component.Markup, Does.Contain("note-editor-container"));
+            Assert.That(component.Markup, Does.Not.Contain("loading-container"));
+            
+            // Should render the TrueLiveMarkdownEditor by default
+            var editor = component.FindComponent<TrueLiveMarkdownEditor>();
+            Assert.That(editor, Is.Not.Null);
+            Assert.That(editor.Instance.Content, Is.EqualTo(testNote.Content));
+        }
+
+        [Test]
+        public void NoteEditorClean_WithEmptyNote_RendersEditor_IsEditable()
+        {
+            // This test ensures empty notes are editable, not just showing empty preview
+            var emptyNote = new Note
+            {
+                Id = "empty-id",
+                Title = "Empty Note",
+                Content = "",
+                FilePath = "/path/to/empty.md"
+            };
+
+            var component = RenderComponent<NoteEditorClean>(parameters => parameters
+                .Add(p => p.Note, emptyNote));
+
+            // Should render editor even for empty notes
+            var editor = component.FindComponent<TrueLiveMarkdownEditor>();
+            Assert.That(editor, Is.Not.Null);
+            Assert.That(editor.Instance.Content, Is.EqualTo(""));
+            
+            // Empty notes should show the clickable placeholder
+            Assert.That(component.Markup, Does.Contain("empty-placeholder"));
+        }
+
+        [Test]
+        public void NoteEditorClean_WithNullNote_DoesNotCrash()
+        {
+            // This test ensures the component handles null notes gracefully
+            var component = RenderComponent<NoteEditorClean>(parameters => parameters
+                .Add(p => p.Note, (Note?)null));
+
+            // Should not crash with null note
+            Assert.DoesNotThrow(() => component.Find(".note-editor-wrapper"));
+        }
+
+        #endregion
+
+        #region Critical Save Functionality Tests
+
+        [Test]
+        public void NoteEditorClean_ManualSave_CallsNoteService()
+        {
+            // This test ensures the save button actually saves notes
+            var testNote = new Note
+            {
+                Id = "test-id",
+                Title = "Test Note",
+                Content = "# Original Content",
+                FilePath = "/path/to/test.md"
+            };
+
+            var component = RenderComponent<NoteEditorClean>(parameters => parameters
+                .Add(p => p.Note, testNote));
+
+            // Click manual save button
+            var saveBtn = component.Find("button[title='Save Note']");
+            saveBtn.Click();
+
+            // Should call save on the note service
+            Assert.That(_mockNoteService.SaveWasCalled, Is.True);
+            Assert.That(_mockNoteService.LastSavedNoteId, Is.EqualTo("test-id"));
+        }
+
+        [Test]
+        public void NoteEditorClean_ContentChange_MarksDirty()
+        {
+            // This test ensures content changes are tracked properly
+            var testNote = new Note
+            {
+                Id = "test-id",
+                Title = "Test Note",
+                Content = "# Original Content",
+                FilePath = "/path/to/test.md"
+            };
+
+            var component = RenderComponent<NoteEditorClean>(parameters => parameters
+                .Add(p => p.Note, testNote));
+
+            // Simulate content change from editor
+            var editor = component.FindComponent<TrueLiveMarkdownEditor>();
+            editor.InvokeAsync(() => editor.Instance.ContentChanged.InvokeAsync("# Modified Content"));
+
+            // Save button should show as dirty
+            var saveBtn = component.Find("button.save-btn");
+            Assert.That(saveBtn.GetClasses(), Does.Contain("dirty"));
+        }
+
+        #endregion
+
+        #region Critical Editor Mode Tests
+
+        [Test]
+        public void NoteEditorClean_SwitchToClassicEditor_PreservesContent()
+        {
+            // This test ensures switching editors doesn't lose content
+            var testNote = new Note
+            {
+                Id = "test-id",
+                Title = "Test Note",
+                Content = "# Test Header\n\nTest content.",
+                FilePath = "/path/to/test.md"
+            };
+
+            var component = RenderComponent<NoteEditorClean>(parameters => parameters
+                .Add(p => p.Note, testNote));
+
+            // Switch from Live to Classic editor
+            var toggleBtn = component.Find("button[title*='Switch to Classic Editor']");
+            toggleBtn.Click();
+
+            // Should switch to WYSIWYG editor with same content
+            var wysiwygEditor = component.FindComponent<WysiwygMarkdownEditor>();
+            Assert.That(wysiwygEditor, Is.Not.Null);
+            Assert.That(wysiwygEditor.Instance.Content, Is.EqualTo(testNote.Content));
+        }
+
+        [Test]
+        public void NoteEditorClean_PreviewMode_InClassicEditor_Works()
+        {
+            // This test ensures preview mode works in classic editor
+            var testNote = new Note
+            {
+                Id = "test-id",
+                Title = "Test Note",
+                Content = "# Test Header\n\nTest content.",
+                FilePath = "/path/to/test.md"
+            };
+
+            var component = RenderComponent<NoteEditorClean>(parameters => parameters
+                .Add(p => p.Note, testNote));
+
+            // Switch to classic editor first
+            var modeToggleBtn = component.Find("button[title*='Switch to Classic Editor']");
+            modeToggleBtn.Click();
+
+            // Toggle to preview mode
+            var previewToggleBtn = component.Find("button[title*='Show Preview']");
+            previewToggleBtn.Click();
+
+            // Should show preview, not editor
+            Assert.That(component.Markup, Does.Contain("markdown-preview"));
+        }
+
+        #endregion
+
+        #region Critical Title Editing Tests
+
+        [Test]
+        public void NoteEditorClean_ClickTitle_EntersEditMode()
+        {
+            // This test ensures title editing works
+            var testNote = new Note
+            {
+                Id = "test-id",
+                Title = "Original Title",
+                Content = "Content",
+                FilePath = "/path/to/test.md"
+            };
+
+            var component = RenderComponent<NoteEditorClean>(parameters => parameters
+                .Add(p => p.Note, testNote));
+
+            // Click on title to edit
+            var titleElement = component.Find("h2.note-title");
+            titleElement.Click();
+
+            // Should show title input
+            var titleInput = component.Find("input.title-input");
+            Assert.That(titleInput, Is.Not.Null);
+            Assert.That(titleInput.GetAttribute("value", Is.EqualTo("Original Title")));
+        }
+
+        [Test]
+        public void NoteEditorClean_EditTitle_SavesOnBlur()
+        {
+            // This test ensures title changes are saved
+            var testNote = new Note
+            {
+                Id = "test-id",
+                Title = "Original Title",
+                Content = "Content",
+                FilePath = "/path/to/test.md"
+            };
+
+            var component = RenderComponent<NoteEditorClean>(parameters => parameters
+                .Add(p => p.Note, testNote));
+
+            // Edit title and blur
+            var titleElement = component.Find("h2.note-title");
+            titleElement.Click();
+            
+            var titleInput = component.Find("input.title-input");
+            titleInput.Change("New Title");
+            titleInput.Blur();
+
+            // Should save new title
+            Assert.That(testNote.Title, Is.EqualTo("New Title"));
+            Assert.That(_mockNoteService.SaveWasCalled, Is.True);
+        }
+
+        #endregion
+
+        #region Critical Error Handling Tests
+
+        [Test]
+        public void NoteEditorClean_SaveFailure_DoesNotCrash()
+        {
+            // This test ensures save failures don't crash the component
+            _mockNoteService.ShouldThrowOnSave = true;
+            var testNote = new Note
+            {
+                Id = "test-id",
+                Title = "Test Note",
+                Content = "# Content",
+                FilePath = "/path/to/test.md"
+            };
+
+            var component = RenderComponent<NoteEditorClean>(parameters => parameters
+                .Add(p => p.Note, testNote));
+
+            // Try to save - should not crash
+            var saveBtn = component.Find("button[title='Save Note']");
+            Assert.DoesNotThrow(() => saveBtn.Click());
+        }
+
+        [Test]
+        public void NoteEditorClean_SpecialCharactersInTitle_HandlesCorrectly()
+        {
+            // This test ensures special characters don't break the component
+            var specialTitle = "Title with <script>alert('test')</script> & \"quotes\"";
+            var testNote = new Note
+            {
+                Id = "test-id",
+                Title = specialTitle,
+                Content = "# Content",
+                FilePath = "/path/to/test.md"
+            };
+
+            var component = RenderComponent<NoteEditorClean>(parameters => parameters
+                .Add(p => p.Note, testNote));
+            
+            // Should handle special characters safely
+            Assert.That(component.Markup, Does.Not.Contain("alert('test')"));
+            Assert.That(component.Markup, Does.Contain("note-title"));
+        }
+
+        #endregion
+
+        #region Mock Classes
+
+        private class MockNoteApplicationService : INoteApplicationService
+        {
+            public bool SaveWasCalled { get; private set; }
+            public string? LastSavedNoteId { get; private set; }
+            public bool ShouldThrowOnSave { get; set; }
+
+            public Task<IEnumerable<Note>> GetAllNotesAsync()
+            {
+                return Task.FromResult(Enumerable.Empty<Note>());
+            }
+
+            public IEnumerable<Note> GetAllNotes()
+            {
+                return Enumerable.Empty<Note>();
+            }
+
+            public Task<Note> LoadNoteAsync(string noteId)
+            {
+                return Task.FromResult(new Note
+                {
+                    Id = noteId,
+                    Title = "Test Note",
+                    Content = "Test Content",
+                    FilePath = "/test/path.md"
+                });
+            }
+
+            public Note LoadNote(string noteId)
+            {
+                return new Note
+                {
+                    Id = noteId,
+                    Title = "Test Note",
+                    Content = "Test Content",
+                    FilePath = "/test/path.md"
+                };
+            }
+
+            public Task SaveNoteAsync(Note note)
+            {
+                if (ShouldThrowOnSave)
+                    throw new InvalidOperationException("Save failed");
+                    
+                SaveWasCalled = true;
+                LastSavedNoteId = note.Id;
+                return Task.CompletedTask;
+            }
+
+            public void SaveNote(Note note)
+            {
+                if (ShouldThrowOnSave)
+                    throw new InvalidOperationException("Save failed");
+                    
+                SaveWasCalled = true;
+                LastSavedNoteId = note.Id;
+            }
+
+            public Task<Note> CreateNoteAsync(string title, string? folderPath = null)
+            {
+                return Task.FromResult(new Note
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    Title = title,
+                    Content = "",
+                    FilePath = $"/test/{title}.md"
+                });
+            }
+
+            public Task<Note> CreateNoteAsync(string title, string content, string? folderPath = null)
+            {
+                return Task.FromResult(new Note
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    Title = title,
+                    Content = content,
+                    FilePath = $"/test/{title}.md"
+                });
+            }
+
+            public Note CreateNote(string title, string content)
+            {
+                return new Note
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    Title = title,
+                    Content = content,
+                    FilePath = $"/test/{title}.md"
+                };
+            }
+
+            public Task DeleteNoteAsync(string noteId)
+            {
+                return Task.CompletedTask;
+            }
+
+            public void DeleteNote(string noteId)
+            {
+                // Mock implementation
+            }
+
+            public Task<IEnumerable<Note>> SearchNotesAsync(string query)
+            {
+                return Task.FromResult(Enumerable.Empty<Note>());
+            }
+
+            public List<string> ExtractTags(string content)
+            {
+                return new List<string>();
+            }
+
+            public void SetRootPath(string path)
+            {
+                // Mock implementation
+            }
+        }
+
+        private class MockMarkdownRenderer : MarkdownRenderer
+        {
+            public MockMarkdownRenderer() : base() { }
+
+            public new string Render(string? markdownText, out List<int> taskLines)
+            {
+                taskLines = new List<int>();
+                return $"<p>Rendered: {markdownText}</p>";
+            }
+        }
+
+        private class MockJSRuntime : IJSRuntime
+        {
+            public ValueTask<TValue> InvokeAsync<TValue>(string identifier, object?[]? args)
+            {
+                return ValueTask.FromResult(default(TValue)!);
+            }
+
+            public ValueTask<TValue> InvokeAsync<TValue>(string identifier, CancellationToken cancellationToken, object?[]? args)
+            {
+                return ValueTask.FromResult(default(TValue)!);
+            }
+        }
+
+        #endregion
+    }
+}

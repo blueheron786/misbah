@@ -1,5 +1,5 @@
 using Bunit;
-using Xunit;
+using NUnit.Framework;
 using Misbah.BlazorDesktop.Components.Pages.Notes;
 using Misbah.Core.Services;
 using Microsoft.Extensions.DependencyInjection;
@@ -9,12 +9,12 @@ namespace Misbah.BlazorDesktop.Tests;
 
 public class ProgramTests
 {
-    [Fact]
+    [Test]
     public void Program_Main_Does_Not_Throw()
     {
         // Just ensure the entry point exists and does not throw
         // (UI will not actually launch in test)
         Misbah.BlazorDesktop.Program.Main();
-        Assert.True(true);
+        Assert.That(true, Is.True);
     }
 }

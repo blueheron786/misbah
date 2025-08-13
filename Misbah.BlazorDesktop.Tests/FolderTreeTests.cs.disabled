@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using Bunit;
-using Xunit;
+using NUnit.Framework;
 using Misbah.BlazorDesktop.Components.Pages.Notes;
 using Misbah.Core.Models;
 using Misbah.Core.Services;
@@ -9,9 +9,10 @@ using NSubstitute;
 
 namespace Misbah.BlazorDesktop.Tests;
 
-public class FolderTreeTests : TestContext
+[TestFixture]
+public class FolderTreeTests : Bunit.TestContext
 {
-    [Fact]
+    [Test]
     public void Renders_Folder_And_Notes()
     {
         // Arrange
@@ -30,8 +31,8 @@ public class FolderTreeTests : TestContext
         var cut = RenderComponent<FolderTree>(parameters => parameters.Add(p => p.RootPath, "root"));
 
         // Assert
-        Assert.Contains("root", cut.Markup);
-        Assert.Contains("sub", cut.Markup);
-        Assert.Contains("Note 1", cut.Markup);
+        Assert.That(cut.Markup, Does.Contain("root"));
+        Assert.That(cut.Markup, Does.Contain("sub"));
+        Assert.That(cut.Markup, Does.Contain("Note 1"));
     }
 }

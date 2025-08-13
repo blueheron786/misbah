@@ -1,0 +1,332 @@
+using Bunit;
+using Microsoft.Extensions.DependencyInjection;
+using NUnit.Framework;
+using Misbah.BlazorDesktop.Components.Pages.Notes;
+using Misbah.Core.Services;
+using Microsoft.JSInterop;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using System.Threading;
+
+namespace Misbah.BlazorDesktop.Tests
+{
+    /// <summary>
+    /// Critical tests for TrueLiveMarkdownEditor focusing on editability and preventing regressions.
+    /// These tests ensure notes remain editable and don't crash during rendering.
+    /// </summary>
+    public class TrueLiveMarkdownEditorCriticalTests : Bunit.TestContext
+    {
+        public TrueLiveMarkdownEditorCriticalTests()
+        {
+            Services.AddSingleton<MarkdownRenderer>(new MockMarkdownRenderer());
+            Services.AddSingleton<IJSRuntime>(new MockJSRuntime());
+        }
+
+        #region Critical Editability Tests - Prevent regression where notes become uneditable
+
+        [Test]
+        public void EmptyNote_ShowsPlaceholder_IsClickable()
+        {
+            // This test prevents regression where empty notes show no way to start editing
+            var component = RenderComponent<TrueLiveMarkdownEditor>(parameters => parameters
+                .Add(p => p.Content, ""));
+
+            var placeholder = component.Find(".empty-placeholder");
+            Assert.That(placeholder, Is.Not.Null);
+            Assert.That(placeholder.TextContent, Does.Contain("Click here to start writing"));
+        }
+
+        [Test]
+        public void EmptyNote_ClickPlaceholder_ShowsTextarea()
+        {
+            // This test ensures empty notes become editable when clicked
+            var component = RenderComponent<TrueLiveMarkdownEditor>(parameters => parameters
+                .Add(p => p.Content, ""));
+
+            var placeholder = component.Find(".empty-placeholder");
+            placeholder.Click();
+
+            var textarea = component.Find("textarea");
+            Assert.That(textarea, Is.Not.Null);
+            Assert.That(textarea.GetClasses(), Does.Contain("block-textarea"));
+        }
+
+        [Test]
+        public void NonEmptyNote_BlocksAreClickable()
+        {
+            // This test ensures existing notes remain editable
+            var content = "# Header\n\nThis is a paragraph.";
+            
+            var component = RenderComponent<TrueLiveMarkdownEditor>(parameters => parameters
+                .Add(p => p.Content, content));
+
+            var blocks = component.FindAll(".block-display");
+            Assert.That(blocks.Count > 0, "Should have clickable blocks", Is.True);
+            
+            foreach (var block in blocks)
+            {
+                Assert.That(block.HasAttribute("onclick"), Is.True, "Each block should be clickable");
+            }
+        }
+
+        [Test]
+        public void ClickBlock_ShowsTextarea_WithSaveCancel()
+        {
+            // This test ensures clicking a block enters edit mode properly
+            var content = "# Header\n\nParagraph content.";
+            var component = RenderComponent<TrueLiveMarkdownEditor>(parameters => parameters
+                .Add(p => p.Content, content));
+
+            var firstBlock = component.Find(".block-display");
+            firstBlock.Click();
+
+            var textarea = component.Find("textarea");
+            Assert.That(textarea, Is.Not.Null);
+            
+            var saveBtn = component.Find(".btn-save");
+            var cancelBtn = component.Find(".btn-cancel");
+            Assert.That(saveBtn, Is.Not.Null);
+            Assert.That(cancelBtn, Is.Not.Null);
+        }
+
+        #endregion
+
+        #region Critical Rendering Tests - Prevent crashes and unrenderable notes
+
+        [Test]
+        public void ParseContentIntoBlocks_DoesNotCrash_WithNormalContent()
+        {
+            // Test that normal markdown content parses without exceptions
+            var content = "# Header 1\n\nParagraph text\n\n## Header 2\n\n- List item 1\n- List item 2";
+            
+            var component = RenderComponent<TrueLiveMarkdownEditor>(parameters => parameters
+                .Add(p => p.Content, content));
+
+            var blocks = component.FindAll(".live-block");
+            Assert.That(blocks.Count >= 3, "Should parse multiple blocks", Is.True);
+        }
+
+        [Test]
+        public void ParseContentIntoBlocks_DoesNotCrash_WithCodeBlocks()
+        {
+            // Test that code blocks don't break parsing
+            var content = "Text before\n\n```csharp\nvar x = 5;\nConsole.WriteLine(x);\n```\n\nText after";
+            
+            var component = RenderComponent<TrueLiveMarkdownEditor>(parameters => parameters
+                .Add(p => p.Content, content));
+
+            var blocks = component.FindAll(".live-block");
+            Assert.That(blocks.Count >= 2, "Should handle code blocks", Is.True);
+        }
+
+        [Test]
+        public void ParseContentIntoBlocks_DoesNotCrash_WithSpecialChars()
+        {
+            // Test that special characters don't break parsing
+            var content = "# Header with <special> & chars\n\n\"Quotes\" and 'apostrophes'\n\n&lt;escaped&gt; HTML";
+            
+            var component = RenderComponent<TrueLiveMarkdownEditor>(parameters => parameters
+                .Add(p => p.Content, content));
+
+            var blocks = component.FindAll(".live-block");
+            Assert.That(blocks.Count > 0, "Should handle special characters", Is.True);
+        }
+
+        [Test]
+        public void RenderBlockToHtml_DoesNotCrash_WithAnyContent()
+        {
+            // Test that rendering doesn't crash with various content types
+            var contents = new[]
+            {
+                "# Simple header",
+                "Regular paragraph",
+                "```code block```",
+                "> Quote block",
+                "- List item",
+                "1. Numbered item",
+                "",
+                "   ", // Whitespace
+                "Special chars: <>&\"'"
+            };
+
+            foreach (var content in contents)
+            {
+                // Should not throw exceptions
+                var component = RenderComponent<TrueLiveMarkdownEditor>(parameters => parameters
+                    .Add(p => p.Content, content));
+                
+                // If it renders without exception, test passes
+                Assert.That(component, Is.Not.Null);
+            }
+        }
+
+        #endregion
+
+        #region Critical Save/Edit Tests - Prevent data loss
+
+        [Test]
+        public void SaveBlock_NotifiesParent_WithUpdatedContent()
+        {
+            // Test that saving actually updates the content
+            var originalContent = "# Original Header";
+            string? savedContent = null;
+            
+            var component = RenderComponent<TrueLiveMarkdownEditor>(parameters => parameters
+                .Add(p => p.Content, originalContent)
+                .Add(p => p.ContentChanged, EventCallback.Factory.Create<string>(this, 
+                    content => savedContent = content)));
+
+            // Enter edit mode and modify
+            var firstBlock = component.Find(".block-display");
+            firstBlock.Click();
+            
+            var textarea = component.Find("textarea");
+            textarea.Change("# Modified Header");
+            
+            var saveBtn = component.Find(".btn-save");
+            saveBtn.Click();
+
+            // Verify parent was notified
+            Assert.That(savedContent, Is.Not.Null);
+            Assert.That(savedContent, Does.Contain("Modified Header"));
+        }
+
+        [Test]
+        public void CancelEdit_DoesNotNotifyParent_PreservesOriginal()
+        {
+            // Test that canceling edit doesn't lose data or make unwanted changes
+            var originalContent = "# Original Header";
+            string? savedContent = null;
+            
+            var component = RenderComponent<TrueLiveMarkdownEditor>(parameters => parameters
+                .Add(p => p.Content, originalContent)
+                .Add(p => p.ContentChanged, EventCallback.Factory.Create<string>(this, 
+                    content => savedContent = content)));
+
+            // Enter edit mode, modify, then cancel
+            var firstBlock = component.Find(".block-display");
+            firstBlock.Click();
+            
+            var textarea = component.Find("textarea");
+            textarea.Change("# Modified Header");
+            
+            var cancelBtn = component.Find(".btn-cancel");
+            cancelBtn.Click();
+
+            // Verify no notification and original content preserved
+            Assert.That(savedContent, Is.Null);
+            var restoredBlock = component.Find(".block-display");
+            Assert.That(restoredBlock.InnerHtml, Does.Contain("Original Header"));
+        }
+
+        [Test]
+        public void CreateNewBlock_EntersEditMode_ReadyForInput()
+        {
+            // Test that creating new blocks works properly
+            var component = RenderComponent<TrueLiveMarkdownEditor>(parameters => parameters
+                .Add(p => p.Content, "# Existing content"));
+
+            var addBtn = component.Find(".add-new-block");
+            addBtn.Click();
+
+            var textarea = component.Find("textarea");
+            Assert.That(textarea, Is.Not.Null);
+            // New block should be ready for input
+            Assert.That(textarea.GetAttribute("value", Is.EqualTo("")) ?? "");
+        }
+
+        #endregion
+
+        #region Edge Case Tests - Prevent crashes from malformed content
+
+        [Test]
+        public void ContentParameterChange_DoesNotCrash()
+        {
+            // Test that changing content parameter doesn't break the component
+            var component = RenderComponent<TrueLiveMarkdownEditor>(parameters => parameters
+                .Add(p => p.Content, "# Original"));
+
+            // Change content parameter
+            component.SetParametersAndRender(parameters => parameters
+                .Add(p => p.Content, "# Updated\n\nNew paragraph"));
+
+            var blocks = component.FindAll(".live-block");
+            Assert.That(blocks.Count >= 1, "Should handle parameter changes", Is.True);
+        }
+
+        [Test]
+        public void VeryLongContent_DoesNotCrash()
+        {
+            // Test that large content doesn't crash the component
+            var longContent = string.Join("\n\n", 
+                Enumerable.Range(1, 50).Select(i => $"# Section {i}\n\nContent for section {i}"));
+            
+            var component = RenderComponent<TrueLiveMarkdownEditor>(parameters => parameters
+                .Add(p => p.Content, longContent));
+
+            var blocks = component.FindAll(".live-block");
+            Assert.That(blocks.Count >= 10, "Should handle large content", Is.True);
+        }
+
+        [Test]
+        public void EmptyAndWhitespaceContent_HandlesGracefully()
+        {
+            // Test various empty/whitespace scenarios
+            var testCases = new[] { "", "   ", "\n\n\n", "\t\t", "   \n   \n   " };
+
+            foreach (var content in testCases)
+            {
+                var component = RenderComponent<TrueLiveMarkdownEditor>(parameters => parameters
+                    .Add(p => p.Content, content));
+
+                // Should show placeholder for empty/whitespace content
+                Assert.That(component.Markup, Does.Contain("empty-placeholder"));
+            }
+        }
+
+        #endregion
+
+        #region Mock Classes
+
+        private class MockMarkdownRenderer : MarkdownRenderer
+        {
+            public MockMarkdownRenderer() : base() { }
+
+            // Hide the base method with 'new' instead of 'override'
+            public new string Render(string? markdownText, out List<int> taskLines)
+            {
+                taskLines = new List<int>();
+                
+                if (string.IsNullOrEmpty(markdownText))
+                    return "<p></p>";
+                
+                // Simple mock rendering
+                if (markdownText.StartsWith("# "))
+                    return $"<h1>{markdownText[2..]}</h1>";
+                if (markdownText.StartsWith("## "))
+                    return $"<h2>{markdownText[3..]}</h2>";
+                if (markdownText.StartsWith("> "))
+                    return $"<blockquote>{markdownText[2..]}</blockquote>";
+                if (markdownText.StartsWith("```"))
+                    return $"<pre><code>{markdownText}</code></pre>";
+                
+                return $"<p>{markdownText}</p>";
+            }
+        }
+
+        private class MockJSRuntime : IJSRuntime
+        {
+            public ValueTask<TValue> InvokeAsync<TValue>(string identifier, object?[]? args)
+            {
+                return ValueTask.FromResult(default(TValue)!);
+            }
+
+            public ValueTask<TValue> InvokeAsync<TValue>(string identifier, CancellationToken cancellationToken, object?[]? args)
+            {
+                return ValueTask.FromResult(default(TValue)!);
+            }
+        }
+
+        #endregion
+    }
+}

@@ -1,6 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using Bunit;
-using Xunit;
+using NUnit.Framework;
 using NSubstitute;
 using Microsoft.AspNetCore.Components;
 using Misbah.Application.Interfaces;
@@ -14,9 +14,10 @@ namespace Misbah.BlazorDesktop.Tests;
 /// <summary>
 /// Tests for the NoteListClean component using Clean Architecture
 /// </summary>
-public class NoteListCleanTests : TestContext
+[TestFixture]
+public class NoteListCleanTests : Bunit.TestContext
 {
-    [Fact]
+    [Test]
     public void NoteListClean_RendersCorrectly_WithEmptyNotes()
     {
         // Arrange
@@ -42,11 +43,11 @@ public class NoteListCleanTests : TestContext
             .Add(p => p.RootPath, "/test/path"));
 
         // Assert
-        Assert.Contains("note-list-container", component.Markup);
-        Assert.Contains("No notes found", component.Markup);
+        Assert.That(component.Markup, Does.Contain("note-list-container"));
+        Assert.That(component.Markup, Does.Contain("No notes found"));
     }
 
-    [Fact]
+    [Test]
     public void NoteListClean_RendersNotes_WhenNotesExist()
     {
         // Arrange
@@ -91,14 +92,14 @@ public class NoteListCleanTests : TestContext
             .Add(p => p.RootPath, "/test/path"));
 
         // Assert
-        Assert.Contains("note-list-container", component.Markup);
-        Assert.Contains("Test Note 1", component.Markup);
-        Assert.Contains("Test Note 2", component.Markup);
-        Assert.Contains("tag1", component.Markup);
-        Assert.Contains("tag2", component.Markup);
+        Assert.That(component.Markup, Does.Contain("note-list-container"));
+        Assert.That(component.Markup, Does.Contain("Test Note 1"));
+        Assert.That(component.Markup, Does.Contain("Test Note 2"));
+        Assert.That(component.Markup, Does.Contain("tag1"));
+        Assert.That(component.Markup, Does.Contain("tag2"));
     }
 
-    [Fact]
+    [Test]
     public void NoteListClean_CallsNoteService_OnInitialization()
     {
         // Arrange

@@ -1,0 +1,24 @@
+using Bunit;
+using NUnit.Framework;
+using Misbah.BlazorDesktop.Pages.Notes;
+
+[TestFixture]
+public class NoteEditorCleanEditabilityTests : Bunit.TestContext
+{
+    [Test]
+    public void NoteEditorClean_RendersEditableEditor_WhenNoteIsLoaded()
+    {
+        // Arrange: create a test note id
+        var noteId = "test-note-id";
+        // Render the NoteEditorClean component
+        var cut = RenderComponent<NoteEditorClean>(parameters => parameters
+            .Add(p => p.NoteId, noteId)
+        );
+
+        // Act: Try to find an editable element (textarea, input, or contenteditable)
+        var editable = cut.FindAll("textarea, input, [contenteditable]");
+
+        // Assert: There should be at least one editable element
+        Assert.That(editable, Is.Not.Empty);
+    }
+}

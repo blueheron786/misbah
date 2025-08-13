@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using Misbah.BlazorDesktop.Pages;
 using Bunit;
-using Xunit;
+using NUnit.Framework;
 using Misbah.BlazorDesktop.Components.Pages.Notes;
 using Misbah.Core.Models;
 using Misbah.Core.Services;
@@ -10,9 +10,10 @@ using NSubstitute;
 
 namespace Misbah.BlazorDesktop.Tests;
 
-public class NotesIndexTests : TestContext
+[TestFixture]
+public class NotesIndexTests : Bunit.TestContext
 {
-    [Fact]
+    [Test]
     public void Renders_NotesIndex_Page()
     {
         // Arrange
@@ -21,7 +22,7 @@ public class NotesIndexTests : TestContext
         // Act
         var cut = RenderComponent<NotesIndex>();
         // Assert
-        Assert.Contains("Notes", cut.Markup);
-        Assert.Contains("New Note", cut.Markup);
+        Assert.That(cut.Markup, Does.Contain("Notes"));
+        Assert.That(cut.Markup, Does.Contain("New Note"));
     }
 }

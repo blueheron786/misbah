@@ -1,6 +1,6 @@
 using Misbah.BlazorDesktop.Components;
 using Bunit;
-using Xunit;
+using NUnit.Framework;
 using Misbah.BlazorDesktop.Components.Pages.Notes;
 using Misbah.Core.Services;
 using Microsoft.Extensions.DependencyInjection;
@@ -8,12 +8,13 @@ using NSubstitute;
 
 namespace Misbah.BlazorDesktop.Tests;
 
-public class LangSelectorTests : TestContext
+[TestFixture]
+public class LangSelectorTests : Bunit.TestContext
 {
-    [Fact]
+    [Test]
     public void LangSelector_Can_Be_Rendered()
     {
         var cut = RenderComponent<LangSelector>();
-        Assert.NotNull(cut);
+        Assert.That(cut, Is.Not.Null);
     }
 }

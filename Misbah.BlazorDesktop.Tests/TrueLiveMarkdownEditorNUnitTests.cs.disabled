@@ -1,0 +1,238 @@
+using Bunit;
+using Microsoft.Extensions.DependencyInjection;
+using NUnit.Framework;
+using Misbah.BlazorDesktop.Components.Pages.Notes;
+using Misbah.Core.Services;
+
+namespace Misbah.BlazorDesktop.Tests;
+
+[TestFixture]
+public class TrueLiveMarkdownEditorNUnitTests : Bunit.TestContext
+{
+    [SetUp]
+    public void Setup()
+    {
+        Services.AddSingleton<MarkdownRenderer>(sp => new MarkdownRenderer());
+    }
+
+    [Test]
+    public void EmptyNote_ShouldShowEditablePlaceholder_PreventRegressionBug()
+    {
+        // This test prevents the critical regression where empty notes are not editable
+        
+        // Act
+        var component = RenderComponent<TrueLiveMarkdownEditor>(parameters => parameters
+            .Add(p => p.Content, "")
+            .Add(p => p.Height, "400px"));
+
+        // Assert - Empty note should show editable placeholder
+        var placeholder = component.Find(".empty-placeholder");
+        Assert.That(placeholder, Is.Not.Null);
+        Assert.That(placeholder.TextContent, Does.Contain("Click here to start writing"));
+    }
+
+    [Test]
+    public void SingleParagraph_ShouldParseAndRenderCorrectly()
+    {
+        // Arrange
+        var content = "This is a simple paragraph.";
+
+        // Act
+        var component = RenderComponent<TrueLiveMarkdownEditor>(parameters => parameters
+            .Add(p => p.Content, content));
+
+        // Assert
+        var blocks = component.FindAll(".live-block");
+        Assert.That(blocks.Count, Is.EqualTo(1));
+        
+        var blockDisplay = component.Find(".block-display");
+        Assert.That(blockDisplay, Is.Not.Null);
+        Assert.That(blockDisplay.InnerHtml, Does.Contain("This is a simple paragraph"));
+    }
+
+    [Test]
+    public void MultipleBlockTypes_ShouldParseCorrectly()
+    {
+        // Arrange
+        var content = @"# Heading 1
+
+This is a paragraph.
+
+## Heading 2
+
+> This is a quote
+
+- List item 1
+- List item 2";
+
+        // Act
+        var component = RenderComponent<TrueLiveMarkdownEditor>(parameters => parameters
+            .Add(p => p.Content, content));
+
+        // Assert
+        var blocks = component.FindAll(".live-block");
+        Assert.That(blocks.Count, Is.GreaterThan(3));
+
+        // Check that different block types are recognized
+        var h1Block = blocks.FirstOrDefault(b => b.GetAttribute("data-block-type") == "h1");
+        var paragraphBlock = blocks.FirstOrDefault(b => b.GetAttribute("data-block-type") == "paragraph");
+        var quoteBlock = blocks.FirstOrDefault(b => b.GetAttribute("data-block-type") == "quote");
+        var listBlock = blocks.FirstOrDefault(b => b.GetAttribute("data-block-type") == "list");
+
+        Assert.That(h1Block, Is.Not.Null);
+        Assert.That(paragraphBlock, Is.Not.Null);
+        Assert.That(quoteBlock, Is.Not.Null);
+        Assert.That(listBlock, Is.Not.Null);
+    }
+
+    [Test]
+    public void BlockClicking_ShouldEnterEditMode()
+    {
+        // Arrange
+        var content = "Click me to edit";
+        var component = RenderComponent<TrueLiveMarkdownEditor>(parameters => parameters
+            .Add(p => p.Content, content));
+
+        // Act
+        var blockDisplay = component.Find(".block-display");
+        blockDisplay.Click();
+
+        // Assert
+        var editingBlock = component.Find(".block-edit");
+        Assert.That(editingBlock, Is.Not.Null);
+        
+        var textarea = component.Find("textarea.block-textarea");
+        Assert.That(textarea, Is.Not.Null);
+        Assert.That(textarea.GetAttribute("value") ?? textarea.TextContent, Does.Contain("Click me to edit"));
+    }
+
+    [Test]
+    public void EditingAndSaving_ShouldUpdateContent()
+    {
+        // Arrange
+        var originalContent = "Original content";
+        var newContent = "Updated content";
+        var contentChangedCalled = false;
+        var updatedContent = "";
+
+        var component = RenderComponent<TrueLiveMarkdownEditor>(parameters => parameters
+            .Add(p => p.Content, originalContent)
+            .Add(p => p.ContentChanged, (string content) => {
+                contentChangedCalled = true;
+                updatedContent = content;
+            }));
+
+        // Act - Click to edit
+        var blockDisplay = component.Find(".block-display");
+        blockDisplay.Click();
+
+        // Update textarea content
+        var textarea = component.Find("textarea.block-textarea");
+        textarea.Change(newContent);
+
+        // Save the changes
+        var saveButton = component.Find("button.btn-save");
+        saveButton.Click();
+
+        // Assert
+        Assert.That(contentChangedCalled, Is.True);
+        Assert.That(updatedContent, Is.EqualTo(newContent));
+        
+        // Should exit edit mode
+        var editingBlocks = component.FindAll(".block-edit");
+        Assert.That(editingBlocks, Is.Empty);
+    }
+
+    [Test]
+    public void CancelEditing_ShouldRevertChanges()
+    {
+        // Arrange
+        var originalContent = "Original content";
+        var component = RenderComponent<TrueLiveMarkdownEditor>(parameters => parameters
+            .Add(p => p.Content, originalContent));
+
+        // Act - Click to edit
+        var blockDisplay = component.Find(".block-display");
+        blockDisplay.Click();
+
+        // Update textarea content
+        var textarea = component.Find("textarea.block-textarea");
+        textarea.Change("Modified content");
+
+        // Cancel the changes
+        var cancelButton = component.Find("button.btn-cancel");
+        cancelButton.Click();
+
+        // Assert
+        // Should exit edit mode
+        var editingBlocks = component.FindAll(".block-edit");
+        Assert.That(editingBlocks, Is.Empty);
+
+        // Content should remain unchanged
+        var blockDisplay2 = component.Find(".block-display");
+        Assert.That(blockDisplay2.InnerHtml, Does.Contain("Original content"));
+    }
+
+    [Test]
+    public void CreateNewBlock_ShouldEnterEditMode()
+    {
+        // Arrange
+        var component = RenderComponent<TrueLiveMarkdownEditor>(parameters => parameters
+            .Add(p => p.Content, "Existing content"));
+
+        // Act
+        var addButton = component.Find(".add-new-block");
+        addButton.Click();
+
+        // Assert
+        var editingBlocks = component.FindAll(".block-edit");
+        Assert.That(editingBlocks.Count, Is.EqualTo(1));
+        
+        var textarea = component.Find("textarea.block-textarea");
+        Assert.That(textarea, Is.Not.Null);
+        Assert.That(string.IsNullOrEmpty(textarea.GetAttribute("value")), Is.True);
+    }
+
+    [Test]
+    public void VeryLongContent_ShouldNotCausePerformanceIssues()
+    {
+        // Arrange - Generate a large document
+        var paragraphs = new List<string>();
+        for (int i = 0; i < 20; i++)
+        {
+            paragraphs.Add($"This is paragraph number {i + 1} with some content to make it realistic.");
+        }
+        var content = string.Join("\n\n", paragraphs);
+
+        // Act & Assert - Should not throw or hang
+        Assert.DoesNotThrow(() =>
+        {
+            var component = RenderComponent<TrueLiveMarkdownEditor>(parameters => parameters
+                .Add(p => p.Content, content));
+            
+            var blocks = component.FindAll(".live-block");
+            Assert.That(blocks.Count, Is.EqualTo(20));
+        });
+    }
+
+    [Test]
+    public void SpecialCharacters_ShouldNotBreakRendering()
+    {
+        // Arrange - Test with various special characters that might break rendering
+        var content = @"# Title with émojis 🚀 and spéciál chars
+
+Content with <script>alert('xss')</script> tags.
+
+And some unicode: ñáéíóú and symbols: © ® ™ € £ ¥";
+
+        // Act & Assert - Should not crash
+        Assert.DoesNotThrow(() =>
+        {
+            var component = RenderComponent<TrueLiveMarkdownEditor>(parameters => parameters
+                .Add(p => p.Content, content));
+            
+            var blocks = component.FindAll(".live-block");
+            Assert.That(blocks.Count, Is.GreaterThan(0));
+        });
+    }
+}
