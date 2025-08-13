@@ -62,6 +62,12 @@ namespace Misbah.Infrastructure.Repositories
         {
             var parentPath = System.IO.Path.GetDirectoryName(path);
             var folderName = System.IO.Path.GetFileName(path);
+            
+            if (string.IsNullOrEmpty(parentPath))
+            {
+                throw new ArgumentException("Cannot determine parent directory from path", nameof(path));
+            }
+            
             _legacyFolderService.CreateFolder(parentPath, folderName);
         }
         

@@ -56,6 +56,7 @@ public class NoteRepositoryAdapterTests
             Id = "test-note", 
             Title = "Test Note", 
             Content = "# Test Content",
+            FilePath = filePath,
             Modified = DateTime.UtcNow
         };
         
@@ -98,9 +99,9 @@ public class NoteRepositoryAdapterTests
         // Arrange
         var coreNotes = new List<CoreNote>
         {
-            new() { Id = "note1", Title = "Note 1", Content = "Content 1" },
-            new() { Id = "note2", Title = "Note 2", Content = "Content 2" },
-            new() { Id = "note3", Title = "Note 3", Content = "Content 3" }
+            new() { Id = "note1", Title = "Note 1", Content = "Content 1", FilePath = "note1.md" },
+            new() { Id = "note2", Title = "Note 2", Content = "Content 2", FilePath = "note2.md" },
+            new() { Id = "note3", Title = "Note 3", Content = "Content 3", FilePath = "note3.md" }
         };
         
         _noteService.GetAllNotes().Returns(coreNotes);
@@ -129,6 +130,7 @@ public class NoteRepositoryAdapterTests
             Id = "new-note",
             Title = title,
             Content = "",
+            FilePath = "/notes/new-note.md",
             Created = DateTime.UtcNow,
             Modified = DateTime.UtcNow
         };

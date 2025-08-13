@@ -149,7 +149,11 @@ namespace Misbah.Application.Services
         
         public FolderNode FilterHiddenFolders(FolderNode rootFolder)
         {
-            if (rootFolder == null) return rootFolder;
+            if (rootFolder == null) 
+            {
+                // Return an empty folder node instead of null
+                return new FolderNode { Name = "", Path = "" };
+            }
             
             // Create a new folder node with filtered subfolders
             var filteredFolder = new FolderNode

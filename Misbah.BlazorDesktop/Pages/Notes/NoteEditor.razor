@@ -7,9 +7,8 @@
 @inject IJSRuntime JS
 
 @code {
-    [Parameter] public string NoteId { get; set; }
-    private Note note;
-    private bool isLiveEditMode = true;
+    [Parameter] public string? NoteId { get; set; }
+    private Note? note;
     private bool isPreviewMode = false;
     private bool useLiveView = false; // New option for Obsidian-style editing
     private string currentTheme = "light";
@@ -23,7 +22,7 @@
             if (note == null)
             {
                 // Fallback: create a dummy note to avoid null reference and show error
-                note = new Note { Title = "(Note not found)", Content = "Could not load note with ID: " + NoteId };
+                note = new Note { Id = NoteId ?? "", Title = "(Note not found)", Content = "Could not load note with ID: " + NoteId, FilePath = "" };
             }
         }
     }

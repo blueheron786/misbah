@@ -40,7 +40,7 @@ namespace Misbah.Core.Services
                 {
                     try
                     {
-                        folder.Notes.Add(new Note { Id = file, Title = Path.GetFileNameWithoutExtension(file), FilePath = file });
+                        folder.Notes.Add(new Note { Id = file, Title = Path.GetFileNameWithoutExtension(file), Content = "", FilePath = file });
                     }
                     catch (Exception ex) { Debug.WriteLine($"[FolderService] Skipped file: {file}, ex: {ex.Message}"); }
                 }

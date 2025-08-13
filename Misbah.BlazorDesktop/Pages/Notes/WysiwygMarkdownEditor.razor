@@ -66,17 +66,17 @@
         }
     }
 
-    private async Task OnContentInput(ChangeEventArgs e)
+    private void OnContentInput(ChangeEventArgs e)
     {
         // No auto-save on input
     }
 
-    private async Task OnContentBlur(FocusEventArgs e)
+    private void OnContentBlur(FocusEventArgs e)
     {
         // No auto-save on blur
     }
 
-    private async Task OnKeyDown(KeyboardEventArgs e)
+    private void OnKeyDown(KeyboardEventArgs e)
     {
         // Optionally handle keyboard shortcuts for formatting, but no save
     }
@@ -102,7 +102,7 @@
     }
 
     [JSInvokable]
-    public async Task OnEditorContentChanged(string html)
+    public void OnEditorContentChanged(string html)
     {
         // No auto-save on content change
     }

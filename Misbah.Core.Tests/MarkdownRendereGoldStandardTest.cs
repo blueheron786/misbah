@@ -157,11 +157,11 @@ End of document.<br>";
             if (cleanActual != cleanExpected)
             {
                 // Print diff for debugging
-                TestContext.WriteLine("=== EXPECTED HTML ===");
-                TestContext.WriteLine(cleanExpected);
-                TestContext.WriteLine("\n=== ACTUAL HTML ===");
-                TestContext.WriteLine(cleanActual);
-                TestContext.WriteLine("\n=== DIFF (showing first difference) ===");
+                TestContext.Out.WriteLine("=== EXPECTED HTML ===");
+                TestContext.Out.WriteLine(cleanExpected);
+                TestContext.Out.WriteLine("\n=== ACTUAL HTML ===");
+                TestContext.Out.WriteLine(cleanActual);
+                TestContext.Out.WriteLine("\n=== DIFF (showing first difference) ===");
                 ShowFirstDifference(cleanExpected, cleanActual);
             }
 
@@ -215,17 +215,17 @@ End of document.<br>";
                     var expectedSnippet = expected.Substring(start, Math.Min(100, expected.Length - start));
                     var actualSnippet = actual.Substring(start, Math.Min(100, actual.Length - start));
                     
-                    TestContext.WriteLine($"First difference at position {i}:");
-                    TestContext.WriteLine($"Expected: ...{expectedSnippet}...");
-                    TestContext.WriteLine($"Actual:   ...{actualSnippet}...");
-                    TestContext.WriteLine($"Character at difference - Expected: '{expected[i]}' (0x{(int)expected[i]:X2}), Actual: '{actual[i]}' (0x{(int)actual[i]:X2})");
+                    TestContext.Out.WriteLine($"First difference at position {i}:");
+                    TestContext.Out.WriteLine($"Expected: ...{expectedSnippet}...");
+                    TestContext.Out.WriteLine($"Actual:   ...{actualSnippet}...");
+                    TestContext.Out.WriteLine($"Character at difference - Expected: '{expected[i]}' (0x{(int)expected[i]:X2}), Actual: '{actual[i]}' (0x{(int)actual[i]:X2})");
                     break;
                 }
             }
 
             if (expected.Length != actual.Length)
             {
-                TestContext.WriteLine($"Length difference - Expected: {expected.Length}, Actual: {actual.Length}");
+                TestContext.Out.WriteLine($"Length difference - Expected: {expected.Length}, Actual: {actual.Length}");
             }
         }
     }
