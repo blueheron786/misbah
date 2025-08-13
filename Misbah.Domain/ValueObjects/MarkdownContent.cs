@@ -62,7 +62,7 @@ namespace Misbah.Domain.ValueObjects
             return "";
         }
         
-        public int WordCount => RawContent.Split(' ', StringSplitOptions.RemoveEmptyEntries).Length;
+        public int WordCount => RawContent.Split(new char[0], StringSplitOptions.RemoveEmptyEntries).Length;
         public int CharacterCount => RawContent.Length;
         public bool IsEmpty => string.IsNullOrWhiteSpace(RawContent);
         

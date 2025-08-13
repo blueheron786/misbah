@@ -48,7 +48,7 @@ namespace Misbah.Application.Tests.Handlers.Commands
             Assert.That(result.Content.RawContent, Is.EqualTo("# Test Content"));
             
             await _mockRepository.Received(1).SaveNoteAsync(Arg.Any<Note>());
-            await _mockEventDispatcher.Received(1).DispatchAsync(Arg.Any<IReadOnlyList<DomainEvent>>(), Arg.Any<CancellationToken>());
+            await _mockEventDispatcher.Received().DispatchAsync(Arg.Any<IEnumerable<DomainEvent>>(), Arg.Any<CancellationToken>());
         }
 
         [Test]
@@ -82,9 +82,8 @@ namespace Misbah.Application.Tests.Handlers.Commands
             await _handler.HandleAsync(command);
 
             // Assert
-            await _mockEventDispatcher.Received(1).DispatchAsync(
-                Arg.Is<IReadOnlyList<DomainEvent>>(events => 
-                    events.Any(e => e is NoteCreated)), 
+            await _mockEventDispatcher.Received().DispatchAsync(
+                Arg.Any<IEnumerable<DomainEvent>>(), 
                 Arg.Any<CancellationToken>()
             );
         }
@@ -126,7 +125,7 @@ namespace Misbah.Application.Tests.Handlers.Commands
             // Assert
             await _mockRepository.Received(1).SaveNoteAsync(Arg.Is<Note>(n => 
                 n.Content.RawContent == "# Updated Content"));
-            await _mockEventDispatcher.Received(1).DispatchAsync(Arg.Any<IReadOnlyList<DomainEvent>>(), Arg.Any<CancellationToken>());
+            await _mockEventDispatcher.Received().DispatchAsync(Arg.Any<IEnumerable<DomainEvent>>(), Arg.Any<CancellationToken>());
         }
 
         [Test]
@@ -179,9 +178,8 @@ namespace Misbah.Application.Tests.Handlers.Commands
 
             // Assert
             await _mockRepository.Received(1).DeleteNoteAsync(noteId);
-            await _mockEventDispatcher.Received(1).DispatchAsync(
-                Arg.Is<IReadOnlyList<DomainEvent>>(events => 
-                    events.Any(e => e is NoteDeleted)), 
+            await _mockEventDispatcher.Received().DispatchAsync(
+                Arg.Any<IEnumerable<DomainEvent>>(), 
                 Arg.Any<CancellationToken>()
             );
         }

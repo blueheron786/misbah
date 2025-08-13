@@ -139,8 +139,7 @@ namespace Misbah.Application.Tests.Handlers.Queries
                 Note.CreateNew("Other Note", @"C:\test", "This is other content")
             };
 
-            _mockRepository.SearchNotesAsync("important").Returns(notes.Where(n => 
-                n.Title.Contains("Important") || n.Content.RawContent.Contains("important")));
+            _mockRepository.GetAllNotes().Returns(notes);
             
             var query = new SearchNotesQuery("important");
 
@@ -189,8 +188,7 @@ namespace Misbah.Application.Tests.Handlers.Queries
                 Note.CreateNew("Note 2", @"C:\test", "Content with #personal")
             };
 
-            _mockRepository.GetNotesByTagAsync("work").Returns(notes.Where(n => 
-                n.ExtractedTags.Contains("work")));
+            _mockRepository.GetAllNotes().Returns(notes);
             
             var query = new GetNotesByTagQuery("work");
 
@@ -220,8 +218,13 @@ namespace Misbah.Application.Tests.Handlers.Queries
         public async Task HandleAsync_NotesExist_ReturnsAllTags()
         {
             // Arrange
-            var expectedTags = new[] { "work", "personal", "project" };
-            _mockRepository.GetAllTagsAsync().Returns(expectedTags);
+            var notes = new[]
+            {
+                Note.CreateNew("Note 1", @"C:\test", "Content with #work and #project"),
+                Note.CreateNew("Note 2", @"C:\test", "Content with #personal")
+            };
+            
+            _mockRepository.GetAllNotes().Returns(notes);
             
             var query = new GetAllTagsQuery();
 
@@ -239,7 +242,7 @@ namespace Misbah.Application.Tests.Handlers.Queries
         public async Task HandleAsync_NoNotes_ReturnsEmptyTags()
         {
             // Arrange
-            _mockRepository.GetAllTagsAsync().Returns(Array.Empty<string>());
+            _mockRepository.GetAllNotes().Returns(Array.Empty<Note>());
             var query = new GetAllTagsQuery();
 
             // Act

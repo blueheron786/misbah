@@ -37,10 +37,12 @@ namespace Misbah.Domain.ValueObjects
         
         private static string NormalizePath(string path)
         {
-            return Path.GetFullPath(path).Replace('\\', '/');
+            return path; // Keep the original path format
         }
         
         public static implicit operator string(NotePath notePath) => notePath.Value;
         public static implicit operator NotePath(string path) => new(path);
+        
+        public override string ToString() => Value;
     }
 }
