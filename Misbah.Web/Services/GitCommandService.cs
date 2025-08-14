@@ -25,12 +25,6 @@ namespace Misbah.Web.Services
                 _gitSyncService.SyncCompleted += OnSyncCompleted;
                 _gitSyncService.SyncError += OnSyncError;
             }
-            
-            // Add some sample commands for testing
-            AddCommand("git init");
-            AddCommand("git add .");
-            AddCommand("git commit -m \"Initial commit\"");
-            AddCommand("git status");
         }
 
         private void OnSyncCompleted(object? sender, GitSyncEventArgs e)
