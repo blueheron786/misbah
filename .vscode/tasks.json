@@ -3,9 +3,19 @@
 	"tasks": [
 		{
 			"type": "shell",
+			"label": "dotnet restore",
+			"command": "dotnet restore",
+			"group": "build",
+			"problemMatcher": [
+				"$msCompile"
+			]
+		},
+		{
+			"type": "shell",
 			"label": "Build RenderMarkdownCli",
 			"command": "dotnet build Misbah.sln",
 			"group": "build",
+			"dependsOn": "dotnet restore",
 			"problemMatcher": [
 				"$msCompile"
 			]
@@ -16,6 +26,7 @@
 			"command": "dotnet build",
 			"args": ["Misbah.BlazorDesktop"],
 			"group": "build",
+			"dependsOn": "dotnet restore",
 			"problemMatcher": [
 				"$msCompile"
 			]
@@ -26,6 +37,7 @@
 			"command": "dotnet build",
 			"args": ["Misbah.Android"],
 			"group": "build",
+			"dependsOn": "dotnet restore",
 			"problemMatcher": [
 				"$msCompile"
 			]
@@ -40,6 +52,7 @@
 				"/property:GenerateFullPaths=true",
 				"/consoleloggerparameters:NoSummary"
 			],
+			"dependsOn": "dotnet restore",
 			"problemMatcher": "$msCompile"
 		},
 		{
@@ -52,6 +65,7 @@
 				"/property:GenerateFullPaths=true",
 				"/consoleloggerparameters:NoSummary"
 			],
+			"dependsOn": "dotnet restore",
 			"problemMatcher": "$msCompile"
 		},
 		{
@@ -64,6 +78,7 @@
 				"--project",
 				"${workspaceFolder}/Misbah.Web/Misbah.Web.csproj"
 			],
+			"dependsOn": "dotnet restore",
 			"problemMatcher": "$msCompile"
 		}
 	]
