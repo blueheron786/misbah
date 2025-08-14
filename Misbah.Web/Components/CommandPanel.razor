@@ -1,17 +1,31 @@
 @inject Misbah.Web.Services.GitCommandService GitCommandService
 @using Microsoft.AspNetCore.Components
+@using Microsoft.JSInterop
+@inject IJSRuntime JSRuntime
 
 @if (showPanel)
 {
-    <div class="command-panel-overlay" @onclick="ClosePanel">
+    <div class="command-panel-overlay" @onclick="ClosePanel" @onkeydown="HandleSearchKeyDown" tabindex="0" autofocus @ref="overlayRef">
         <div class="command-panel" @onclick:stopPropagation="true">
             @if (!showGitLogs)
             {
-                <input @bind="searchText" @bind:event="oninput" placeholder="Type to search..." class="command-search" @ref="searchInput" />
+          <input @bind="searchText" 
+              @bind:event="oninput" 
+              placeholder="Type to search..." 
+              class="command-search" 
+              @ref="searchInput" />
                 <div class="command-options">
-                    @foreach (var option in options.Where(o => string.IsNullOrEmpty(searchText) || o.Contains(searchText, StringComparison.OrdinalIgnoreCase)))
+                    @{
+                        var filteredOptions = options.Where(o => string.IsNullOrEmpty(searchText) || o.Contains(searchText, StringComparison.OrdinalIgnoreCase)).ToList();
+                    }
+                    @for (int i = 0; i < filteredOptions.Count; i++)
                     {
-                        <div class="command-option" @onclick="() => SelectOption(option)">@option</div>
+                        var index = i;
+                        var option = filteredOptions[i];
+                        <div class="command-option @(index == selectedIndex ? "selected" : "")" 
+                             @onclick="() => SelectOption(option)">
+                            @option
+                        </div>
                     }
                 </div>
             }
@@ -46,47 +60,70 @@
 .command-panel-overlay {
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.5);
+    background: rgba(0,0,0,0.7);
     z-index: 1000;
     display: flex;
     align-items: flex-start;
     justify-content: center;
     padding-top: 10vh;
+    outline: none;
 }
 
 .command-panel {
-    background: #fff;
+    background: #2d2d30;
+    border: 1px solid #454545;
     border-radius: 8px;
     width: 600px;
     max-width: 90vw;
     max-height: 70vh;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.6);
     overflow: hidden;
+    color: #cccccc;
 }
 
 .command-search {
     width: 100%;
     padding: 1rem;
     border: none;
-    border-bottom: 1px solid #e0e0e0;
+    border-bottom: 1px solid #454545;
     font-size: 1.1rem;
     outline: none;
+    background: #1e1e1e;
+    color: #cccccc;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.command-search::placeholder {
+    color: #6c6c6c;
 }
 
 .command-options {
     max-height: 300px;
     overflow-y: auto;
+    background: #2d2d30;
 }
 
 .command-option {
     padding: 0.8rem 1rem;
     cursor: pointer;
-    border-bottom: 1px solid #f5f5f5;
+    border-bottom: 1px solid #383838;
     transition: background-color 0.2s;
+    color: #cccccc;
+    display: flex;
+    align-items: center;
 }
 
 .command-option:hover {
-    background-color: #f0f0f0;
+    background-color: #37373d;
+}
+
+.command-option.selected {
+    background-color: #094771;
+    color: #ffffff;
+}
+
+.command-option:last-child {
+    border-bottom: none;
 }
 
 .command-header {
@@ -94,13 +131,14 @@
     justify-content: space-between;
     align-items: center;
     padding: 1rem;
-    border-bottom: 1px solid #e0e0e0;
-    background-color: #f8f9fa;
+    border-bottom: 1px solid #454545;
+    background-color: #252526;
 }
 
 .command-header h3 {
     margin: 0;
-    color: #333;
+    color: #cccccc;
+    font-weight: 600;
 }
 
 .close-btn {
@@ -108,51 +146,79 @@
     border: none;
     font-size: 1.5rem;
     cursor: pointer;
-    color: #666;
+    color: #cccccc;
     width: 30px;
     height: 30px;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 50%;
+    border-radius: 4px;
     transition: background-color 0.2s;
 }
 
 .close-btn:hover {
-    background-color: #e0e0e0;
+    background-color: #e81123;
+    color: #ffffff;
 }
 
 .git-logs {
     max-height: 400px;
     overflow-y: auto;
     padding: 0.5rem;
+    background: #1e1e1e;
 }
 
 .git-entry {
     display: flex;
-    padding: 0.5rem;
-    border-bottom: 1px solid #f0f0f0;
-    font-family: 'Consolas', 'Monaco', monospace;
+    padding: 0.6rem;
+    border-bottom: 1px solid #383838;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
     font-size: 0.9rem;
+}
+
+.git-entry:hover {
+    background-color: #2d2d30;
 }
 
 .git-timestamp {
     flex-shrink: 0;
-    width: 70px;
-    color: #666;
+    width: 80px;
+    color: #9cdcfe;
     margin-right: 1rem;
 }
 
 .git-command {
     flex: 1;
-    color: #333;
+    color: #d4d4d4;
 }
 
 .no-commands {
     padding: 2rem;
     text-align: center;
-    color: #666;
+    color: #6c6c6c;
     font-style: italic;
+}
+
+/* Scrollbar styling for dark mode */
+.command-options::-webkit-scrollbar,
+.git-logs::-webkit-scrollbar {
+    width: 8px;
+}
+
+.command-options::-webkit-scrollbar-track,
+.git-logs::-webkit-scrollbar-track {
+    background: #1e1e1e;
+}
+
+.command-options::-webkit-scrollbar-thumb,
+.git-logs::-webkit-scrollbar-thumb {
+    background: #424242;
+    border-radius: 4px;
+}
+
+.command-options::-webkit-scrollbar-thumb:hover,
+.git-logs::-webkit-scrollbar-thumb:hover {
+    background: #4e4e4e;
 }
 </style>
 
@@ -160,14 +226,16 @@
     private bool showPanel = false;
     private bool showGitLogs = false;
     private string searchText = "";
-    private List<string> options = new() { "View Git Logs" };
+    private List<string> options = new() { "View Git Logs", "Settings", "Help", "About", "Export Notes", "Import Notes" };
     private ElementReference searchInput;
+    private ElementReference overlayRef;
+    private int selectedIndex = 0;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (showPanel && !showGitLogs && searchInput.Context != null)
+        if (showPanel && !showGitLogs && overlayRef.Context != null)
         {
-            await searchInput.FocusAsync();
+            await overlayRef.FocusAsync();
         }
     }
 
@@ -176,6 +244,7 @@
         showPanel = true;
         showGitLogs = false;
         searchText = "";
+        selectedIndex = 0;
         StateHasChanged();
     }
 
@@ -186,12 +255,72 @@
             showGitLogs = true;
             StateHasChanged();
         }
+        else
+        {
+            // For other options, just close the panel for now
+            ClosePanel();
+        }
+    }
+
+    private void SelectCurrentOption()
+    {
+        var filteredOptions = options.Where(o => string.IsNullOrEmpty(searchText) || o.Contains(searchText, StringComparison.OrdinalIgnoreCase)).ToList();
+        if (filteredOptions.Any() && selectedIndex < filteredOptions.Count)
+        {
+            SelectOption(filteredOptions[selectedIndex]);
+        }
     }
 
     private void ClosePanel()
     {
         showPanel = false;
         showGitLogs = false;
+        selectedIndex = 0;
         StateHasChanged();
+    }
+
+    private void HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Escape")
+        {
+            ClosePanel();
+        }
+    }
+
+    private bool IsNavigationKey(KeyboardEventArgs e)
+    {
+        return e.Key == "ArrowDown" || e.Key == "ArrowUp" || e.Key == "Enter";
+    }
+
+    private void HandleSearchKeyDown(KeyboardEventArgs e)
+    {
+        var filteredOptions = options.Where(o => string.IsNullOrEmpty(searchText) || o.Contains(searchText, StringComparison.OrdinalIgnoreCase)).ToList();
+        
+        switch (e.Key)
+        {
+            case "ArrowDown":
+                selectedIndex = (selectedIndex + 1) % Math.Max(1, filteredOptions.Count);
+                StateHasChanged();
+                break;
+                
+            case "ArrowUp":
+                selectedIndex = selectedIndex <= 0 ? Math.Max(0, filteredOptions.Count - 1) : selectedIndex - 1;
+                StateHasChanged();
+                break;
+                
+            case "Enter":
+                SelectCurrentOption();
+                break;
+                
+            case "Escape":
+                ClosePanel();
+                break;
+        }
+
+        // Reset selection when search text changes
+        if (e.Key != "ArrowDown" && e.Key != "ArrowUp" && e.Key != "Enter" && e.Key != "Escape")
+        {
+            selectedIndex = 0;
+        }
     }
 }
