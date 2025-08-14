@@ -19,5 +19,5 @@ jobs:
       run: dotnet restore Misbah.sln
     - name: Build
       run: dotnet build Misbah.sln --no-restore --configuration Release
-    - name: Test
-      run: dotnet test Misbah.sln --no-build --configuration Release --logger trx
+    - name: Test and Generate Coverage
+      run: ./coverage.ps1
