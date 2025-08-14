@@ -33,44 +33,53 @@
         }
     }
 
+    protected override async Task OnInitializedAsync()
+    {
+        // Try to register early, but don't fail if JavaScript isn't ready yet
+        if (!isCtrlSRegistered)
+        {
+            try
+            {
+                Console.WriteLine("🔥 [Blazor] OnInitializedAsync - Attempting early Ctrl+S registration...");
+                
+                // Small delay to allow JavaScript to load
+                await Task.Delay(100);
+                
+                dotNetRef = DotNetObjectReference.Create(this);
+                await JS.InvokeVoidAsync("blazorHelpers.registerSaveFunction", dotNetRef, nameof(HandleCtrlS));
+                isCtrlSRegistered = true;
+                
+                Console.WriteLine("✅ [Blazor] OnInitializedAsync - Early Ctrl+S registration successful!");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"⚠️ [Blazor] OnInitializedAsync - Early registration failed (will retry): {ex.Message}");
+                // Don't set isCtrlSRegistered = true, so OnAfterRenderAsync can try again
+            }
+        }
+    }
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender && !isCtrlSRegistered)
         {
             try
             {
-                Console.WriteLine("Waiting for Misbah API to be ready...");
+                Console.WriteLine("🔥 [Blazor] Attempting to register Ctrl+S save function...");
                 
-                // Wait for the API to be ready using the global promise
-                await JS.InvokeVoidAsync("eval", @"
-                    window.misbahApiReady.then(() => {
-                        console.log('✅ API ready for Blazor registration');
-                    }).catch((err) => {
-                        console.error('❌ API failed to load:', err);
-                    });
-                    return window.misbahApiReady;
-                ");
-                
-                // Double-check that everything is available
-                var isReady = await JS.InvokeAsync<bool>("eval", 
-                    "!!(window.misbah && window.misbah.api && window.blazorHelpers && window.blazorHelpers.registerSaveFunction)");
-                
-                if (!isReady)
-                {
-                    Console.WriteLine("API objects not available after promise resolved");
-                    return;
-                }
+                // Small delay to ensure JavaScript is fully ready
+                await Task.Delay(50);
                 
                 // Register Ctrl+S functionality
                 dotNetRef = DotNetObjectReference.Create(this);
                 await JS.InvokeVoidAsync("blazorHelpers.registerSaveFunction", dotNetRef, nameof(HandleCtrlS));
                 isCtrlSRegistered = true;
                 
-                Console.WriteLine("Ctrl+S save function registered successfully");
+                Console.WriteLine("✅ [Blazor] Ctrl+S save function registered successfully!");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Failed to register Ctrl+S save function: {ex.Message}");
+                Console.WriteLine($"❌ [Blazor] Failed to register Ctrl+S save function: {ex.Message}");
             }
         }
     }
@@ -129,6 +138,7 @@
     [JSInvokable]
     public async Task HandleCtrlS()
     {
+        Console.WriteLine("🚀 [Blazor] HandleCtrlS called - saving note...");
         await SaveNote();
     }
 

@@ -1,0 +1,87 @@
+@using Misbah.Core.Models
+@using Misbah.Core.Services
+@using Microsoft.JSInterop
+@inherits Shared.Components.Notes.CtrlSHandler
+@inject INoteService NoteService
+@inject IJSRuntime JS
+
+@code {
+    [Parameter] public string? NoteId { get; set; }
+    
+    protected Note? note;
+    protected bool isPreviewMode = false;
+    protected bool useLiveView = false;
+    protected string currentTheme = "light";
+
+    protected override void OnParametersSet()
+    {
+        if (!string.IsNullOrEmpty(NoteId))
+        {
+            note = NoteService.LoadNote(NoteId);
+            if (note == null)
+            {
+                // Fallback: create a dummy note to avoid null reference and show error
+                note = new Note { Id = NoteId ?? "", Title = "(Note not found)", Content = "Could not load note with ID: " + NoteId, FilePath = "" };
+            }
+        }
+    }
+
+    protected override async Task OnSaveRequested()
+    {
+        Console.WriteLine("🚀 [Blazor] NoteEditorBase - Save requested");
+        await SaveNote();
+    }
+
+    protected virtual async Task SaveNote()
+    {
+        if (note != null)
+        {
+            try
+            {
+                NoteService.SaveNote(note);
+                StateHasChanged();
+                
+                // Show success toast
+                await JS.InvokeVoidAsync("eval", "window.misbah.api.toast.success('Note saved successfully! ✓')");
+                Console.WriteLine("✅ [Blazor] Note saved successfully");
+            }
+            catch (Exception ex)
+            {
+                // Show error toast
+                await JS.InvokeVoidAsync("eval", "window.misbah.api.toast.error('Failed to save note')");
+                Console.WriteLine($"❌ [Blazor] Failed to save note: {ex.Message}");
+            }
+        }
+    }
+
+    protected virtual async Task OnContentChanged(string content)
+    {
+        if (note != null)
+        {
+            note.Content = content;
+            // Auto-save after content changes
+            await SaveNote();
+        }
+    }
+
+    protected virtual Task TogglePreviewMode()
+    {
+        isPreviewMode = !isPreviewMode;
+        StateHasChanged();
+        return Task.CompletedTask;
+    }
+
+    protected virtual Task ToggleLiveView()
+    {
+        useLiveView = !useLiveView;
+        StateHasChanged();
+        return Task.CompletedTask;
+    }
+
+    protected virtual Task ToggleTheme()
+    {
+        currentTheme = currentTheme == "light" ? "dark" : "light";
+        StateHasChanged();
+        return Task.CompletedTask;
+    }
+}

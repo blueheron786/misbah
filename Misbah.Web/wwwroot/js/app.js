@@ -1,7 +1,17 @@
-// Misbah Note-Taking Application - Web Entry Point
-// Simple cache busting approach
+/**
+ * Misbah Application Loader
+ * Shared between Web and BlazorDesktop applications
+ * Handles cache busting and synchronous loading of the API
+ */
 
-// Include the API directly with cache busting
-document.write(`<script src="js/api.js?v=${Date.now()}"><\/script>`);
-
-console.log(`Misbah Web API loaded with cache busting: v=${Date.now()}`);
+(function() {
+    // Cache busting with timestamp
+    const timestamp = Date.now();
+    const version = timestamp;
+    
+    console.log('Misbah API loading with cache busting: v=' + version);
+    
+    // Use document.write for synchronous loading
+    // This ensures the API is available immediately when Blazor components initialize
+    document.write('<script src="js/api.js?v=' + version + '"><\/script>');
+})();

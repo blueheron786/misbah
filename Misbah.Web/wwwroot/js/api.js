@@ -1,259 +1,243 @@
-// Misbah Note-Taking Application - Web JavaScript API
-// Organized under misbah.api namespace for clean code organization
+/**
+ * Misbah Application JavaScript API
+ * Shared between Web and BlazorDesktop applications
+ * Handles keyboard shortcuts, Blazor interop, and UI utilities
+ */
 
-// Initialize the Misbah API namespace
+// Initialize the global Misbah namespace
 window.misbah = window.misbah || {};
-window.misbah.api = {
-    // Internal state management
-    _internal: {
-        currentSaveFunction: null,
-        isInitialized: false
-    },
+window.misbah.api = window.misbah.api || {};
+window.misbah.api._internal = window.misbah.api._internal || {};
 
-    // Core keyboard functionality
-    keyboard: {
-        /**
-         * Register a save function to be called on Ctrl+S
-         * @param {Object} dotNetRef - Blazor component reference
-         * @param {string} methodName - Method name to invoke
-         */
-        registerSaveFunction: function(dotNetRef, methodName) {
-            window.misbah.api._internal.currentSaveFunction = function() {
-                dotNetRef.invokeMethodAsync(methodName);
-            };
-            console.log('✅ Save function registered for Ctrl+S:', methodName);
-            console.log('✅ Current save function:', typeof window.misbah.api._internal.currentSaveFunction);
-        },
+// Main API initialization
+window.misbah.api.init = function() {
+    console.log('Misbah API initialized - refresh shortcuts disabled, Ctrl+S save enabled');
+    
+    // Initialize keyboard shortcuts
+    window.misbah.api.keyboard.init();
+    
+    // Initialize protection utilities
+    window.misbah.api.protection.init();
+    
+    // Initialize toast system
+    window.misbah.api.toast.init();
+};
+
+// Keyboard shortcuts namespace
+window.misbah.api.keyboard = {
+    init: function() {
+        // Remove any existing listeners to prevent duplicates
+        document.removeEventListener('keydown', this.handleKeyDown);
         
-        /**
-         * Unregister the current save function
-         */
-        unregisterSaveFunction: function() {
-            window.misbah.api._internal.currentSaveFunction = null;
-            console.log('Save function unregistered');
-        },
+        // Add keyboard event listener
+        document.addEventListener('keydown', this.handleKeyDown.bind(this));
+    },
+    
+    /**
+     * Main keyboard event handler
+     * @param {KeyboardEvent} event - The keyboard event
+     */
+    handleKeyDown: function(event) {
+        // Handle Ctrl+S (Save)
+        if (event.ctrlKey && event.key === 's') {
+            this.handleCtrlS(event);
+            return;
+        }
         
-        /**
-         * Handle Ctrl+S keyboard shortcut
-         * @param {KeyboardEvent} event - The keyboard event
-         */
-        handleCtrlS: function(event) {
+        // Handle F5 and Ctrl+R (Refresh prevention)
+        if (event.key === 'F5' || (event.ctrlKey && event.key === 'r')) {
+            this.handleRefreshPrevention(event);
+            return;
+        }
+    },
+    
+    /**
+     * Handle Ctrl+S keyboard shortcut
+     * @param {KeyboardEvent} event - The keyboard event
+     */
+    handleCtrlS: function(event) {
+        event.preventDefault();
+        event.stopPropagation();
+        
+        console.log('🔥 Ctrl+S pressed at', new Date().toISOString());
+        console.log('🔍 Current save function type:', typeof window.misbah.api._internal.currentSaveFunction);
+        console.log('🔍 Current save function value:', window.misbah.api._internal.currentSaveFunction);
+        console.log('🔍 blazorHelpers available:', typeof window.blazorHelpers);
+        console.log('🔍 blazorHelpers.registerSaveFunction available:', typeof window.blazorHelpers?.registerSaveFunction);
+        
+        if (typeof window.misbah.api._internal.currentSaveFunction === 'function') {
+            console.log('✅ Calling save function...');
+            window.misbah.api._internal.currentSaveFunction();
+        } else if (typeof console !== 'undefined') {
+            console.log('❌ Ctrl+S pressed but no save function is registered.');
+            
+            // Try to help by retrying registration after a short delay
+            console.log('🔄 Attempting to trigger delayed registration...');
+            setTimeout(() => {
+                if (typeof window.misbah.api._internal.currentSaveFunction !== 'function') {
+                    console.log('⚠️ Save function still not available after delay');
+                }
+            }, 100);
+        }
+        
+        return false;
+    },
+    
+    /**
+     * Handle refresh prevention (Ctrl+R, F5)
+     * @param {KeyboardEvent} event - The keyboard event
+     */
+    handleRefreshPrevention: function(event) {
+        // Only prevent refresh in certain contexts (like when editing)
+        if (document.querySelector('.markdown-editor, .note-editor, textarea, input[type="text"]')) {
             event.preventDefault();
             event.stopPropagation();
-            
-            console.log('🔵 Ctrl+S detected');
-            console.log('🔵 Current save function type:', typeof window.misbah.api._internal.currentSaveFunction);
-            console.log('🔵 Current save function:', window.misbah.api._internal.currentSaveFunction);
-            
-            if (typeof window.misbah.api._internal.currentSaveFunction === 'function') {
-                console.log('✅ Calling save function...');
-                window.misbah.api._internal.currentSaveFunction();
-            } else if (typeof console !== 'undefined') {
-                console.log('❌ Ctrl+S pressed but no save function is registered.');
-            }
-            
+            console.log('Refresh prevented - unsaved changes may exist');
             return false;
-        },
-        
-        /**
-         * Handle refresh prevention (Ctrl+R, F5)
-         * @param {KeyboardEvent} event - The keyboard event
-         */
-        handleRefreshPrevention: function(event) {
-            // Disable Ctrl+R (refresh)
-            if (event.ctrlKey && event.key === 'r') {
-                event.preventDefault();
-                event.stopPropagation();
-                
-                if (typeof console !== 'undefined') {
-                    console.log('Page refresh disabled to prevent losing content. Use the browser refresh button if needed.');
-                }
-                
-                return false;
-            }
-            
-            // Disable F5 (refresh)
-            if (event.key === 'F5') {
-                event.preventDefault();
-                event.stopPropagation();
-                
-                if (typeof console !== 'undefined') {
-                    console.log('Page refresh disabled to prevent losing content. Use the browser refresh button if needed.');
-                }
-                
-                return false;
-            }
-            
-            return true;
         }
-    },
+    }
+};
 
-    // Content protection utilities
-    protection: {
-        /**
-         * Check if there's potentially unsaved content on the page
-         * @returns {boolean} True if content is detected
-         */
-        hasUnsavedContent: function() {
-            const textareas = document.querySelectorAll('textarea');
-            const inputs = document.querySelectorAll('input[type="text"]');
-            
-            let hasContent = false;
-            textareas.forEach(textarea => {
-                if (textarea.value && textarea.value.trim().length > 0) {
-                    hasContent = true;
-                }
-            });
-            
-            inputs.forEach(input => {
-                if (input.value && input.value.trim().length > 0) {
-                    hasContent = true;
-                }
-            });
-            
-            return hasContent;
-        },
+// Protection utilities namespace
+window.misbah.api.protection = {
+    init: function() {
+        console.log('🛡️ Protection utilities disabled for development');
         
-        /**
-         * Handle page unload warning
-         * @param {BeforeUnloadEvent} event - The beforeunload event
-         */
-        handleBeforeUnload: function(event) {
-            if (window.misbah.api.protection.hasUnsavedContent()) {
-                event.preventDefault();
-                event.returnValue = 'You may have unsaved changes. Are you sure you want to leave?';
-                return 'You may have unsaved changes. Are you sure you want to leave?';
-            }
+        // DEVELOPMENT: All protection disabled to allow debugging
+        // Uncomment below for production builds
+        
+        /*
+        // Disable context menu in production
+        if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+            document.addEventListener('contextmenu', function(e) {
+                e.preventDefault();
+                return false;
+            });
         }
+        
+        // Disable F12, Ctrl+Shift+I, Ctrl+U
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'F12' || 
+                (e.ctrlKey && e.shiftKey && e.key === 'I') || 
+                (e.ctrlKey && e.key === 'u')) {
+                if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+                    e.preventDefault();
+                    return false;
+                }
+            }
+        });
+        */
+    }
+};
+
+// Toast notification system
+window.misbah.api.toast = {
+    init: function() {
+        this.ensureToastContainer();
     },
-
-    /**
-     * Toast notification utilities
-     */
-    toast: {
-        /**
-         * Show a toast notification
-         * @param {string} message - The message to display
-         * @param {string} type - The type of toast: 'success', 'error', 'info'
-         * @param {number} duration - Duration in milliseconds (default: 3000)
-         */
-        show: function(message, type = 'success', duration = 3000) {
-            const container = document.getElementById('toast-container') || this.createContainer();
-            
-            const toast = document.createElement('div');
-            toast.className = `toast toast-${type}`;
-            
-            const icon = type === 'success' ? '✓' : type === 'error' ? '✗' : 'ℹ';
-            toast.innerHTML = `
-                <span class="toast-icon">${icon}</span>
-                <span class="toast-message">${message}</span>
-            `;
-            
-            container.appendChild(toast);
-            
-            // Trigger animation
-            setTimeout(() => {
-                toast.classList.add('show');
-            }, 10);
-            
-            // Auto-remove
-            setTimeout(() => {
-                toast.classList.remove('show');
-                setTimeout(() => {
-                    if (container.contains(toast)) {
-                        container.removeChild(toast);
-                    }
-                }, 300);
-            }, duration);
-        },
-
-        /**
-         * Create the toast container if it doesn't exist
-         */
-        createContainer: function() {
+    
+    ensureToastContainer: function() {
+        if (!document.getElementById('toast-container')) {
             const container = document.createElement('div');
             container.id = 'toast-container';
             container.className = 'toast-container';
             document.body.appendChild(container);
-            return container;
-        },
-
-        /**
-         * Show a success toast
-         * @param {string} message - The success message
-         */
-        success: function(message) {
-            this.show(message, 'success');
-        },
-
-        /**
-         * Show an error toast
-         * @param {string} message - The error message
-         */
-        error: function(message) {
-            this.show(message, 'error');
-        },
-
-        /**
-         * Show an info toast
-         * @param {string} message - The info message
-         */
-        info: function(message) {
-            this.show(message, 'info');
         }
     },
-
-    /**
-     * Initialize the misbah API with all event listeners and protections
-     */
-    init: function() {
-        if (window.misbah.api._internal.isInitialized) {
-            console.warn('Misbah API already initialized');
-            return;
+    
+    show: function(message, type = 'info', duration = 3000) {
+        this.ensureToastContainer();
+        
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type}`;
+        toast.innerHTML = `
+            <div class="toast-content">
+                <span class="toast-message">${message}</span>
+                <button class="toast-close" onclick="this.parentElement.parentElement.remove()">&times;</button>
+            </div>
+        `;
+        
+        const container = document.getElementById('toast-container');
+        container.appendChild(toast);
+        
+        // Animate in
+        setTimeout(() => toast.classList.add('toast-show'), 10);
+        
+        // Auto-remove after duration
+        if (duration > 0) {
+            setTimeout(() => {
+                toast.classList.remove('toast-show');
+                setTimeout(() => {
+                    if (toast.parentNode) {
+                        toast.parentNode.removeChild(toast);
+                    }
+                }, 300);
+            }, duration);
         }
         
-        // Set up global keyboard event handling
-        document.addEventListener('keydown', function(event) {
-            // Handle Ctrl+S (save)
-            if (event.ctrlKey && event.key === 's') {
-                return window.misbah.api.keyboard.handleCtrlS(event);
-            }
-            
-            // Handle refresh prevention
-            return window.misbah.api.keyboard.handleRefreshPrevention(event);
-        });
-        
-        // Set up page unload protection - with safety check
-        if (window.misbah.api.protection && typeof window.misbah.api.protection.handleBeforeUnload === 'function') {
-            window.addEventListener('beforeunload', window.misbah.api.protection.handleBeforeUnload);
-        } else {
-            console.warn('Protection module not properly initialized');
-        }
-        
-        window.misbah.api._internal.isInitialized = true;
-        console.log('Misbah API initialized - keyboard shortcuts and content protection active');
+        return toast;
+    },
+    
+    success: function(message, duration = 3000) {
+        return this.show(message, 'success', duration);
+    },
+    
+    error: function(message, duration = 5000) {
+        return this.show(message, 'error', duration);
+    },
+    
+    warning: function(message, duration = 4000) {
+        return this.show(message, 'warning', duration);
+    },
+    
+    info: function(message, duration = 3000) {
+        return this.show(message, 'info', duration);
     }
 };
 
-// Legacy compatibility - maintain old interface for existing Blazor code
-window.blazorHelpers = {
-    registerSaveFunction: window.misbah.api.keyboard.registerSaveFunction,
-    unregisterSaveFunction: window.misbah.api.keyboard.unregisterSaveFunction
+// Blazor helpers namespace (backwards compatibility layer)
+window.blazorHelpers = window.blazorHelpers || {};
+
+/**
+ * Register a save function to be called when Ctrl+S is pressed
+ * @param {object} dotNetRef - Reference to the .NET object
+ * @param {string} methodName - Name of the method to call
+ */
+window.blazorHelpers.registerSaveFunction = function(dotNetRef, methodName) {
+    console.log('📝 [blazorHelpers] Registering save function:', methodName);
+    console.log('📝 [blazorHelpers] DotNet reference:', dotNetRef);
+    
+    if (!dotNetRef || !methodName) {
+        console.error('❌ [blazorHelpers] Invalid parameters for registerSaveFunction');
+        return;
+    }
+    
+    // Store the save function
+    window.misbah.api._internal.currentSaveFunction = function() {
+        console.log('🚀 [blazorHelpers] Invoking', methodName, 'on', dotNetRef);
+        try {
+            dotNetRef.invokeMethodAsync(methodName);
+        } catch (error) {
+            console.error('❌ [blazorHelpers] Error invoking save method:', error);
+        }
+    };
+    
+    console.log('✅ [blazorHelpers] Save function registered successfully');
 };
 
-// Auto-initialize when DOM is ready with race condition protection
+/**
+ * Unregister the current save function
+ */
+window.blazorHelpers.unregisterSaveFunction = function() {
+    console.log('🗑️ [blazorHelpers] Unregistering save function');
+    window.misbah.api._internal.currentSaveFunction = null;
+};
+
+// Auto-initialize when DOM is ready
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', function() {
-        if (window.misbah && window.misbah.api && typeof window.misbah.api.init === 'function') {
-            window.misbah.api.init();
-        } else {
-            console.error('Misbah API not properly initialized - init function not found');
-        }
+        window.misbah.api.init();
     });
 } else {
-    if (window.misbah && window.misbah.api && typeof window.misbah.api.init === 'function') {
-        window.misbah.api.init();
-    } else {
-        console.error('Misbah API not properly initialized - init function not found');
-    }
+    window.misbah.api.init();
 }

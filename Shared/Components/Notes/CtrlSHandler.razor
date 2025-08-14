@@ -1,0 +1,93 @@
+@using Microsoft.JSInterop
+@implements IDisposable
+@inject IJSRuntime JS
+
+@code {
+    // JavaScript interop for Ctrl+S handling
+    private DotNetObjectReference<CtrlSHandler>? dotNetRef;
+    private bool isCtrlSRegistered = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Try to register early, but don't fail if JavaScript isn't ready yet
+        if (!isCtrlSRegistered)
+        {
+            try
+            {
+                Console.WriteLine("🔥 [Blazor] OnInitializedAsync - Attempting early Ctrl+S registration...");
+                
+                // Small delay to allow JavaScript to load
+                await Task.Delay(100);
+                
+                dotNetRef = DotNetObjectReference.Create(this);
+                await JS.InvokeVoidAsync("blazorHelpers.registerSaveFunction", dotNetRef, nameof(HandleCtrlS));
+                isCtrlSRegistered = true;
+                
+                Console.WriteLine("✅ [Blazor] OnInitializedAsync - Early Ctrl+S registration successful!");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"⚠️ [Blazor] OnInitializedAsync - Early registration failed (will retry): {ex.Message}");
+                // Don't set isCtrlSRegistered = true, so OnAfterRenderAsync can try again
+            }
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !isCtrlSRegistered)
+        {
+            try
+            {
+                Console.WriteLine("🔥 [Blazor] OnAfterRenderAsync - Attempting Ctrl+S registration...");
+                
+                // Small delay to ensure JavaScript is fully ready
+                await Task.Delay(50);
+                
+                // Register Ctrl+S functionality
+                dotNetRef = DotNetObjectReference.Create(this);
+                await JS.InvokeVoidAsync("blazorHelpers.registerSaveFunction", dotNetRef, nameof(HandleCtrlS));
+                isCtrlSRegistered = true;
+                
+                Console.WriteLine("✅ [Blazor] OnAfterRenderAsync - Ctrl+S registration successful!");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ [Blazor] OnAfterRenderAsync - Registration failed: {ex.Message}");
+            }
+        }
+    }
+
+    [JSInvokable]
+    public async Task HandleCtrlS()
+    {
+        Console.WriteLine("🚀 [Blazor] HandleCtrlS called - invoking save action...");
+        await OnSaveRequested();
+    }
+
+    /// <summary>
+    /// Override this method in derived components to handle save requests
+    /// </summary>
+    protected virtual Task OnSaveRequested()
+    {
+        Console.WriteLine("⚠️ [Blazor] OnSaveRequested not implemented in derived component");
+        return Task.CompletedTask;
+    }
+
+    public void Dispose()
+    {
+        // Unregister Ctrl+S functionality
+        if (isCtrlSRegistered && dotNetRef != null)
+        {
+            try
+            {
+                JS.InvokeVoidAsync("blazorHelpers.unregisterSaveFunction");
+            }
+            catch (Exception)
+            {
+                // Ignore exceptions during disposal
+            }
+            dotNetRef.Dispose();
+        }
+    }
+}

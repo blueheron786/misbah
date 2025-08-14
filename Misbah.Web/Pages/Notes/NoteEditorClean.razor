@@ -206,41 +206,14 @@
     {
         if (firstRender && !isCtrlSRegistered)
         {
-            try
-            {
-                Logger.LogInformation("Waiting for Misbah API to be ready...");
-                
-                // Wait for the API to be ready using the global promise
-                await JS.InvokeVoidAsync("eval", @"
-                    window.misbahApiReady.then(() => {
-                        console.log('✅ API ready for Blazor registration');
-                    }).catch((err) => {
-                        console.error('❌ API failed to load:', err);
-                    });
-                    return window.misbahApiReady;
-                ");
-                
-                // Double-check that everything is available
-                var isReady = await JS.InvokeAsync<bool>("eval", 
-                    "!!(window.misbah && window.misbah.api && window.blazorHelpers && window.blazorHelpers.registerSaveFunction)");
-                
-                if (!isReady)
-                {
-                    Logger.LogWarning("API objects not available after promise resolved");
-                    return;
-                }
-                
-                // Register Ctrl+S functionality
-                dotNetRef = DotNetObjectReference.Create(this);
-                await JS.InvokeVoidAsync("blazorHelpers.registerSaveFunction", dotNetRef, nameof(HandleCtrlS));
-                isCtrlSRegistered = true;
-                
-                Logger.LogInformation("Ctrl+S save function registered successfully");
-            }
-            catch (Exception ex)
-            {
-                Logger.LogError(ex, "Failed to register Ctrl+S save function");
-            }
+            Logger.LogInformation("🔧 OnAfterRenderAsync - Starting save function registration");
+            
+            // Register Ctrl+S functionality
+            dotNetRef = DotNetObjectReference.Create(this);
+            await JS.InvokeVoidAsync("blazorHelpers.registerSaveFunction", dotNetRef, nameof(HandleCtrlS));
+            isCtrlSRegistered = true;
+            
+            Logger.LogInformation("✅ OnAfterRenderAsync - Save function registration completed");
         }
     }
 
@@ -428,6 +401,7 @@
     [JSInvokable]
     public async Task HandleCtrlS()
     {
+        Logger.LogInformation("🔥 HandleCtrlS called from JavaScript at {Time}", DateTime.Now);
         await ManualSave();
     }
 
