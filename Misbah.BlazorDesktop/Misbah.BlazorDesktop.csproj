@@ -9,6 +9,7 @@
     <UseWindowsForms>true</UseWindowsForms>
     <EnableDefaultEmbeddedResourceItems>false</EnableDefaultEmbeddedResourceItems>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <ApplicationIcon>app.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
