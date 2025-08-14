@@ -115,6 +115,14 @@ pre, code, .misbah-code {
     color: var(--primary-bright) !important;
 }
 
+.folder-tree .note-leaf i {
+    color: #9ca3af !important;
+}
+
+.folder-tree .note-leaf:hover i {
+    color: var(--primary-bright) !important;
+}
+
 ::-webkit-scrollbar {
     background: #23272e;
     width: 12px;

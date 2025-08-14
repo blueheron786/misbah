@@ -21,9 +21,17 @@
 }
 /* Remove bullet points and reduce indentation for folder tree */
 .folder-tree ul {
-    list-style: none;
+    list-style: none !important;
     margin-left: 0.7em;
     padding-left: 0.7em;
+}
+
+.folder-tree li {
+    list-style: none !important;
+}
+
+.folder-tree ul li {
+    list-style: none !important;
 }
 
 .content {

@@ -3,7 +3,7 @@
 
 <PageTitle>Misbah - Note Taking App</PageTitle>
 
-<div class="container-fluid h-100">
+<div class="container-fluid h-100 home-page">
     <div class="row h-100">
         <div class="col-12">
             <h1>Welcome to Misbah</h1>
@@ -38,3 +38,34 @@
         </div>
     </div>
 </div>
+
+<style>
+/* Dark mode support for home page */
+@@media (prefers-color-scheme: dark) {
+    .home-page {
+        background-color: #1f2937;
+        color: #e5e7eb;
+    }
+    
+    .home-page .card {
+        background-color: #374151;
+        border-color: #4b5563;
+        color: #e5e7eb;
+    }
+    
+    .home-page .card-title {
+        color: #f9fafb;
+    }
+    
+    .home-page .list-group-item {
+        background-color: #4b5563;
+        border-color: #6b7280;
+        color: #e5e7eb;
+    }
+    
+    .home-page .list-group-item:hover {
+        background-color: #6b7280;
+        color: #f9fafb;
+    }
+}
+</style>

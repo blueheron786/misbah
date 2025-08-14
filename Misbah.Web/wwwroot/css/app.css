@@ -2,6 +2,14 @@ html, body {
     font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
 
+/* Dark mode support for root elements */
+@media (prefers-color-scheme: dark) {
+    html, body {
+        background-color: #1f2937 !important;
+        color: #e5e7eb !important;
+    }
+}
+
 :root {
     --primary-color: #fb0;
     --primary-dark: color-mix(in srgb, var(--primary-color) 80%, black);
@@ -119,6 +127,21 @@ h1:focus {
         content: "An error has occurred."
     }
 
+/* Remove list bullets for folder tree */
+.folder-tree ul {
+    list-style: none !important;
+    margin-left: 0.7em;
+    padding-left: 0.7em;
+}
+
+.folder-tree li {
+    list-style: none !important;
+}
+
+.folder-tree ul li {
+    list-style: none !important;
+}
+
 .folder-tree .folder-label {
     cursor: pointer;
     padding: 2px 6px;
@@ -136,7 +159,10 @@ h1:focus {
     user-select: none;
     color: white;
     border-radius: 3px;
-}.folder-tree .note-leaf:hover {
+    list-style: none !important;
+}
+
+.folder-tree .note-leaf:hover {
     color: var(--primary-dark);
 }
 
@@ -399,6 +425,10 @@ h1:focus {
 
 /* Dark mode support for layout */
 @media (prefers-color-scheme: dark) {
+    .layout-container {
+        background: #1f2937 !important;
+    }
+    
     .sidebar-panel {
         background: #2d3748;
         border-right-color: #4a5568;
@@ -417,5 +447,15 @@ h1:focus {
     
     .splitter:active {
         background: #a0aec0;
+    }
+    
+    .main-content {
+        background: #1f2937 !important;
+        color: #e5e7eb !important;
+    }
+    
+    .content {
+        background: #1f2937 !important;
+        color: #e5e7eb !important;
     }
 }
