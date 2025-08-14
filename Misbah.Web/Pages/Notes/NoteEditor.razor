@@ -22,6 +22,8 @@
 
     protected override void OnParametersSet()
     {
+        Console.WriteLine($"🔧 [Blazor] NoteEditor.OnParametersSet called with NoteId: {NoteId}");
+        
         if (!string.IsNullOrEmpty(NoteId))
         {
             note = NoteService.LoadNote(NoteId);
@@ -30,6 +32,11 @@
                 // Fallback: create a dummy note to avoid null reference and show error
                 note = new Note { Id = NoteId ?? "", Title = "(Note not found)", Content = "Could not load note with ID: " + NoteId, FilePath = "" };
             }
+            Console.WriteLine($"✅ [Blazor] Note loaded: {note.Title}");
+        }
+        else
+        {
+            Console.WriteLine("⚠️ [Blazor] NoteId is null or empty");
         }
     }
 

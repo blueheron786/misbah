@@ -71,11 +71,23 @@ window.misbah.api.keyboard = {
         } else if (typeof console !== 'undefined') {
             console.log('❌ Ctrl+S pressed but no save function is registered.');
             
+            // DEBUG: Show current page info to help with navigation
+            console.log('🌐 Current URL:', window.location.href);
+            console.log('🌐 Current pathname:', window.location.pathname);
+            console.log('💡 To test Ctrl+S, navigate to /notes/edit/{noteId} instead of /notes/{noteId}');
+            
+            // TEMPORARY: Add a test function for any page
+            if (window.location.pathname === '/') {
+                console.log('🧪 [TEMP] Running test save function on home page...');
+                window.misbah.api.toast.success('Test Ctrl+S working on home page! 🎉');
+            }
+            
             // Try to help by retrying registration after a short delay
             console.log('🔄 Attempting to trigger delayed registration...');
             setTimeout(() => {
                 if (typeof window.misbah.api._internal.currentSaveFunction !== 'function') {
                     console.log('⚠️ Save function still not available after delay');
+                    console.log('💡 Make sure you are on a page that uses NoteEditorClean component');
                 }
             }, 100);
         }

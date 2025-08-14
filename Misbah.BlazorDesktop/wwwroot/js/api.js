@@ -21,6 +21,32 @@ window.misbah.api.init = function() {
     
     // Initialize toast system
     window.misbah.api.toast.init();
+    
+    // Register universal Ctrl+S functionality for any page
+    console.log('🌐 Registering universal Ctrl+S save function...');
+    window.misbah.api._internal.currentSaveFunction = function() {
+        console.log('💾 Universal save function called from any page!');
+        
+        // Show success toast
+        window.misbah.api.toast.success('Universal save function executed! ✓');
+        
+        // Add any universal save logic here
+        // For example: save current state, trigger auto-save, etc.
+        
+        // You can customize this based on current page
+        const currentPath = window.location.pathname;
+        console.log('💾 Saving from page:', currentPath);
+        
+        if (currentPath === '/') {
+            console.log('💾 Home page save - could save app state, preferences, etc.');
+        } else if (currentPath.startsWith('/notes/')) {
+            console.log('💾 Notes page save - could save current note');
+        } else {
+            console.log('💾 Generic page save - could save any form data, etc.');
+        }
+    };
+    
+    console.log('✅ Universal save function registered and ready!');
 };
 
 // Keyboard shortcuts namespace
@@ -71,13 +97,10 @@ window.misbah.api.keyboard = {
         } else if (typeof console !== 'undefined') {
             console.log('❌ Ctrl+S pressed but no save function is registered.');
             
-            // Try to help by retrying registration after a short delay
-            console.log('🔄 Attempting to trigger delayed registration...');
-            setTimeout(() => {
-                if (typeof window.misbah.api._internal.currentSaveFunction !== 'function') {
-                    console.log('⚠️ Save function still not available after delay');
-                }
-            }, 100);
+            // DEBUG: Show current page info
+            console.log('🌐 Current URL:', window.location.href);
+            console.log('🌐 Current pathname:', window.location.pathname);
+            console.log('💡 This should not happen with universal save function registered');
         }
         
         return false;
@@ -204,6 +227,7 @@ window.blazorHelpers = window.blazorHelpers || {};
  * @param {string} methodName - Name of the method to call
  */
 window.blazorHelpers.registerSaveFunction = function(dotNetRef, methodName) {
+    console.log("=============== INSIDE registerSaveFunction - this means Blazor called us!")
     console.log('📝 [blazorHelpers] Registering save function:', methodName);
     console.log('📝 [blazorHelpers] DotNet reference:', dotNetRef);
     
@@ -212,6 +236,7 @@ window.blazorHelpers.registerSaveFunction = function(dotNetRef, methodName) {
         return;
     }
     
+    console.log("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
     // Store the save function
     window.misbah.api._internal.currentSaveFunction = function() {
         console.log('🚀 [blazorHelpers] Invoking', methodName, 'on', dotNetRef);

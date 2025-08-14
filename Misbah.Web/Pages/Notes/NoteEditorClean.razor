@@ -1,3 +1,4 @@
+@page "/notes/edit/{NoteId}"
 @using Misbah.Application.Interfaces
 @using Misbah.Domain.Entities
 @using Misbah.Web.Resources
@@ -194,26 +195,46 @@
     private DotNetObjectReference<NoteEditorClean>? dotNetRef;
     private bool isCtrlSRegistered = false;
 
+    public NoteEditorClean()
+    {
+        Console.WriteLine("🎯 [Blazor] NoteEditorClean constructor called!");
+    }
+
     protected override async Task OnInitializedAsync()
     {
+        Console.WriteLine($"🚀 [Blazor] NoteEditorClean.OnInitializedAsync called with NoteId: '{NoteId}'");
+        
         if (!string.IsNullOrEmpty(NoteId))
         {
             await LoadNoteAsync();
+        }
+        else
+        {
+            Console.WriteLine("⚠️ [Blazor] NoteId is null or empty in OnInitializedAsync");
         }
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        Console.WriteLine($"🔄 [Blazor] NoteEditorClean.OnAfterRenderAsync called, firstRender: {firstRender}, isCtrlSRegistered: {isCtrlSRegistered}");
+        
         if (firstRender && !isCtrlSRegistered)
         {
-            Logger.LogInformation("🔧 OnAfterRenderAsync - Starting save function registration");
-            
-            // Register Ctrl+S functionality
-            dotNetRef = DotNetObjectReference.Create(this);
-            await JS.InvokeVoidAsync("blazorHelpers.registerSaveFunction", dotNetRef, nameof(HandleCtrlS));
-            isCtrlSRegistered = true;
-            
-            Logger.LogInformation("✅ OnAfterRenderAsync - Save function registration completed");
+            try
+            {
+                Console.WriteLine("🔧 [Blazor] OnAfterRenderAsync - Starting save function registration");
+                
+                // Register Ctrl+S functionality
+                dotNetRef = DotNetObjectReference.Create(this);
+                await JS.InvokeVoidAsync("blazorHelpers.registerSaveFunction", dotNetRef, nameof(HandleCtrlS));
+                isCtrlSRegistered = true;
+                
+                Console.WriteLine("✅ [Blazor] OnAfterRenderAsync - Save function registration completed");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ [Blazor] OnAfterRenderAsync - Registration failed: {ex.Message}");
+            }
         }
     }
 
