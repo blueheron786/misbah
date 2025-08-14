@@ -1,7 +1,4 @@
-﻿using Microsoft.AspNetCore.Components.WebView.Wpf;
-using Microsoft.Extensions.DependencyInjection;
-using System.Windows;
-using Misbah.Web.Components;
+﻿using System.Windows;
 
 namespace Misbah.BlazorDesktop
 {
@@ -13,7 +10,11 @@ namespace Misbah.BlazorDesktop
 
             var services = new ServiceCollection();
             services.AddWpfBlazorWebView();
-            
+
+            // Allow access to the underlying dev tools console.
+            // Enables CTRL+SHIFT+I and viewing HTML etc.
+            services.AddBlazorWebViewDeveloperTools();
+
             // Import all services from the Web project
             Misbah.Web.Program.ConfigureServices(services);
 
