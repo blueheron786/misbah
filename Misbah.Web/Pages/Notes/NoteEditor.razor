@@ -3,6 +3,8 @@
 @using Misbah.Core.Models
 @using Misbah.Web.Resources
 @using Misbah.Core.Services
+@using Microsoft.JSInterop
+@implements IDisposable
 @inject INoteService NoteService
 @inject IJSRuntime JS
 
@@ -13,6 +15,10 @@
     private bool useLiveView = false; // New option for Obsidian-style editing
     private string currentTheme = "light";
     private TrueLiveMarkdownEditor? editorRef;
+    
+    // JavaScript interop for Ctrl+S handling
+    private DotNetObjectReference<NoteEditor>? dotNetRef;
+    private bool isCtrlSRegistered = false;
 
     protected override void OnParametersSet()
     {
@@ -27,6 +33,48 @@
         }
     }
 
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !isCtrlSRegistered)
+        {
+            try
+            {
+                Console.WriteLine("Waiting for Misbah API to be ready...");
+                
+                // Wait for the API to be ready using the global promise
+                await JS.InvokeVoidAsync("eval", @"
+                    window.misbahApiReady.then(() => {
+                        console.log('✅ API ready for Blazor registration');
+                    }).catch((err) => {
+                        console.error('❌ API failed to load:', err);
+                    });
+                    return window.misbahApiReady;
+                ");
+                
+                // Double-check that everything is available
+                var isReady = await JS.InvokeAsync<bool>("eval", 
+                    "!!(window.misbah && window.misbah.api && window.blazorHelpers && window.blazorHelpers.registerSaveFunction)");
+                
+                if (!isReady)
+                {
+                    Console.WriteLine("API objects not available after promise resolved");
+                    return;
+                }
+                
+                // Register Ctrl+S functionality
+                dotNetRef = DotNetObjectReference.Create(this);
+                await JS.InvokeVoidAsync("blazorHelpers.registerSaveFunction", dotNetRef, nameof(HandleCtrlS));
+                isCtrlSRegistered = true;
+                
+                Console.WriteLine("Ctrl+S save function registered successfully");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Failed to register Ctrl+S save function: {ex.Message}");
+            }
+        }
+    }
+
     private async Task OnContentChanged(string content)
     {
         if (note != null)
@@ -37,14 +85,24 @@
         }
     }
 
-    private Task SaveNote()
+    private async Task SaveNote()
     {
         if (note != null)
         {
-            NoteService.SaveNote(note);
-            StateHasChanged();
+            try
+            {
+                NoteService.SaveNote(note);
+                StateHasChanged();
+                
+                // Show success toast
+                await JS.InvokeVoidAsync("eval", "window.misbah.api.toast.success('Note saved successfully! ✓')");
+            }
+            catch (Exception)
+            {
+                // Show error toast
+                await JS.InvokeVoidAsync("eval", "window.misbah.api.toast.error('Failed to save note')");
+            }
         }
-        return Task.CompletedTask;
     }
 
     private Task TogglePreviewMode()
@@ -67,7 +125,33 @@
         StateHasChanged();
         return Task.CompletedTask;
     }
+
+    [JSInvokable]
+    public async Task HandleCtrlS()
+    {
+        await SaveNote();
+    }
+
+    public void Dispose()
+    {
+        // Unregister Ctrl+S functionality
+        if (isCtrlSRegistered && dotNetRef != null)
+        {
+            try
+            {
+                JS.InvokeVoidAsync("blazorHelpers.unregisterSaveFunction");
+            }
+            catch (Exception)
+            {
+                // Ignore exceptions during disposal
+            }
+            dotNetRef.Dispose();
+        }
+    }
 }
+
+<!-- Toast notification container -->
+<div id="toast-container" class="toast-container"></div>
 
 @if (note != null && note.Title != "(Note not found)")
 {
@@ -237,5 +321,57 @@ else
         justify-content: center;
         height: 100%;
         text-align: center;
+    }
+
+    /* Toast Notification Styles */
+    .toast-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        pointer-events: none;
+    }
+
+    .toast {
+        background-color: #28a745;
+        color: white;
+        padding: 12px 24px;
+        border-radius: 8px;
+        margin-bottom: 10px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        transform: translateX(100%);
+        transition: transform 0.3s ease, opacity 0.3s ease;
+        opacity: 0;
+        pointer-events: auto;
+        display: flex;
+        align-items: center;
+        min-width: 200px;
+        font-size: 14px;
+        font-weight: 500;
+    }
+
+    .toast.show {
+        transform: translateX(0);
+        opacity: 1;
+    }
+
+    .toast-icon {
+        margin-right: 8px;
+        font-size: 16px;
+    }
+
+    .toast-success {
+        background-color: #28a745;
+        border-left: 4px solid #1e7e34;
+    }
+
+    .toast-error {
+        background-color: #dc3545;
+        border-left: 4px solid #c82333;
+    }
+
+    .toast-info {
+        background-color: #17a2b8;
+        border-left: 4px solid #138496;
     }
 </style>

@@ -25,3 +25,23 @@ Custom Markdown syntax includes:
 - `==x==`: highlights `x` (the same as `<mark>x</mark>`)
 - `- [ ]` creates a checkbox in a list. `- [x]` checks it off. You can also click to toggle it.
 - `[[Page|Display]]` links to `[[Page]]` but appears as `Display`
+
+## API
+
+Misbah contains a very rudimentary Javascript API, which is subject to change at any time.
+
+```javascript
+window.misbah.api = {
+    keyboard: {
+        handleKeydown: function(event) { /* Ctrl+S, refresh prevention */ },
+        handleCtrlS: function() { /* Save functionality */ },
+        handleRefreshPrevention: function(event) { /* F5, Ctrl+R blocking */ }
+    },
+    
+    protection: {
+        handleBeforeUnload: function(event) { /* Unsaved content warnings */ }
+    },
+    
+    init: function() { /* Initialize all event listeners */ }
+};
+```

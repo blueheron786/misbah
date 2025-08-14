@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Misbah JavaScript API Test</title>
+</head>
+<body>
+    <h1>Misbah JavaScript API Test</h1>
+    <p>Open the browser console to see if the API initializes correctly.</p>
+    <textarea placeholder="Type something here and try Ctrl+S"></textarea>
+    
+    <script src="Misbah.BlazorDesktop/wwwroot/js/app.js"></script>
+    <script>
+        // Test the API after a short delay to ensure it's loaded
+        setTimeout(function() {
+            console.log('Testing Misbah API structure:');
+            console.log('window.misbah:', window.misbah);
+            console.log('window.misbah.api:', window.misbah.api);
+            console.log('window.misbah.api.init:', window.misbah.api.init);
+            console.log('typeof window.misbah.api.init:', typeof window.misbah.api.init);
+            
+            if (window.misbah && window.misbah.api && typeof window.misbah.api.init === 'function') {
+                console.log('✅ API structure is correct!');
+            } else {
+                console.log('❌ API structure has issues');
+            }
+        }, 100);
+    </script>
+</body>
+</html>

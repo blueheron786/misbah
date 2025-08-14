@@ -1,60 +1,35 @@
-// App-level JavaScript functionality for BlazorDesktop
+// Misbah Note-Taking Application - BlazorDesktop Entry Point
+// This file loads the main API with cache busting
 
-// Disable page refresh shortcuts to prevent losing content
-document.addEventListener('keydown', function(event) {
-    // Disable Ctrl+R and Ctrl+Shift+R (refresh)
-    if ((event.ctrlKey && event.key === 'r') || 
-        (event.ctrlKey && event.shiftKey && event.key === 'R')) {
-        event.preventDefault();
-        event.stopPropagation();
-        
-        // Show a notification instead
-        if (typeof console !== 'undefined') {
-            console.log('Page refresh disabled to prevent losing content. Use the browser refresh button if needed.');
-        }
-        
-        // You could also show a toast notification here if you have a notification system
-        return false;
-    }
+// Cache busting timestamp
+const apiVersion = new Date().getTime();
+
+// Create a promise to track when the API is loaded
+window.misbahApiReady = new Promise((resolve) => {
+    const apiScript = document.createElement('script');
+    apiScript.src = `js/api.js?v=${apiVersion}`;
+    apiScript.async = false;
     
-    // Disable F5 (refresh)
-    if (event.key === 'F5') {
-        event.preventDefault();
-        event.stopPropagation();
-        
-        if (typeof console !== 'undefined') {
-            console.log('Page refresh disabled to prevent losing content. Use the browser refresh button if needed.');
-        }
-        
-        return false;
-    }
+    // Ensure API is ready before resolving
+    apiScript.onload = function() {
+        // Wait a bit to ensure the API has fully initialized
+        setTimeout(() => {
+            if (window.misbah && window.misbah.api && window.blazorHelpers) {
+                console.log(`Misbah BlazorDesktop API fully ready: v=${apiVersion}`);
+                resolve();
+            } else {
+                console.error('API loaded but objects not found');
+                resolve(); // Still resolve to prevent hanging
+            }
+        }, 10);
+    };
+    
+    apiScript.onerror = function() {
+        console.error('Failed to load Misbah API');
+        resolve(); // Resolve even on error to prevent hanging
+    };
+    
+    document.head.appendChild(apiScript);
 });
 
-// Additional protection: warn before page unload if there might be unsaved content
-window.addEventListener('beforeunload', function(event) {
-    // Only show warning if we detect potential unsaved content
-    // You might want to customize this logic based on your app's state
-    const textareas = document.querySelectorAll('textarea');
-    const inputs = document.querySelectorAll('input[type="text"]');
-    
-    let hasContent = false;
-    textareas.forEach(textarea => {
-        if (textarea.value && textarea.value.trim().length > 0) {
-            hasContent = true;
-        }
-    });
-    
-    inputs.forEach(input => {
-        if (input.value && input.value.trim().length > 0) {
-            hasContent = true;
-        }
-    });
-    
-    if (hasContent) {
-        event.preventDefault();
-        event.returnValue = 'You may have unsaved changes. Are you sure you want to leave?';
-        return 'You may have unsaved changes. Are you sure you want to leave?';
-    }
-});
-
-console.log('BlazorDesktop App.js loaded - refresh shortcuts disabled');
+console.log(`Misbah BlazorDesktop API loading with cache busting: v=${apiVersion}`);
