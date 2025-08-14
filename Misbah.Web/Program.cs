@@ -150,6 +150,10 @@ namespace Misbah.Web
             services.AddSingleton<SearchService>();
             services.AddSingleton<MarkdownRenderer>();
 
+            // Git services - register GitSyncService if available
+            services.AddSingleton<IGitSyncService, GitSyncService>();
+            services.AddSingleton<Misbah.Web.Services.GitCommandService>();
+
             // Advanced Clean Architecture with CQRS and Domain Events
             services.AddAdvancedCleanArchitecture("Notes");
 

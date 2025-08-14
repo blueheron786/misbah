@@ -10,7 +10,9 @@
 
 @using Misbah.Core.Utils
 @using Misbah.Web.Components
+@using Misbah.Web.Components.Pages
 @using Misbah.Web.Components.Pages.Notes
+// ...existing code...
 
 @inject Misbah.Core.Services.INoteService NoteService
 @inject IJSRuntime JS
@@ -26,6 +28,8 @@
     private string? _selectedNoteId;
     private static MainLayout? _instance;
     private bool _showSearchPopup = false;
+    private bool _showCommandPanel = false;
+    private CommandPanel? _commandPanelRef;
 
     // Static properties to expose current state to other components
     public static string? CurrentHubRoot => _instance?._hubRoot;
@@ -44,8 +48,13 @@
                 window.addEventListener('show-search-popup', function() {
                     DotNet.invokeMethodAsync('Misbah.Web', 'ShowSearchPopup');
                 });
+                window.addEventListener('keydown', function(e) {
+                    if (e.ctrlKey && e.key === 'p') {
+                        e.preventDefault();
+                        DotNet.invokeMethodAsync('Misbah.Web', 'ShowCommandPanel');
+                    }
+                });
             ");
-            
             // Initialize the splitter
             JS.InvokeVoidAsync("initializeSplitter");
         }
@@ -57,6 +66,22 @@
         if (_instance != null)
         {
             _instance._showSearchPopup = true;
+            _instance._showCommandPanel = false;
+            _instance.StateHasChanged();
+        }
+    }
+
+    [JSInvokable("ShowCommandPanel")]
+    public static void ShowCommandPanel()
+    {
+        if (_instance != null)
+        {
+            _instance._showCommandPanel = true;
+            _instance._showSearchPopup = false;
+            if (_instance._commandPanelRef != null)
+            {
+                _instance._commandPanelRef.OpenPanel();
+            }
             _instance.StateHasChanged();
         }
     }
@@ -64,6 +89,12 @@
     void OnSearchPopupClose()
     {
         _showSearchPopup = false;
+        StateHasChanged();
+    }
+
+    void OnCommandPanelClose()
+    {
+        _showCommandPanel = false;
         StateHasChanged();
     }
 
@@ -139,6 +170,11 @@
     @if (_showSearchPopup)
     {
         <SearchPopup OnNoteSelected="OnSearchNoteSelected" OnClose="OnSearchPopupClose" />
+        <style>body { overflow: hidden !important; }</style>
+    }
+    @if (_showCommandPanel)
+    {
+        <CommandPanel @ref="_commandPanelRef" />
         <style>body { overflow: hidden !important; }</style>
     }
     @if (string.IsNullOrEmpty(_hubRoot))
