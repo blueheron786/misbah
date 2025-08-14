@@ -271,6 +271,13 @@
             if (note != null)
             {
                 Logger.LogInformation("Loaded note: {NoteTitle}", note.Title);
+                
+                // Register the actual file path for universal save functionality
+                if (!string.IsNullOrEmpty(note.FilePath))
+                {
+                    await JS.InvokeVoidAsync("window.misbah.api.registerCurrentNoteFilePath", note.FilePath);
+                    Logger.LogInformation("Registered note file path for save: {FilePath}", note.FilePath);
+                }
             }
         }
         catch (Exception ex)
@@ -436,6 +443,7 @@
             try
             {
                 JS.InvokeVoidAsync("blazorHelpers.unregisterSaveFunction");
+                JS.InvokeVoidAsync("window.misbah.api.unregisterCurrentNoteFilePath");
             }
             catch (Exception)
             {

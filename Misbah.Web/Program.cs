@@ -1,4 +1,3 @@
-using Misbah.Web.Components;
 using Misbah.Core.Services;
 using Misbah.Core.Utils;
 using Misbah.Application.Interfaces;
@@ -6,7 +5,10 @@ using Misbah.Application.Services;
 using Misbah.Domain.Interfaces;
 using Misbah.Infrastructure.Repositories;
 using Misbah.Infrastructure.Configuration;
-using Microsoft.Extensions.DependencyInjection;
+using Misbah.Web.Components;
+
+// Record for the save API
+public record SaveRequest(string Path, string Timestamp, object Content);
 
 namespace Misbah.Web
 {
@@ -36,7 +38,104 @@ namespace Misbah.Web
             app.UseHttpsRedirection();
             app.UseStaticFiles();
             app.UseAntiforgery();
-            app.MapRazorComponents<App>()
+            
+            // Add minimal save API for universal Ctrl+S functionality
+            app.MapPost("/api/save", async (HttpContext context) =>
+            {
+                using var reader = new StreamReader(context.Request.Body);
+                var jsonContent = await reader.ReadToEndAsync();
+                
+                try
+                {
+                    var saveData = System.Text.Json.JsonSerializer.Deserialize<SaveRequest>(jsonContent);
+                    if (saveData == null)
+                    {
+                        return Results.BadRequest(new { success = false, error = "Invalid save data" });
+                    }
+                    
+                    // Determine the actual file to save based on the request
+                    string targetFilePath;
+                    string contentToSave;
+                    
+                    if (saveData.Content is System.Text.Json.JsonElement contentElement)
+                    {
+                        // If we have a specific file path in the content, use it
+                        if (contentElement.TryGetProperty("filePath", out var filePathElement) && 
+                            filePathElement.ValueKind == System.Text.Json.JsonValueKind.String &&
+                            !string.IsNullOrEmpty(filePathElement.GetString()))
+                        {
+                            var relativePath = filePathElement.GetString()!;
+                            
+                            // Build full path in Documents/Misbah
+                            targetFilePath = Path.Combine(
+                                Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), 
+                                "Misbah", 
+                                relativePath
+                            );
+                            
+                            // Extract the actual content to save
+                            if (contentElement.TryGetProperty("content", out var actualContentElement))
+                            {
+                                contentToSave = actualContentElement.GetString() ?? "";
+                            }
+                            else
+                            {
+                                contentToSave = jsonContent; // Fallback to full JSON
+                            }
+                        }
+                        else
+                        {
+                            // No specific file path, create a default save location based on page
+                            var pageBasedName = saveData.Path.Replace("/", "_").Replace("\\", "_").Trim('_');
+                            if (string.IsNullOrEmpty(pageBasedName)) 
+                                pageBasedName = "home";
+                            
+                            targetFilePath = Path.Combine(
+                                Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), 
+                                "Misbah", 
+                                "PageContent",
+                                $"{pageBasedName}.json"
+                            );
+                            contentToSave = jsonContent;
+                        }
+                    }
+                    else
+                    {
+                        // Fallback for non-JSON content
+                        var pageBasedName = saveData.Path.Replace("/", "_").Replace("\\", "_").Trim('_');
+                        if (string.IsNullOrEmpty(pageBasedName)) 
+                            pageBasedName = "home";
+                        
+                        targetFilePath = Path.Combine(
+                            Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), 
+                            "Misbah", 
+                            "PageContent",
+                            $"{pageBasedName}.json"
+                        );
+                        contentToSave = jsonContent;
+                    }
+                    
+                    // Ensure directory exists
+                    Directory.CreateDirectory(Path.GetDirectoryName(targetFilePath)!);
+                    
+                    // Save to the target file (overwrites existing)
+                    await File.WriteAllTextAsync(targetFilePath, contentToSave);
+                    
+                    Console.WriteLine($"💾 Saved content to same location: {targetFilePath}");
+                    return Results.Ok(new { 
+                        success = true, 
+                        filePath = targetFilePath,
+                        message = $"Saved to {Path.GetFileName(targetFilePath)}"
+                    });
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"❌ Save error: {ex.Message}");
+                    return Results.BadRequest(new { success = false, error = ex.Message });
+                }
+            });
+            
+            app.MapRazorComponents<Routes>()
                 .AddInteractiveServerRenderMode();
 
             app.Run();

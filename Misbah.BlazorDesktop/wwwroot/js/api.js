@@ -22,31 +22,8 @@ window.misbah.api.init = function() {
     // Initialize toast system
     window.misbah.api.toast.init();
     
-    // Register universal Ctrl+S functionality for any page
-    console.log('🌐 Registering universal Ctrl+S save function...');
-    window.misbah.api._internal.currentSaveFunction = function() {
-        console.log('💾 Universal save function called from any page!');
-        
-        // Show success toast
-        window.misbah.api.toast.success('Universal save function executed! ✓');
-        
-        // Add any universal save logic here
-        // For example: save current state, trigger auto-save, etc.
-        
-        // You can customize this based on current page
-        const currentPath = window.location.pathname;
-        console.log('💾 Saving from page:', currentPath);
-        
-        if (currentPath === '/') {
-            console.log('💾 Home page save - could save app state, preferences, etc.');
-        } else if (currentPath.startsWith('/notes/')) {
-            console.log('💾 Notes page save - could save current note');
-        } else {
-            console.log('💾 Generic page save - could save any form data, etc.');
-        }
-    };
-    
-    console.log('✅ Universal save function registered and ready!');
+    // Register universal save function as fallback
+    window.misbah.api.registerUniversalSave();
 };
 
 // Keyboard shortcuts namespace
@@ -97,10 +74,13 @@ window.misbah.api.keyboard = {
         } else if (typeof console !== 'undefined') {
             console.log('❌ Ctrl+S pressed but no save function is registered.');
             
-            // DEBUG: Show current page info
-            console.log('🌐 Current URL:', window.location.href);
-            console.log('🌐 Current pathname:', window.location.pathname);
-            console.log('💡 This should not happen with universal save function registered');
+            // Try to help by retrying registration after a short delay
+            console.log('🔄 Attempting to trigger delayed registration...');
+            setTimeout(() => {
+                if (typeof window.misbah.api._internal.currentSaveFunction !== 'function') {
+                    console.log('⚠️ Save function still not available after delay');
+                }
+            }, 100);
         }
         
         return false;
@@ -227,7 +207,6 @@ window.blazorHelpers = window.blazorHelpers || {};
  * @param {string} methodName - Name of the method to call
  */
 window.blazorHelpers.registerSaveFunction = function(dotNetRef, methodName) {
-    console.log("=============== INSIDE registerSaveFunction - this means Blazor called us!")
     console.log('📝 [blazorHelpers] Registering save function:', methodName);
     console.log('📝 [blazorHelpers] DotNet reference:', dotNetRef);
     
@@ -236,7 +215,6 @@ window.blazorHelpers.registerSaveFunction = function(dotNetRef, methodName) {
         return;
     }
     
-    console.log("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
     // Store the save function
     window.misbah.api._internal.currentSaveFunction = function() {
         console.log('🚀 [blazorHelpers] Invoking', methodName, 'on', dotNetRef);
@@ -256,6 +234,213 @@ window.blazorHelpers.registerSaveFunction = function(dotNetRef, methodName) {
 window.blazorHelpers.unregisterSaveFunction = function() {
     console.log('🗑️ [blazorHelpers] Unregistering save function');
     window.misbah.api._internal.currentSaveFunction = null;
+};
+
+// Universal save functionality (fallback when no Blazor component is registered)
+window.misbah.api.registerUniversalSave = function() {
+    console.log('🌐 Registering universal save fallback...');
+    
+    // Only register if no save function is already registered
+    if (!window.misbah.api._internal.currentSaveFunction) {
+        window.misbah.api._internal.currentSaveFunction = async function() {
+            console.log('💾 Universal save function called!');
+            
+            try {
+                // Extract saveable content from current page
+                const saveData = await window.misbah.api.extractSaveableContent();
+                
+                console.log('💾 Saving data:', saveData);
+                
+                // Check if we have desktop save interop (BlazorDesktop)
+                if (window.misbah.api._internal.desktopSaveInterop) {
+                    console.log('🖥️ Using desktop save interop...');
+                    console.log('🖥️ Save data being passed to C#:', JSON.stringify(saveData, null, 2));
+                    const result = await window.misbah.api._internal.desktopSaveInterop.invokeMethodAsync('SaveContent', saveData);
+                    console.log('🖥️ Desktop interop result:', result);
+                    console.log('📁 Expected save location: Documents\\Misbah\\PageContent\\ (or with specific file path if provided)');
+                    window.misbah.api.toast.success(result || 'Content saved! ✓');
+                    console.log('✅ Successfully saved via desktop interop');
+                } else {
+                    // Fallback to Web API (for Web app)
+                    console.log('🌐 Using Web API...');
+                    const response = await fetch('/api/save', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(saveData)
+                    });
+                    
+                    if (response.ok) {
+                        const result = await response.json();
+                        window.misbah.api.toast.success(result.message || 'Content saved! ✓');
+                        console.log('✅ Successfully saved to:', result.filePath);
+                    } else {
+                        throw new Error(`Save failed: ${response.statusText}`);
+                    }
+                }
+            } catch (error) {
+                console.error('❌ Universal save error:', error);
+                window.misbah.api.toast.error('Failed to save content');
+            }
+        };
+    }
+};
+
+// Extract saveable content from current page
+window.misbah.api.extractSaveableContent = async function() {
+    const currentPath = window.location.pathname;
+    console.log('🔍 Extracting saveable content from path:', currentPath);
+    
+    // Try to find WYSIWYG editor content first
+    const wysiwygEditors = document.querySelectorAll('.wysiwyg-markdown-editor');
+    console.log('🔍 Found WYSIWYG editors:', wysiwygEditors.length);
+    
+    if (wysiwygEditors.length > 0) {
+        try {
+            // Try to get content from the WYSIWYG editor using its JavaScript API
+            const editorId = wysiwygEditors[0].id.replace('wysiwyg-editor-', '');
+            console.log('📝 Found WYSIWYG editor with ID:', editorId);
+            
+            let markdownContent = '';
+            if (window.wysiwygMarkdownEditor && window.wysiwygMarkdownEditor.getContent) {
+                const html = await window.wysiwygMarkdownEditor.getContent(wysiwygEditors[0].id);
+                markdownContent = await window.wysiwygMarkdownEditor.htmlToMarkdown(html);
+                console.log('📝 Extracted WYSIWYG content length:', markdownContent?.length || 0);
+            } else {
+                // Fallback: try to get text content from contenteditable div
+                const contentDiv = wysiwygEditors[0].querySelector('[contenteditable="true"]');
+                if (contentDiv) {
+                    markdownContent = contentDiv.innerText || contentDiv.textContent || '';
+                    console.log('📝 Fallback: extracted text content length:', markdownContent?.length || 0);
+                }
+            }
+            
+            if (markdownContent.trim()) {
+                // Get the actual file path from the page/component
+                let actualFilePath = await window.misbah.api.getCurrentNoteFilePath();
+                console.log('📁 Retrieved note file path for WYSIWYG:', actualFilePath);
+                
+                const saveData = {
+                    path: currentPath,
+                    timestamp: new Date().toISOString(),
+                    content: {
+                        filePath: actualFilePath,
+                        content: markdownContent,
+                        type: 'note-content'
+                    }
+                };
+                
+                console.log('📦 Prepared WYSIWYG save data:', JSON.stringify(saveData, null, 2));
+                return saveData;
+            }
+        } catch (error) {
+            console.error('❌ Error extracting WYSIWYG content:', error);
+        }
+    }
+    
+    // Try to find a textarea (legacy editor)
+    const textareas = document.querySelectorAll('textarea');
+    const mainTextarea = textareas.length > 0 ? textareas[0] : null;
+    console.log('🔍 Found textareas:', textareas.length, 'Main textarea has content:', !!mainTextarea?.value?.trim());
+    
+    if (mainTextarea && mainTextarea.value.trim()) {
+        // If there's a main textarea (like a note editor), save its content
+        
+        // Try to get the actual file path from the page/component
+        let actualFilePath = await window.misbah.api.getCurrentNoteFilePath();
+        console.log('📁 Retrieved note file path:', actualFilePath);
+        
+        const saveData = {
+            path: currentPath,
+            timestamp: new Date().toISOString(),
+            content: {
+                filePath: actualFilePath,
+                content: mainTextarea.value,
+                type: 'note-content'
+            }
+        };
+        
+        console.log('📦 Prepared save data:', JSON.stringify(saveData, null, 2));
+        return saveData;
+    } else {
+        console.log('⚠️ No main textarea with content found, using generic page content');
+        // Generic page content (form data, app state, etc.)
+        const formData = {};
+        
+        // Extract all form inputs
+        document.querySelectorAll('input, textarea, select').forEach((element, index) => {
+            if (element.type !== 'password' && element.value) {
+                const key = element.name || element.id || `element_${index}`;
+                formData[key] = element.value;
+            }
+        });
+        
+        const saveData = {
+            path: currentPath,
+            timestamp: new Date().toISOString(),
+            content: {
+                type: 'page-content',
+                formData: formData,
+                url: window.location.href
+            }
+        };
+        
+        console.log('📦 Prepared generic save data:', JSON.stringify(saveData, null, 2));
+        return saveData;
+    }
+};
+
+// Note file path management (for proper save-to-same-file functionality)
+window.misbah.api.registerCurrentNoteFilePath = function(filePath) {
+    console.log('📁 Registering current note file path:', filePath);
+    window.misbah.api._internal.currentNoteFilePath = filePath;
+};
+
+window.misbah.api.unregisterCurrentNoteFilePath = function() {
+    console.log('📁 Unregistering current note file path');
+    window.misbah.api._internal.currentNoteFilePath = null;
+};
+
+window.misbah.api.getCurrentNoteFilePath = async function() {
+    // Try to get the file path from a registered Blazor component
+    if (window.misbah.api._internal.currentNoteFilePath) {
+        console.log('📁 Using cached note file path:', window.misbah.api._internal.currentNoteFilePath);
+        return window.misbah.api._internal.currentNoteFilePath;
+    }
+    
+    // If no cached path, try to infer from URL
+    const currentPath = window.location.pathname;
+    console.log('🔍 Trying to infer file path from URL:', currentPath);
+    
+    // Check if we're on a note edit page
+    const noteIdMatch = currentPath.match(/\/notes\/(.+)$/);
+    if (noteIdMatch) {
+        const noteId = decodeURIComponent(noteIdMatch[1]);
+        console.log('📝 Inferred note ID from URL:', noteId);
+        
+        // If the noteId looks like a file path, use it directly
+        if (noteId.includes('.md') || noteId.includes('/') || noteId.includes('\\')) {
+            return noteId;
+        } else {
+            // Otherwise, assume it needs .md extension
+            return `${noteId}.md`;
+        }
+    }
+    
+    console.log('⚠️ Could not determine note file path');
+    return null;
+};
+
+// Desktop save interop registration (BlazorDesktop only)
+window.misbah.api.registerDesktopSaveInterop = function(dotNetRef) {
+    console.log('🖥️ Registering desktop save interop:', dotNetRef);
+    window.misbah.api._internal.desktopSaveInterop = dotNetRef;
+};
+
+window.misbah.api.unregisterDesktopSaveInterop = function() {
+    console.log('🖥️ Unregistering desktop save interop');
+    window.misbah.api._internal.desktopSaveInterop = null;
 };
 
 // Auto-initialize when DOM is ready

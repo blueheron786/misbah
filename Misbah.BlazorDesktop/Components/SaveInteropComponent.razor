@@ -1,0 +1,233 @@
+@using Microsoft.JSInterop
+@using System.IO
+@using System.Text.Json
+@using Microsoft.Extensions.Configuration
+@using Misbah.Web.Utils
+@using Misbah.Web.Components.Layout
+@implements IAsyncDisposable
+@inject IJSRuntime JSRuntime
+
+<div style="display: none;">
+    <!-- Hidden component that provides JavaScript interop -->
+</div>
+
+@code {
+    private DotNetObjectReference<SaveInteropComponent>? objRef;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            objRef = DotNetObjectReference.Create(this);
+            await JSRuntime.InvokeVoidAsync("window.misbah.api.registerDesktopSaveInterop", objRef);
+        }
+    }
+
+    [JSInvokable("SaveContent")]
+    public async Task<string> SaveContent(object saveDataObject)
+    {
+        var serializerOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+        string targetFilePath = "";
+        string contentToSave = "";
+
+        try
+        {
+            Console.WriteLine($"💾 [SaveInterop] Received save data object: {saveDataObject}");
+            Console.WriteLine($"💾 [SaveInterop] Object type: {saveDataObject?.GetType().Name}");
+            
+            SaveRequest? saveData = null;
+            
+            // Handle different input types from JavaScript
+            if (saveDataObject is JsonElement jsonElement)
+            {
+                // Already a JsonElement - deserialize directly
+                saveData = JsonSerializer.Deserialize<SaveRequest>(jsonElement, serializerOptions);
+            }
+            else if (saveDataObject is string jsonString)
+            {
+                // JSON string - deserialize from string
+                saveData = JsonSerializer.Deserialize<SaveRequest>(jsonString, serializerOptions);
+            }
+            else
+            {
+                // Try to serialize and then deserialize (fallback)
+                var serializedJson = JsonSerializer.Serialize(saveDataObject);
+                Console.WriteLine($"💾 [SaveInterop] Serialized as JSON: {serializedJson}");
+                saveData = JsonSerializer.Deserialize<SaveRequest>(serializedJson);
+            }
+            
+            if (saveData == null)
+            {
+                Console.WriteLine("❌ [SaveInterop] Failed to deserialize save data");
+                return "Error: Invalid save data";
+            }
+            
+            Console.WriteLine($"💾 [SaveInterop] Parsed save data - Path: {saveData.Path}");
+
+            // Get current context from MainLayout and ConfigManager
+            var currentHubRoot = MainLayout.CurrentHubRoot;
+            var currentNoteId = MainLayout.CurrentSelectedNoteId;
+            var config = ConfigManager.Load();
+            var hubFolder = currentHubRoot ?? config.LastHubPath ?? @"C:\hub";
+            
+            Console.WriteLine($"💾 [SaveInterop] Current hub root: {currentHubRoot}");
+            Console.WriteLine($"💾 [SaveInterop] Current note ID: {currentNoteId}");
+            Console.WriteLine($"💾 [SaveInterop] Hub folder: {hubFolder}");
+
+            // Process content and determine file path
+            if (saveData.Content is JsonElement contentElement)
+            {
+                Console.WriteLine($"💾 [SaveInterop] Content is JsonElement");
+
+                // If we have a specific file path in the content, use it
+                if (contentElement.TryGetProperty("filePath", out var filePathElement) && 
+                    filePathElement.ValueKind == JsonValueKind.String &&
+                    !string.IsNullOrEmpty(filePathElement.GetString()))
+                {
+                    var filePath = filePathElement.GetString()!;
+                    Console.WriteLine($"💾 [SaveInterop] Using explicit file path: {filePath}");
+
+                    // Use the file path directly if it's already absolute, otherwise resolve it
+                    if (Path.IsPathFullyQualified(filePath))
+                    {
+                        targetFilePath = filePath;
+                    }
+                    else
+                    {
+                        // For relative paths, resolve against the current hub root
+                        targetFilePath = Path.Combine(hubFolder, filePath);
+                    }
+
+                    // Extract the actual content to save
+                    if (contentElement.TryGetProperty("content", out var actualContentElement))
+                    {
+                        contentToSave = actualContentElement.GetString() ?? "";
+                    }
+                    else
+                    {
+                        contentToSave = JsonSerializer.Serialize(saveData); // Fallback to full JSON
+                    }
+                }
+                else
+                {
+                    // No explicit file path - use MainLayout context or fallback to URL-based naming
+                    if (!string.IsNullOrEmpty(currentNoteId))
+                    {
+                        // Use current note ID from MainLayout
+                        var noteFileName = currentNoteId.EndsWith(".md") ? currentNoteId : $"{currentNoteId}.md";
+                        targetFilePath = Path.Combine(hubFolder, noteFileName);
+                        Console.WriteLine($"💾 [SaveInterop] Using current note ID: {noteFileName}");
+                    }
+                    else
+                    {
+                        // Fallback to URL-based naming
+                        var urlPath = saveData.Path ?? "";
+                        var noteMatch = System.Text.RegularExpressions.Regex.Match(urlPath, @"/notes/(.+)$");
+                        if (noteMatch.Success)
+                        {
+                            var noteName = Uri.UnescapeDataString(noteMatch.Groups[1].Value);
+                            if (!noteName.EndsWith(".md"))
+                                noteName += ".md";
+                            
+                            targetFilePath = Path.Combine(hubFolder, noteName);
+                        }
+                        else
+                        {
+                            var pageBasedName = urlPath.Replace("/", "_").Replace("\\", "_").Trim('_');
+                            if (string.IsNullOrEmpty(pageBasedName)) 
+                                pageBasedName = "untitled";
+
+                            targetFilePath = Path.Combine(hubFolder, $"{pageBasedName}.md");
+                        }
+                        Console.WriteLine($"💾 [SaveInterop] Fallback target file path: {targetFilePath}");
+                    }
+                        
+                    // Extract the actual content to save
+                    if (contentElement.TryGetProperty("content", out var actualContentElement))
+                    {
+                        contentToSave = actualContentElement.GetString() ?? "";
+                    }
+                    else
+                    {
+                        contentToSave = ""; // Empty markdown file
+                    }
+                }
+            }
+            else
+            {
+                Console.WriteLine($"💾 [SaveInterop] Content is not JsonElement: {saveData.Content?.GetType().Name}");
+                
+                // Fallback for non-JSON content - use current note or infer from URL
+                if (!string.IsNullOrEmpty(currentNoteId))
+                {
+                    // Use current note ID from MainLayout
+                    var noteFileName = currentNoteId.EndsWith(".md") ? currentNoteId : $"{currentNoteId}.md";
+                    targetFilePath = Path.Combine(hubFolder, noteFileName);
+                    Console.WriteLine($"💾 [SaveInterop] Using current note ID: {noteFileName}");
+                }
+                else
+                {
+                    // Fallback to URL-based naming
+                    var urlPath = saveData.Path ?? "";
+                    var noteMatch = System.Text.RegularExpressions.Regex.Match(urlPath, @"/notes/(.+)$");
+                    if (noteMatch.Success)
+                    {
+                        var noteName = Uri.UnescapeDataString(noteMatch.Groups[1].Value);
+                        if (!noteName.EndsWith(".md"))
+                            noteName += ".md";
+                        
+                        targetFilePath = Path.Combine(hubFolder, noteName);
+                    }
+                    else
+                    {
+                        var pageBasedName = urlPath.Replace("/", "_").Replace("\\", "_").Trim('_');
+                        if (string.IsNullOrEmpty(pageBasedName)) 
+                            pageBasedName = "untitled";
+
+                        targetFilePath = Path.Combine(hubFolder, $"{pageBasedName}.md");
+                    }
+                }
+                
+                contentToSave = saveData.Content?.ToString() ?? "";
+            }
+
+            // Fix: "There are too many newlines in this house," said Mama ...
+            contentToSave = contentToSave.Replace("\n\n", "\n").Replace("\n", Environment.NewLine);
+
+            Console.WriteLine($"💾 [SaveInterop] Target file path: {targetFilePath}");
+            Console.WriteLine($"💾 [SaveInterop] Absolute file path: {Path.GetFullPath(targetFilePath)}");
+            Console.WriteLine($"💾 [SaveInterop] Content length: {contentToSave?.Length ?? 0}");
+
+            // Ensure directory exists
+            var directory = Path.GetDirectoryName(targetFilePath);
+            if (!string.IsNullOrEmpty(directory))
+            {
+                Directory.CreateDirectory(directory);
+                Console.WriteLine($"💾 [SaveInterop] Ensured directory exists: {directory}");
+            }
+
+            // Save to the target file (overwrites existing)
+            await File.WriteAllTextAsync(targetFilePath, contentToSave);
+
+            Console.WriteLine($"💾 [SaveInterop] Successfully saved to: {targetFilePath}");
+            return $"Saved to: {targetFilePath}";
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ [BlazorDesktop] Save error: {ex.Message}");
+            return $"Error: {ex.Message}";
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (objRef != null)
+        {
+            await JSRuntime.InvokeVoidAsync("window.misbah.api.unregisterDesktopSaveInterop");
+            objRef.Dispose();
+        }
+    }
+
+    // Record for the save request
+    public record SaveRequest(string Path, string Timestamp, object Content);
+}

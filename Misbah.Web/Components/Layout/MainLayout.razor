@@ -27,6 +27,10 @@
     private static MainLayout? _instance;
     private bool _showSearchPopup = false;
 
+    // Static properties to expose current state to other components
+    public static string? CurrentHubRoot => _instance?._hubRoot;
+    public static string? CurrentSelectedNoteId => _instance?._selectedNoteId;
+
     protected override void OnAfterRender(bool firstRender)
     {
         if (firstRender)
@@ -95,6 +99,7 @@
         {
             concrete.SetRootPath(path);
         }
+        
         // Save to config
         var config = ConfigManager.Load();
         config.LastHubPath = path;
@@ -105,6 +110,11 @@
     void OnNoteSelected(string noteId)
     {
         _selectedNoteId = noteId;
+        
+        // Save to config
+        var config = ConfigManager.Load();
+        config.SelectedNoteId = noteId;
+        ConfigManager.Save(config);
         StateHasChanged();
     }
 

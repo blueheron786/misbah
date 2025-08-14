@@ -10,6 +10,7 @@ namespace Misbah.Web.Utils
         public class Config
         {
             public string? LastHubPath { get; set; }
+            public string? SelectedNoteId { get; set; }
         }
 
         public static Config Load()
@@ -28,6 +29,12 @@ namespace Misbah.Web.Utils
             {
                 config.LastHubPath = vaultProp.GetString();
             }
+            
+            if (doc.RootElement.TryGetProperty("SelectedNoteId", out var noteProp))
+            {
+                config.SelectedNoteId = noteProp.GetString();
+            }
+            
             return config;
         }
 
