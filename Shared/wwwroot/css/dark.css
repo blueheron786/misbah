@@ -62,9 +62,50 @@ a, .btn-link {
     margin-right: 8px;
 }
 
-/* Remove list bullets for task lists */
+/* Regular list styling for markdown body in dark theme */
+.markdown-body ul,
+.markdown-body ol {
+    margin: 1rem 0;
+    padding-left: 2rem;
+    list-style-position: outside;
+}
+
+.markdown-body ul li {
+    list-style-type: disc !important;
+    display: list-item !important;
+    margin: 0.25rem 0;
+    line-height: 1.5;
+}
+
+.markdown-body ol li {
+    list-style-type: decimal !important;
+    display: list-item !important;
+    margin: 0.25rem 0;
+    line-height: 1.5;
+}
+
+/* Nested lists with proper indentation */
+.markdown-body ul ul,
+.markdown-body ol ul,
+.markdown-body ul ol,
+.markdown-body ol ol {
+    margin: 0.25rem 0;
+    padding-left: 1.5rem;
+}
+
+.markdown-body ul ul li {
+    list-style-type: circle !important;
+}
+
+.markdown-body ul ul ul li {
+    list-style-type: square !important;
+}
+
+/* Task lists override for specific cases */
 .markdown-body ul li:has(.md-task) {
-    list-style: none;
+    list-style: none !important;
+    display: flex !important;
+    align-items: center;
     margin-left: 0;
 }
 
@@ -75,7 +116,9 @@ a, .btn-link {
 
 /* Fallback for browsers that don't support :has() */
 .markdown-body li.task-list-item {
-    list-style: none;
+    list-style: none !important;
+    display: flex !important;
+    align-items: center;
     margin-left: 0;
 }
 

@@ -236,6 +236,63 @@ window.blazorHelpers.unregisterSaveFunction = function() {
     window.misbah.api._internal.currentSaveFunction = null;
 };
 
+// BlazorDesktop interop functions
+window.misbah.api.desktopSaveInteropRef = null;
+
+/**
+ * Register BlazorDesktop save interop (C# object reference)
+ * @param {object} dotNetRef - Reference to the .NET SaveInteropComponent
+ */
+window.misbah.api.registerDesktopSaveInterop = function(dotNetRef) {
+    console.log('💻 [BlazorDesktop] Registering desktop save interop:', dotNetRef);
+    
+    if (!dotNetRef) {
+        console.error('❌ [BlazorDesktop] Invalid dotNetRef for registerDesktopSaveInterop');
+        return;
+    }
+    
+    // Store the desktop interop reference
+    window.misbah.api.desktopSaveInteropRef = dotNetRef;
+    
+    // Override the save function to use desktop interop
+    window.misbah.api._internal.currentSaveFunction = async function() {
+        console.log('💾 [BlazorDesktop] Invoking desktop save interop...');
+        
+        try {
+            // Extract saveable content from current page
+            const saveData = await window.misbah.api.extractSaveableContent();
+            console.log('📄 [BlazorDesktop] Extracted save data:', saveData);
+            
+            // Call the C# SaveContent method
+            const result = await dotNetRef.invokeMethodAsync('SaveContent', saveData);
+            console.log('✅ [BlazorDesktop] Save result:', result);
+            
+            // Show success toast
+            window.misbah.api.toast.success('💾 Saved successfully!');
+            
+            return result;
+        } catch (error) {
+            console.error('❌ [BlazorDesktop] Error in desktop save:', error);
+            window.misbah.api.toast.error('❌ Save failed: ' + error.message);
+            throw error;
+        }
+    };
+    
+    console.log('✅ [BlazorDesktop] Desktop save interop registered successfully');
+};
+
+/**
+ * Unregister BlazorDesktop save interop
+ */
+window.misbah.api.unregisterDesktopSaveInterop = function() {
+    console.log('🗑️ [BlazorDesktop] Unregistering desktop save interop');
+    window.misbah.api.desktopSaveInteropRef = null;
+    window.misbah.api._internal.currentSaveFunction = null;
+    
+    // Re-register universal save as fallback
+    window.misbah.api.registerUniversalSave();
+};
+
 // Universal save functionality (fallback when no Blazor component is registered)
 window.misbah.api.registerUniversalSave = function() {
     console.log('🌐 Registering universal save fallback...');

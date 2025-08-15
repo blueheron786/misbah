@@ -113,19 +113,41 @@
     margin: 1rem 0;
     padding-left: 2rem;
     color: #e6e6e6;
+    list-style-position: outside;
 }
 
 .wysiwyg-markdown-editor .editor-content li {
     margin: 0.5rem 0;
     color: #e6e6e6;
+    line-height: 1.5;
+    position: relative;
 }
 
 .wysiwyg-markdown-editor .editor-content ul li {
-    list-style-type: disc;
+    list-style-type: disc !important;
+    display: list-item !important;
 }
 
 .wysiwyg-markdown-editor .editor-content ol li {
-    list-style-type: decimal;
+    list-style-type: decimal !important;
+    display: list-item !important;
+}
+
+/* Nested lists with proper indentation */
+.wysiwyg-markdown-editor .editor-content ul ul,
+.wysiwyg-markdown-editor .editor-content ol ul,
+.wysiwyg-markdown-editor .editor-content ul ol,
+.wysiwyg-markdown-editor .editor-content ol ol {
+    margin: 0.25rem 0;
+    padding-left: 1.5rem;
+}
+
+.wysiwyg-markdown-editor .editor-content ul ul li {
+    list-style-type: circle !important;
+}
+
+.wysiwyg-markdown-editor .editor-content ul ul ul li {
+    list-style-type: square !important;
 }
 
 /* Blockquotes */
@@ -175,10 +197,15 @@
     cursor: pointer;
 }
 
+/* Only task list items should have no bullets */
 .wysiwyg-markdown-editor .editor-content ul li:has(input[type="checkbox"]),
 .wysiwyg-markdown-editor .editor-content ul li:has(.md-task) {
-    list-style: none;
+    list-style: none !important;
+    display: flex !important;
+    align-items: center;
     margin-left: -1.5rem;
+    min-height: 2.2em;
+    margin: 0.1rem 0;
 }
 
 /* Fallback for browsers without :has() support */
@@ -187,15 +214,7 @@
     margin-left: -1.5rem;
 }
 
-/* Better formatting for task lists */
-.wysiwyg-markdown-editor .editor-content ul li {
-    position: relative;
-    min-height: 2.2em;
-    display: flex;
-    align-items: center;
-    margin: 0.1rem 0;
-}
-
+/* Task list items specific styling */
 .wysiwyg-markdown-editor .editor-content ul li input[type="checkbox"] {
     position: relative;
     top: 2px;
