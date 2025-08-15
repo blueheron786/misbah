@@ -14,6 +14,7 @@
 @using Misbah.Web.Components.Pages.Notes
 
 @inject Misbah.Core.Services.INoteService NoteService
+@inject Misbah.Core.Services.IGitSyncService GitSyncService
 @inject IJSRuntime JS
 
 <link rel="stylesheet" href="css/search-popup.css" />
@@ -104,7 +105,7 @@
         StateHasChanged();
     }
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         _instance = this;
         // Try to load last hub path from config
@@ -116,11 +117,23 @@
             {
                 concrete.SetRootPath(_hubRoot);
             }
+            
+            // Initialize GitSyncService for existing hub
+            try
+            {
+                await GitSyncService.InitializeAsync(_hubRoot);
+                await GitSyncService.StartAsync();
+                Console.WriteLine($"✅ Git auto-sync started for existing hub: {_hubRoot}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"⚠️ Failed to start Git auto-sync for existing hub: {ex.Message}");
+            }
         }
     }
 
 
-    void OnHubSelected(string path)
+    async void OnHubSelected(string path)
     {
         _hubRoot = path;
         _selectedNoteId = null;
@@ -128,6 +141,18 @@
         if (NoteService is Misbah.Core.Services.NoteService concrete)
         {
             concrete.SetRootPath(path);
+        }
+        
+        // Initialize and start GitSyncService for the selected hub
+        try
+        {
+            await GitSyncService.InitializeAsync(path);
+            await GitSyncService.StartAsync();
+            Console.WriteLine($"✅ Git auto-sync started for hub: {path}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"⚠️ Failed to start Git auto-sync: {ex.Message}");
         }
         
         // Save to config

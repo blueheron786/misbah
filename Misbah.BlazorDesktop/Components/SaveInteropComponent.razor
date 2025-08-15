@@ -4,8 +4,11 @@
 @using Microsoft.Extensions.Configuration
 @using Misbah.Web.Utils
 @using Misbah.Web.Components.Layout
+@using Misbah.Core.Services
+@using Misbah.Core.Models
 @implements IAsyncDisposable
 @inject IJSRuntime JSRuntime
+@inject INoteService NoteService
 
 <div style="display: none;">
     <!-- Hidden component that provides JavaScript interop -->
@@ -206,10 +209,20 @@
                 Console.WriteLine($"💾 [SaveInterop] Ensured directory exists: {directory}");
             }
 
-            // Save to the target file (overwrites existing)
-            await File.WriteAllTextAsync(targetFilePath, contentToSave);
+            // Create a Note object and save using NoteService (includes Git integration)
+            var note = new Note
+            {
+                Id = targetFilePath,
+                FilePath = targetFilePath,
+                Content = contentToSave ?? string.Empty,
+                Title = Path.GetFileNameWithoutExtension(targetFilePath),
+                Modified = DateTime.Now
+            };
+            
+            // Use NoteService for saving (this triggers Git sync automatically)
+            await NoteService.SaveNoteAsync(note);
 
-            Console.WriteLine($"💾 [SaveInterop] Successfully saved to: {targetFilePath}");
+            Console.WriteLine($"💾 [SaveInterop] Successfully saved via NoteService to: {targetFilePath}");
             return $"Saved to: {targetFilePath}";
         }
         catch (Exception ex)

@@ -1,5 +1,6 @@
 using Misbah.Core.Services;
 using Misbah.Core.Utils;
+using Misbah.Core.Models;
 using Misbah.Application.Interfaces;
 using Misbah.Application.Services;
 using Misbah.Domain.Interfaces;
@@ -40,7 +41,7 @@ namespace Misbah.Web
             app.UseAntiforgery();
             
             // Add minimal save API for universal Ctrl+S functionality
-            app.MapPost("/api/save", async (HttpContext context) =>
+            app.MapPost("/api/save", async (HttpContext context, INoteService noteService) =>
             {
                 using var reader = new StreamReader(context.Request.Body);
                 var jsonContent = await reader.ReadToEndAsync();
@@ -118,10 +119,20 @@ namespace Misbah.Web
                     // Ensure directory exists
                     Directory.CreateDirectory(Path.GetDirectoryName(targetFilePath)!);
                     
-                    // Save to the target file (overwrites existing)
-                    await File.WriteAllTextAsync(targetFilePath, contentToSave);
+                    // Create a Note object and save using NoteService (includes Git integration)
+                    var note = new Note
+                    {
+                        Id = targetFilePath,
+                        FilePath = targetFilePath,
+                        Content = contentToSave,
+                        Title = Path.GetFileNameWithoutExtension(targetFilePath),
+                        Modified = DateTime.Now
+                    };
                     
-                    Console.WriteLine($"💾 Saved content to same location: {targetFilePath}");
+                    // Use NoteService for saving (this triggers Git sync automatically)
+                    await noteService.SaveNoteAsync(note);
+                    
+                    Console.WriteLine($"💾 Saved content via NoteService to: {targetFilePath}");
                     return Results.Ok(new { 
                         success = true, 
                         filePath = targetFilePath,
