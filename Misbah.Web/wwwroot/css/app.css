@@ -169,6 +169,20 @@ h1:focus {
     font-weight: 500;
 }
 
+.folder-tree .expand-toggle-symbol,
+.folder-tree .expand-toggle-spacer {
+    display: inline-block;
+    width: 1.25em;
+    text-align: center;
+    font-weight: 600;
+    margin-right: 0.35em;
+    color: inherit;
+}
+
+.folder-tree .expand-toggle-spacer {
+    font-weight: 400;
+}
+
 .folder-tree .folder-label:hover {
     color: var(--primary-color);
 }

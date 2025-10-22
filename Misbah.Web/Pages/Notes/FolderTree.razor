@@ -37,13 +37,28 @@ protected override void OnParametersSet()
         {
             int seq = 0;
             builder.OpenElement(seq++, "li");
-            // Folder label
+            var childFolders = folder.Folders ?? new List<FolderNode>();
+            var childNotes = folder.Notes ?? new List<Note>();
+
+            // Folder label row (toggle + icons + name)
             builder.OpenElement(seq++, "div");
             builder.AddAttribute(seq++, "class", "folder-label");
             builder.AddAttribute(seq++, "onclick", EventCallback.Factory.Create<Microsoft.AspNetCore.Components.Web.MouseEventArgs>(this, () => OnFolderClicked(folder.Path)));
 
+            var isExpanded = _expandedFolders.Contains(folder.Path);
+            var hasChildren = childFolders.Any() || childNotes.Any();
+
+            builder.OpenElement(seq++, "span");
+            builder.AddAttribute(seq++, "class", hasChildren ? "expand-toggle-symbol" : "expand-toggle-spacer");
+            builder.AddAttribute(seq++, "aria-hidden", "true");
+            if (hasChildren)
+            {
+                builder.AddContent(seq++, isExpanded ? "-" : "+");
+            }
+            builder.CloseElement();
+
             // FontAwesome expand/collapse icon
-            if (_expandedFolders.Contains(folder.Path))
+            if (isExpanded)
             {
                 builder.OpenElement(seq++, "i");
                 builder.AddAttribute(seq++, "class", "fa fa-chevron-down fa-fw");
@@ -69,14 +84,14 @@ protected override void OnParametersSet()
             builder.AddContent(seq++, folder.Name);
             builder.CloseElement();
 
-            if (_expandedFolders.Contains(folder.Path))
+            if (isExpanded)
             {
                 builder.OpenElement(seq++, "ul");
-                foreach (var sub in folder.Folders)
+                foreach (var sub in childFolders)
                 {
                     builder.AddContent(seq++, RenderFolder(sub));
                 }
-                foreach (var note in folder.Notes)
+                foreach (var note in childNotes)
                 {
                     builder.AddContent(seq++, RenderNote(note));
                 }

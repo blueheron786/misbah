@@ -1,0 +1,30 @@
+.folder-tree {
+    /* Keep tree items aligned without browser bullets */
+    list-style: none;
+}
+
+.folder-tree .folder-label {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.folder-tree .expand-toggle-symbol,
+.folder-tree .expand-toggle-spacer {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.25rem;
+    height: 1.25rem;
+    font-weight: 600;
+    line-height: 1;
+    margin-right: 0.1rem;
+}
+
+.folder-tree .expand-toggle-symbol {
+    color: var(--primary-color, #fb0);
+}
+
+.folder-tree .expand-toggle-spacer {
+    color: transparent;
+}
