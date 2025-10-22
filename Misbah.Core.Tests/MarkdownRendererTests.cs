@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using NUnit.Framework;
 using Misbah.Core.Services;
 
@@ -104,6 +105,78 @@ Normal text with `inline` code.";
             Assert.That(html, Does.Contain("<a href='Missing Page' target='_blank'>Missing Page</a>"));
             Assert.That(html, Does.Contain("<a href='My Note' target='_blank'>My Note</a>"));
             Assert.That(html, Does.Contain("See <a href='Missing Page' target='_blank'>Missing Page</a> and <a href='My Note' target='_blank'>My Note</a> for details.<br>"));
+        }
+
+        [Test]
+        public void Renders_Obsidian_Style_Table()
+        {
+            var renderer = new MarkdownRenderer();
+            var md = @"| Species      | Name            | World Type                                       | Niche / Strength                        | Tone                                    |
+| ------------ | --------------- | ------------------------------------------------ | --------------------------------------- | --------------------------------------- |
+| 🐱 Cats      | [[Nyssari v1]]  | Verdant jungle or desert luxury world            | Traders, artists, aristocrats, duelists | Elegant, vain, sarcastic                |
+| 🐧 Penguins  | [[Glacari]]     | Ice-crusted world with geothermal seas           | Cryo-tech engineers, survivalists       | Stoic, dry-humored, quietly badass      |
+| 🦊 Foxes     | [[Feydra]]      | Lush temperate forests, diplomatic cities        | Spies, diplomats, tricksters,           | Clever, political, sardonic             |
+| 🐘 Elephants | [[Tromians]]    | Massive gravity world; rocky, slow-changing      | Builders, archivists, strategists       | Stoic, ancient, dignified               |
+| 🐦 Birds     | [[Aetherin]]    | Floating cities on gas giant moons or sky cliffs | Scouts, messengers, fast attack         | Swift, loyal, poetic                    |
+| 🐙 Octopuses | [[Quaralune]]   | Oceanic abyss world with biotechnological reefs  | Engineers, philosophers, fluid thinkers | Alien, cerebral, flowing                |
+| 🐍 Snakes    | [[Slytherix]]   | Swampy, humid, bioluminescent jungles            | Biotech, assassins, stealth             | Mysterious, eerie, precise              |
+| 🐺 Doggos    | [[Dromakai v1]] | Mountainous, volcanic world of ash and obsidian  | Loyal oath-bound warriors, duelists     | Quiet, focused, disciplined, loyal      |
+| 🦀 Crabs     | [[Korithal v1]] | Varies: from desert to ocean                     | Ancient, unknowable, watching           | Ancient. Alien. Unsettling. Unknowable. |
+| 🐞 Bugs      | [[Chirrix v1]]  | Vast hives underground and desolate plains       | Assimilate all, adapt endlessly         | Ravenous, terrifying, hive-minded       |";
+
+            var html = renderer.Render(md, out _);
+
+            Assert.That(html, Does.Contain("<table>"));
+            Assert.That(html, Does.Contain("<th>Species</th>"));
+            Assert.That(html, Does.Contain("<td><a href='Nyssari v1' target='_blank'>Nyssari v1</a></td>"));
+            Assert.That(Regex.Matches(html, "<tr>").Count, Is.EqualTo(11));
+        }
+
+        [Test]
+        public void EscapedCharacters_RenderWithoutBackslashes()
+        {
+            var renderer = new MarkdownRenderer();
+            var md = "\\* literal star\n\\## heading literal";
+
+            var html = renderer.Render(md, out _);
+
+            Assert.That(html, Does.Contain("* literal star<br>"));
+            Assert.That(html, Does.Contain("## heading literal<br>"));
+        }
+
+        [Test]
+        public void EscapedCharacters_RenderInsideTables()
+        {
+            var renderer = new MarkdownRenderer();
+            var md = "| Col |\n| --- |\n| \\* literal star |";
+
+            var html = renderer.Render(md, out _);
+
+            Assert.That(html, Does.Contain("<td>* literal star</td>"));
+        }
+
+        [Test]
+        public void HeadingLines_RenderAsHeadings()
+        {
+            var renderer = new MarkdownRenderer();
+            var md = "# Title\n## Section\n### Sub";
+
+            var html = renderer.Render(md, out _);
+
+            Assert.That(html, Does.Contain("<h1>Title</h1>"));
+            Assert.That(html, Does.Contain("<h2>Section</h2>"));
+            Assert.That(html, Does.Contain("<h3>Sub</h3>"));
+        }
+
+        [Test]
+        public void EscapedHeadingPrefix_DoesNotRenderAsHeading()
+        {
+            var renderer = new MarkdownRenderer();
+            var md = "\\## Not heading";
+
+            var html = renderer.Render(md, out _);
+
+            Assert.That(html, Does.Contain("## Not heading<br>"));
         }
     }
 }

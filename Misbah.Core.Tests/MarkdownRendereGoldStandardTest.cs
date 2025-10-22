@@ -82,35 +82,35 @@ Line three
 End of document.";
 
             // Expected HTML output - this captures the EXACT current behavior
-            var expectedHtml = @"# Main Heading<br>
+            var expectedHtml = @"<h1>Main Heading</h1>
 <br>
 This is a paragraph with <strong>bold text</strong>, <em>italic text</em>, and <em><strong>bold italic text</strong></em>.<br>
 <br>
 Here's some <code class='misbah-code'>inline code</code> and <mark>highlighted text</mark>.<br>
 <br>
-## Links and References<br>
+<h2>Links and References</h2>
 <br>
 External link: <a href='https://google.com' target='_blank'>Google</a><i class='fa fa-external-link-alt' style='font-size:0.95em;vertical-align:middle;'></i><br>
 Wiki link: <a href='My Note' target='_blank'>My Note</a><br>
 Wiki link with display text: <a href='CSharp' target='_blank'>C# Programming</a><br>
 <br>
-## Lists<br>
+<h2>Lists</h2>
 <br>
-### Task Lists<br>
+<h3>Task Lists</h3>
 <ul>
 <li><input type='checkbox' class='md-task' data-line='15'  onclick=""window.dispatchEvent(new CustomEvent('misbah-task-toggle',{detail:{line:15}}));""> Incomplete task</li>
 <li><input type='checkbox' class='md-task' data-line='16' checked onclick=""window.dispatchEvent(new CustomEvent('misbah-task-toggle',{detail:{line:16}}));""> Completed task</li>
 <li><input type='checkbox' class='md-task' data-line='17'  onclick=""window.dispatchEvent(new CustomEvent('misbah-task-toggle',{detail:{line:17}}));""> Another incomplete task</li>
 <br>
 </ul>
-### Regular Lists<br>
+<h3>Regular Lists</h3>
 <ul>
 <li>Item one</li>
 <li>Item two</li>
 <li>Item three</li>
 <br>
 </ul>
-## Code Blocks<br>
+<h2>Code Blocks</h2>
 <br>
 <pre class='misbah-code'><code class='misbah-code'>
 function hello() {
@@ -124,7 +124,7 @@ const greeting = &#39;Hello&#39;;
 console.log(greeting);
 </code></pre>
 <br>
-## Special Cases<br>
+<h2>Special Cases</h2>
 <br>
 Empty lines should be collapsed:<br>
 <br>
@@ -138,7 +138,7 @@ Edge case with backticks: <code class='misbah-code'>code with </code> incomplete
 <br>
 Nested formatting: <strong>Bold with <em>italic</em> inside</strong><br>
 <br>
-## Line Breaks<br>
+<h2>Line Breaks</h2>
 <br>
 Line one<br>
 Line two<br>

@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 using Markdig;
 using Markdig.Renderers;
@@ -36,14 +38,17 @@ namespace Misbah.Core.Services
             bool inCodeBlock = false;
             var pipeline = new MarkdownPipelineBuilder().UseAdvancedExtensions().Build();
             bool lastWasBlank = false;
+            var tableBuffer = new List<string>();
             for (int i = 0; i < lines.Length; i++)
             {
                 var line = lines[i];
-                // Highlight: ==text== to <mark>text</mark>
-                line = Regex.Replace(line, "==(.+?)==", m => $"<mark>{System.Net.WebUtility.HtmlEncode(m.Groups[1].Value)}</mark>");
 
                 if (IsCodeBlockDelimiter(line))
                 {
+                    if (FlushTableBuffer(tableBuffer, htmlLines))
+                    {
+                        lastWasBlank = false;
+                    }
                     HandleCodeBlockDelimiter(ref inCodeBlock, htmlLines);
                     lastWasBlank = false;
                     continue;
@@ -54,6 +59,25 @@ namespace Misbah.Core.Services
                     lastWasBlank = false;
                     continue;
                 }
+
+                bool isTableLine = IsTableLine(line);
+                if (!isTableLine && FlushTableBuffer(tableBuffer, htmlLines))
+                {
+                    lastWasBlank = false;
+                }
+
+                if (isTableLine)
+                {
+                    if (inList)
+                    {
+                        htmlLines.Add("</ul>");
+                        inList = false;
+                    }
+                    tableBuffer.Add(line);
+                    lastWasBlank = false;
+                    continue;
+                }
+
                 if (string.IsNullOrWhiteSpace(line))
                 {
                     // Only insert a single <br> for consecutive blank lines
@@ -73,7 +97,8 @@ namespace Misbah.Core.Services
                 if (IsNormalListLine(line))
                 {
                     if (!inList) { htmlLines.Add("<ul>"); inList = true; }
-                    htmlLines.Add($"<li>{line.Substring(2).Trim()}</li>");
+                    var listContent = ProcessInlineText(line.Substring(2).Trim());
+                    htmlLines.Add($"<li>{listContent}</li>");
                     lastWasBlank = false;
                     continue;
                 }
@@ -83,22 +108,23 @@ namespace Misbah.Core.Services
                     inList = false;
                 }
 
+                if (TryRenderHeadingLine(line, htmlLines))
+                {
+                    lastWasBlank = false;
+                    continue;
+                }
+
                 // Markdown: bold+italic, bold, italic, links
-                var processed = line;
-                // Bold+italic: ***text***
-                processed = Regex.Replace(processed, @"\*\*\*(.+?)\*\*\*", "<em><strong>$1</strong></em>");
-                // Bold: **text**
-                processed = Regex.Replace(processed, @"\*\*(.+?)\*\*", "<strong>$1</strong>");
-                // Italic: *text*
-                processed = Regex.Replace(processed, @"\*(.+?)\*", "<em>$1</em>");
-                // Markdown links: [text](url)
-                processed = Regex.Replace(processed, @"\[([^\]]+)\]\(([^\)]+)\)", "<a href='$2' target='_blank'>$1</a>");
-                processed = RenderInlineCode(processed);
+                var processed = ProcessInlineText(line);
                 // Add <br> after every normal line (not blank, not list, not code)
                 htmlLines.Add(processed + "<br>");
                 lastWasBlank = false;
             }
 
+            if (FlushTableBuffer(tableBuffer, htmlLines))
+            {
+                lastWasBlank = false;
+            }
             if (inList) htmlLines.Add("</ul>");
             if (inCodeBlock) htmlLines.Add("</code></pre>");
             var html = string.Join("\n", htmlLines);
@@ -172,7 +198,7 @@ namespace Misbah.Core.Services
             {
                 if (!inList) { htmlLines.Add("<ul>"); inList = true; }
                 bool isChecked = match.Groups[1].Value.ToLower() == "x";
-                string taskText = match.Groups[2].Value;
+                string taskText = RemoveMarkdownEscapes(match.Groups[2].Value);
                 string checkbox = $"<input type='checkbox' class='md-task' data-line='{lineNumber}' {(isChecked ? "checked" : "")} onclick=\"window.dispatchEvent(new CustomEvent('misbah-task-toggle',{{detail:{{line:{lineNumber}}}}}));\">";
                 htmlLines.Add($"<li>{checkbox} {System.Net.WebUtility.HtmlEncode(taskText)}</li>");
                 taskLineNumbers.Add(lineNumber);
@@ -187,6 +213,286 @@ namespace Misbah.Core.Services
                 line,
                 "`([^`]+)`",
                 m => $"<code class='misbah-code'>{System.Net.WebUtility.HtmlEncode(m.Groups[1].Value)}</code>");
+        }
+
+        private string ApplyHighlight(string line)
+        {
+            return Regex.Replace(line, "==(.+?)==", m => $"<mark>{System.Net.WebUtility.HtmlEncode(m.Groups[1].Value)}</mark>");
+        }
+
+        private string ProcessInlineText(string text)
+        {
+            var processed = ProtectEscapedCharacters(text, out var escapes);
+            processed = ApplyHighlight(processed);
+            processed = ApplyBasicInlineFormatting(processed);
+            return RestoreEscapedCharacters(processed, escapes);
+        }
+
+        private string ApplyBasicInlineFormatting(string text)
+        {
+            var processed = text;
+            processed = Regex.Replace(processed, @"\*\*\*(.+?)\*\*\*", "<em><strong>$1</strong></em>");
+            processed = Regex.Replace(processed, @"\*\*(.+?)\*\*", "<strong>$1</strong>");
+            processed = Regex.Replace(processed, @"\*(.+?)\*", "<em>$1</em>");
+            processed = Regex.Replace(processed, @"\[([^\]]+)\]\(([^\)]+)\)", "<a href='$2' target='_blank'>$1</a>");
+            processed = RenderInlineCode(processed);
+            return processed;
+        }
+
+        private string RemoveMarkdownEscapes(string text)
+        {
+            return Regex.Replace(text, @"\\([\\`*_{}\[\]()#+\-.!|>])", "$1");
+        }
+
+        private bool IsTableLine(string line)
+        {
+            if (string.IsNullOrWhiteSpace(line))
+            {
+                return false;
+            }
+
+            var trimmed = line.Trim();
+            if (!trimmed.StartsWith("|", StringComparison.Ordinal))
+            {
+                return false;
+            }
+
+            return trimmed.Count(c => c == '|') >= 2;
+        }
+
+        private bool FlushTableBuffer(List<string> tableBuffer, List<string> htmlLines)
+        {
+            if (tableBuffer.Count == 0)
+            {
+                return false;
+            }
+
+            var bufferedLines = tableBuffer.ToList();
+            tableBuffer.Clear();
+
+            var tableHtml = TryRenderTable(bufferedLines);
+            if (tableHtml != null)
+            {
+                htmlLines.Add(tableHtml);
+                return true;
+            }
+
+            foreach (var fallbackLine in bufferedLines)
+            {
+                htmlLines.Add(ProcessInlineText(fallbackLine) + "<br>");
+            }
+
+            return bufferedLines.Count > 0;
+        }
+
+        private string? TryRenderTable(List<string> tableLines)
+        {
+            if (tableLines.Count < 2)
+            {
+                return null;
+            }
+
+            var headerCells = SplitTableRow(tableLines[0]);
+            if (headerCells.Count == 0)
+            {
+                return null;
+            }
+
+            var alignments = ParseAlignmentRow(tableLines[1], headerCells.Count);
+            if (alignments == null)
+            {
+                return null;
+            }
+
+            var columnCount = Math.Max(headerCells.Count, alignments.Count);
+            while (headerCells.Count < columnCount)
+            {
+                headerCells.Add(string.Empty);
+            }
+            while (alignments.Count < columnCount)
+            {
+                alignments.Add(null);
+            }
+
+            var sb = new StringBuilder();
+            sb.Append("<table>");
+            sb.Append("<thead><tr>");
+            for (int col = 0; col < columnCount; col++)
+            {
+                sb.Append("<th");
+                var align = alignments[col];
+                if (!string.IsNullOrEmpty(align) && !string.Equals(align, "left", StringComparison.OrdinalIgnoreCase))
+                {
+                    sb.Append(" style='text-align:").Append(align).Append("'>");
+                }
+                else
+                {
+                    sb.Append(">");
+                }
+
+                sb.Append(ProcessInlineText(headerCells[col].Trim()));
+                sb.Append("</th>");
+            }
+            sb.Append("</tr></thead>");
+
+            if (tableLines.Count > 2)
+            {
+                sb.Append("<tbody>");
+                for (int rowIndex = 2; rowIndex < tableLines.Count; rowIndex++)
+                {
+                    var rowCells = SplitTableRow(tableLines[rowIndex]);
+                    sb.Append("<tr>");
+                    for (int col = 0; col < columnCount; col++)
+                    {
+                        var cellText = col < rowCells.Count ? rowCells[col] : string.Empty;
+                        sb.Append("<td");
+                        var align = alignments[col];
+                        if (!string.IsNullOrEmpty(align) && !string.Equals(align, "left", StringComparison.OrdinalIgnoreCase))
+                        {
+                            sb.Append(" style='text-align:").Append(align).Append("'>");
+                        }
+                        else
+                        {
+                            sb.Append(">");
+                        }
+
+                        sb.Append(ProcessInlineText(cellText.Trim()));
+                        sb.Append("</td>");
+                    }
+                    sb.Append("</tr>");
+                }
+                sb.Append("</tbody>");
+            }
+            else
+            {
+                sb.Append("<tbody></tbody>");
+            }
+
+            sb.Append("</table>");
+            return sb.ToString();
+        }
+
+        private List<string?>? ParseAlignmentRow(string line, int minimumColumns)
+        {
+            var separators = SplitTableRow(line);
+            if (separators.All(string.IsNullOrWhiteSpace))
+            {
+                return null;
+            }
+
+            var alignments = new List<string?>();
+            foreach (var separator in separators)
+            {
+                var trimmed = separator.Trim();
+                if (string.IsNullOrEmpty(trimmed))
+                {
+                    alignments.Add(null);
+                    continue;
+                }
+
+                if (!Regex.IsMatch(trimmed, @"^:?-+:?$"))
+                {
+                    return null;
+                }
+
+                bool startsColon = trimmed.StartsWith(":", StringComparison.Ordinal);
+                bool endsColon = trimmed.EndsWith(":", StringComparison.Ordinal);
+
+                if (startsColon && endsColon)
+                {
+                    alignments.Add("center");
+                }
+                else if (endsColon)
+                {
+                    alignments.Add("right");
+                }
+                else if (startsColon)
+                {
+                    alignments.Add("left");
+                }
+                else
+                {
+                    alignments.Add(null);
+                }
+            }
+
+            while (alignments.Count < minimumColumns)
+            {
+                alignments.Add(null);
+            }
+
+            return alignments;
+        }
+
+        private List<string> SplitTableRow(string line)
+        {
+            var trimmed = line.Trim();
+            if (trimmed.StartsWith("|", StringComparison.Ordinal))
+            {
+                trimmed = trimmed.Substring(1);
+            }
+            if (trimmed.EndsWith("|", StringComparison.Ordinal))
+            {
+                trimmed = trimmed.Substring(0, trimmed.Length - 1);
+            }
+
+            return trimmed.Split('|').Select(cell => cell).ToList();
+        }
+
+        private string ProtectEscapedCharacters(string text, out List<(string placeholder, string value)> replacements)
+        {
+            var list = new List<(string placeholder, string value)>();
+            var result = Regex.Replace(
+                text,
+                @"\\([\\`*_{}\[\]()#+\-.!|>])",
+                m =>
+                {
+                    var placeholder = $"__MISBAH_ESC_{list.Count}__";
+                    list.Add((placeholder, m.Groups[1].Value));
+                    return placeholder;
+                });
+            replacements = list;
+            return result;
+        }
+
+        private string RestoreEscapedCharacters(string text, List<(string placeholder, string value)> replacements)
+        {
+            foreach (var replacement in replacements)
+            {
+                text = text.Replace(replacement.placeholder, replacement.value, StringComparison.Ordinal);
+            }
+            return text;
+        }
+
+        private bool TryRenderHeadingLine(string line, List<string> htmlLines)
+        {
+            if (string.IsNullOrWhiteSpace(line))
+            {
+                return false;
+            }
+
+            var trimmedStart = line.TrimStart();
+            if (!trimmedStart.StartsWith("#", StringComparison.Ordinal))
+            {
+                return false;
+            }
+
+            if (trimmedStart.StartsWith("\\#", StringComparison.Ordinal))
+            {
+                return false;
+            }
+
+            var match = Regex.Match(trimmedStart, @"^(#{1,6})\s+(.*)$");
+            if (!match.Success)
+            {
+                return false;
+            }
+
+            var level = match.Groups[1].Length;
+            var content = match.Groups[2].Value;
+            var processedContent = ProcessInlineText(content.TrimEnd());
+            htmlLines.Add($"<h{level}>{processedContent}</h{level}>");
+            return true;
         }
     }
 }
