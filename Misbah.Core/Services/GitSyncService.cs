@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using LibGit2Sharp;
@@ -17,7 +16,7 @@ namespace Misbah.Core.Services
         private readonly Timer _gcTimer;
         private readonly object _lockObject = new object();
         private readonly string _misbahConfigDir = ".misbah";
-        private readonly string _lastSyncFile = "last-sync.json";
+        private readonly HashSet<string> _pendingChanges = new HashSet<string>();
         
         private string _repositoryPath = string.Empty;
         private Repository? _repository;
@@ -119,6 +118,16 @@ namespace Misbah.Core.Services
             await PerformSyncAsync();
         }
 
+        public async Task AddFileAndSyncAsync(string filePath)
+        {
+            if (_repository == null)
+                throw new InvalidOperationException("Service must be initialized");
+
+            // Add the file and immediately sync (useful for Ctrl+S saves)
+            await AddFileAsync(filePath);
+            await PerformSyncAsync();
+        }
+
         public async Task AddFileAsync(string filePath)
         {
             if (_repository == null)
@@ -126,15 +135,30 @@ namespace Misbah.Core.Services
 
             try
             {
-                var relativePath = Path.GetRelativePath(_repositoryPath, filePath);
-                Commands.Stage(_repository, relativePath);
-                _logger.LogDebug("Added file to staging: {Path}", relativePath);
+                // Check if file is within the repository path
+                var fullFilePath = Path.GetFullPath(filePath);
+                var fullRepoPath = Path.GetFullPath(_repositoryPath);
+                
+                if (!fullFilePath.StartsWith(fullRepoPath, StringComparison.OrdinalIgnoreCase))
+                {
+                    _logger.LogWarning("File is outside repository path - skipping: {FilePath} (repo: {RepoPath})", 
+                        fullFilePath, fullRepoPath);
+                    return;
+                }
+                
+                // Track this file as having pending changes (don't stage yet)
+                lock (_lockObject)
+                {
+                    _pendingChanges.Add(filePath);
+                }
+                
+                _logger.LogInformation("Added file to pending changes: {Path}", Path.GetRelativePath(_repositoryPath, filePath));
                 await Task.CompletedTask;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to add file to staging: {Path}", filePath);
-                OnSyncError($"Failed to add file to staging: {filePath}", ex);
+                _logger.LogError(ex, "Failed to add file to pending changes: {Path}", filePath);
+                OnSyncError($"Failed to add file to pending changes: {filePath}", ex);
                 throw;
             }
         }
@@ -147,8 +171,17 @@ namespace Misbah.Core.Services
             try
             {
                 var relativePaths = filePaths.Select(fp => Path.GetRelativePath(_repositoryPath, fp)).ToArray();
+                
+                // Log what we're trying to stage
+                _logger.LogInformation("Staging {Count} files: {Files}", relativePaths.Length, string.Join(", ", relativePaths));
+                
                 Commands.Stage(_repository, relativePaths);
-                _logger.LogDebug("Added {Count} files to staging", relativePaths.Length);
+                
+                // Verify staging worked
+                var status = _repository.RetrieveStatus();
+                var actuallyStaged = status.Staged.Select(s => s.FilePath).ToList();
+                _logger.LogInformation("Actually staged {Count} files: {Files}", actuallyStaged.Count, string.Join(", ", actuallyStaged));
+                
                 await Task.CompletedTask;
             }
             catch (Exception ex)
@@ -176,9 +209,12 @@ namespace Misbah.Core.Services
                 var status = _repository.RetrieveStatus();
                 var stagedFiles = status.Staged.Select(s => s.FilePath).ToList();
                 
+                _logger.LogInformation("CommitStagedChangesAsync: Found {Count} staged files: {Files}", 
+                    stagedFiles.Count, string.Join(", ", stagedFiles));
+                
                 if (!stagedFiles.Any())
                 {
-                    _logger.LogDebug("No staged files to commit");
+                    _logger.LogWarning("No staged files to commit - this might indicate a staging issue");
                     return;
                 }
 
@@ -303,17 +339,34 @@ namespace Misbah.Core.Services
 
             try
             {
-                // Check if files have changed since last sync
-                var changedFiles = await GetChangedFilesAsync();
-                
-                if (changedFiles.Any())
+                // Check if we have any pending changes to stage and commit
+                List<string> filesToStage;
+                lock (_lockObject)
                 {
-                    await AddFilesAsync(changedFiles);
+                    filesToStage = _pendingChanges.ToList();
+                }
+                
+                _logger.LogInformation("PerformSyncAsync: Found {Count} pending files: {Files}", 
+                    filesToStage.Count, string.Join(", ", filesToStage.Select(f => Path.GetRelativePath(_repositoryPath, f))));
+                
+                if (filesToStage.Any())
+                {
+                    // Stage all pending files
+                    await AddFilesAsync(filesToStage);
+                    
+                    // Commit staged changes
                     await CommitStagedChangesAsync();
+                    
+                    // Clear pending changes after successful commit
+                    lock (_lockObject)
+                    {
+                        _pendingChanges.Clear();
+                    }
+                    _logger.LogInformation("PerformSyncAsync: Cleared {Count} pending files", filesToStage.Count);
                 }
                 else
                 {
-                    _logger.LogDebug("No files changed since last sync");
+                    _logger.LogDebug("No pending changes to commit");
                 }
             }
             catch (Exception ex)
@@ -324,79 +377,6 @@ namespace Misbah.Core.Services
             finally
             {
                 Status = GitSyncStatus.Running;
-            }
-        }
-
-        private async Task<List<string>> GetChangedFilesAsync()
-        {
-            var changedFiles = new List<string>();
-            var lastSyncData = await LoadLastSyncDataAsync();
-            
-            // Find all markdown files
-            var mdFiles = Directory.EnumerateFiles(_repositoryPath, "*.md", SearchOption.AllDirectories)
-                .Where(f => !f.Contains(_misbahConfigDir) && !Path.GetFileName(f).StartsWith("."))
-                .ToList();
-
-            foreach (var filePath in mdFiles)
-            {
-                var fileInfo = new FileInfo(filePath);
-                var relativePath = Path.GetRelativePath(_repositoryPath, filePath);
-                
-                // Check if file has been modified since last sync
-                if (!lastSyncData.ContainsKey(relativePath) ||
-                    lastSyncData[relativePath] != fileInfo.LastWriteTime)
-                {
-                    changedFiles.Add(filePath);
-                    lastSyncData[relativePath] = fileInfo.LastWriteTime;
-                }
-            }
-
-            // Remove deleted files from tracking
-            var currentFiles = mdFiles.Select(f => Path.GetRelativePath(_repositoryPath, f)).ToHashSet();
-            var keysToRemove = lastSyncData.Keys.Where(k => !currentFiles.Contains(k)).ToList();
-            foreach (var key in keysToRemove)
-            {
-                lastSyncData.Remove(key);
-            }
-
-            // Save updated sync data
-            await SaveLastSyncDataAsync(lastSyncData);
-            
-            return changedFiles;
-        }
-
-        private async Task<Dictionary<string, DateTime>> LoadLastSyncDataAsync()
-        {
-            var syncFilePath = Path.Combine(_repositoryPath, _misbahConfigDir, _lastSyncFile);
-            
-            if (!File.Exists(syncFilePath))
-                return new Dictionary<string, DateTime>();
-
-            try
-            {
-                var json = await File.ReadAllTextAsync(syncFilePath);
-                var data = JsonSerializer.Deserialize<Dictionary<string, DateTime>>(json);
-                return data ?? new Dictionary<string, DateTime>();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Failed to load last sync data, starting fresh");
-                return new Dictionary<string, DateTime>();
-            }
-        }
-
-        private async Task SaveLastSyncDataAsync(Dictionary<string, DateTime> data)
-        {
-            var syncFilePath = Path.Combine(_repositoryPath, _misbahConfigDir, _lastSyncFile);
-            
-            try
-            {
-                var json = JsonSerializer.Serialize(data, new JsonSerializerOptions { WriteIndented = true });
-                await File.WriteAllTextAsync(syncFilePath, json);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Failed to save last sync data");
             }
         }
 

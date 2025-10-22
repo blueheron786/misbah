@@ -32,6 +32,11 @@ namespace Misbah.Core.Services
         Task AddFileAsync(string filePath);
 
         /// <summary>
+        /// Adds a file and immediately syncs (useful for immediate saves like Ctrl+S)
+        /// </summary>
+        Task AddFileAndSyncAsync(string filePath);
+
+        /// <summary>
         /// Adds multiple files to the staging area
         /// </summary>
         Task AddFilesAsync(IEnumerable<string> filePaths);
