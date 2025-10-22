@@ -16,13 +16,34 @@
 
 @code {
     private DotNetObjectReference<SaveInteropComponent>? objRef;
+    private const int MaxInteropAttempts = 10;
+    private const int InteropRetryDelayMs = 150;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
             objRef = DotNetObjectReference.Create(this);
-            await JSRuntime.InvokeVoidAsync("window.misbah.api.registerDesktopSaveInterop", objRef);
+            await RegisterInteropWithRetryAsync(objRef);
+        }
+    }
+
+    private async Task RegisterInteropWithRetryAsync(DotNetObjectReference<SaveInteropComponent> reference, int attempt = 0)
+    {
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("window.misbah.api.registerDesktopSaveInterop", reference);
+            Console.WriteLine($"✅ [SaveInterop] Registered desktop save interop on attempt {attempt + 1}");
+        }
+        catch (JSException ex) when (attempt + 1 < MaxInteropAttempts)
+        {
+            Console.WriteLine($"⚠️ [SaveInterop] registerDesktopSaveInterop failed (attempt {attempt + 1}): {ex.Message}. Retrying...");
+            await Task.Delay(InteropRetryDelayMs);
+            await RegisterInteropWithRetryAsync(reference, attempt + 1);
+        }
+        catch (JSException ex)
+        {
+            Console.WriteLine($"❌ [SaveInterop] Unable to register desktop save interop after {attempt + 1} attempts: {ex.Message}");
         }
     }
 
