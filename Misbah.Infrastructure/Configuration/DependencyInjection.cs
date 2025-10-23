@@ -20,7 +20,11 @@ namespace Misbah.Infrastructure.Configuration
             string notesRootPath)
         {
             // Legacy services (keep these for backwards compatibility)
-            services.AddSingleton<INoteService>(sp => new NoteService(notesRootPath));
+            services.AddSingleton<INoteService>(sp => 
+            {
+                var gitSyncService = sp.GetRequiredService<IGitSyncService>();
+                return new NoteService(notesRootPath, gitSyncService);
+            });
             services.AddSingleton<IFolderService, FolderService>();
 
             // New Clean Architecture services
@@ -41,7 +45,8 @@ namespace Misbah.Infrastructure.Configuration
             services.AddSingleton<INoteService>(sp => 
             {
                 var logger = sp.GetRequiredService<ILogger<NoteService>>();
-                return new NoteService(logger) { };
+                var gitSyncService = sp.GetRequiredService<IGitSyncService>();
+                return new NoteService(logger, gitSyncService);
             });
             services.AddSingleton<IFolderService, FolderService>();
 

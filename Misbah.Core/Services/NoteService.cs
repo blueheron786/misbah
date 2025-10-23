@@ -15,14 +15,15 @@ namespace Misbah.Core.Services
         private readonly IGitSyncService? _gitSyncService;
         private string _rootPath;
 
-        public NoteService(ILogger<NoteService> logger, IGitSyncService? gitSyncService = null)
+        public NoteService(ILogger<NoteService> logger, IGitSyncService gitSyncService)
         {
             _logger = logger;
             _gitSyncService = gitSyncService;
             _rootPath = string.Empty;
         }
 
-        public NoteService(string rootPath) : this(Microsoft.Extensions.Logging.Abstractions.NullLogger<NoteService>.Instance)
+        public NoteService(string rootPath, IGitSyncService gitSyncService)
+            : this(Microsoft.Extensions.Logging.Abstractions.NullLogger<NoteService>.Instance, gitSyncService)
         {
             _rootPath = rootPath;
         }
@@ -74,17 +75,26 @@ namespace Misbah.Core.Services
             await File.WriteAllTextAsync(note.FilePath, note.Content);
             
             // Notify Git sync service if available
+            _logger.LogInformation("SaveNoteAsync: GitSyncService is {Status}, IsRunning: {IsRunning}", 
+                _gitSyncService == null ? "NULL" : "Available", 
+                _gitSyncService?.IsRunning ?? false);
+                
             if (_gitSyncService != null && _gitSyncService.IsRunning)
             {
                 try
                 {
+                    _logger.LogInformation("Calling GitSyncService.AddFileAsync for: {FilePath}", note.FilePath);
                     await _gitSyncService.AddFileAsync(note.FilePath);
-                    _logger.LogDebug("Added note to Git staging: {FilePath}", note.FilePath);
+                    _logger.LogInformation("Successfully added note to Git staging: {FilePath}", note.FilePath);
                 }
                 catch (Exception ex)
                 {
                     _logger.LogWarning(ex, "Failed to add note to Git staging: {FilePath}", note.FilePath);
                 }
+            }
+            else
+            {
+                _logger.LogWarning("GitSyncService not available or not running - file not added to Git: {FilePath}", note.FilePath);
             }
         }
 
