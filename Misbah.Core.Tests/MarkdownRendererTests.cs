@@ -80,8 +80,8 @@ Normal text with `inline` code.";
 
             // Assert
             // List items should be grouped in a single <ul>
-            Assert.That(html, Does.Contain("<ul>"));
-            Assert.That(html, Does.Not.Contain("<ul>\n<li>one</li>\n</ul>\n<ul>")); // No separate <ul> for each item
+            Assert.That(html, Does.Contain("<ul class='task-list'>"));
+            Assert.That(Regex.Matches(html, "<ul class='task-list'>").Count, Is.EqualTo(1));
             // Task list checkboxes should be present
             Assert.That(html, Does.Contain("<input type='checkbox' class='md-task' data-line='6' checked"));
             Assert.That(html, Does.Contain("<input type='checkbox' class='md-task' data-line='7' "));

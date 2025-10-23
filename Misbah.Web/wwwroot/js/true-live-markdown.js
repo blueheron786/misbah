@@ -253,45 +253,102 @@ window.trueLiveMarkdownEditor = {
         return html;
     },
 
+    buildListHtml: function(lines, options) {
+        const listStack = [];
+        let html = '';
+
+        const closeLevel = () => {
+            const level = listStack.pop();
+            if (!level) return;
+            if (level.itemOpen) {
+                html += '</li>';
+            }
+            html += level.ordered ? '</ol>' : '</ul>';
+        };
+
+        const openLevel = (indent) => {
+            if (options.ordered) {
+                html += '<ol>';
+            } else if (options.task) {
+                html += '<ul class="task-list">';
+            } else {
+                html += '<ul>';
+            }
+            listStack.push({ indent, ordered: options.ordered, task: options.task, itemOpen: false });
+        };
+
+        lines.forEach(line => {
+            if (!line.trim()) {
+                return;
+            }
+
+            const trimmed = line.trimStart();
+            const indent = line.length - trimmed.length;
+            let content = '';
+
+            if (options.task) {
+                const match = trimmed.match(/^[-*+]\s+\[([ xX])\]\s+(.*)$/);
+                if (!match) {
+                    return;
+                }
+                const checked = match[1].toLowerCase() === 'x' ? 'checked' : '';
+                content = `<input type="checkbox" ${checked} disabled> ${this.escapeHtml(match[2])}`;
+            } else if (options.ordered) {
+                const match = trimmed.match(/^\d+\.\s+(.*)$/);
+                if (!match) {
+                    return;
+                }
+                content = this.renderInlineMarkdown(match[1]);
+            } else {
+                const match = trimmed.match(/^[-*+]\s+(.*)$/);
+                if (!match) {
+                    return;
+                }
+                content = this.renderInlineMarkdown(match[1]);
+            }
+
+            while (listStack.length > 0 && indent < listStack[listStack.length - 1].indent) {
+                closeLevel();
+            }
+
+            if (listStack.length === 0 || indent > listStack[listStack.length - 1].indent) {
+                openLevel(indent);
+            } else {
+                const current = listStack[listStack.length - 1];
+                if (current.itemOpen) {
+                    html += '</li>';
+                    current.itemOpen = false;
+                }
+            }
+
+            html += `<li>${content}`;
+            listStack[listStack.length - 1].itemOpen = true;
+        });
+
+        while (listStack.length > 0) {
+            const level = listStack.pop();
+            if (level.itemOpen) {
+                html += '</li>';
+            }
+            html += level.ordered ? '</ol>' : '</ul>';
+        }
+
+        return html;
+    },
+
     renderTaskList: function(content) {
         const lines = content.split('\n');
-        const items = lines.map(line => {
-            const match = line.match(/^- \[([ x])\] (.*)$/);
-            if (match) {
-                const checked = match[1] === 'x' ? 'checked' : '';
-                const text = this.escapeHtml(match[2]);
-                return `<li><input type="checkbox" ${checked} disabled> ${text}</li>`;
-            }
-            return '';
-        }).filter(item => item);
-        
-        return `<ul class="task-list">${items.join('')}</ul>`;
+        return this.buildListHtml(lines, { ordered: false, task: true });
     },
 
     renderList: function(content) {
         const lines = content.split('\n');
-        const items = lines.map(line => {
-            const match = line.match(/^[-*+]\s(.*)$/);
-            if (match) {
-                return `<li>${this.escapeHtml(match[1])}</li>`;
-            }
-            return '';
-        }).filter(item => item);
-        
-        return `<ul>${items.join('')}</ul>`;
+        return this.buildListHtml(lines, { ordered: false, task: false });
     },
 
     renderOrderedList: function(content) {
         const lines = content.split('\n');
-        const items = lines.map(line => {
-            const match = line.match(/^\d+\.\s(.*)$/);
-            if (match) {
-                return `<li>${this.escapeHtml(match[1])}</li>`;
-            }
-            return '';
-        }).filter(item => item);
-        
-        return `<ol>${items.join('')}</ol>`;
+        return this.buildListHtml(lines, { ordered: true, task: false });
     },
 
     escapeHtml: function(text) {

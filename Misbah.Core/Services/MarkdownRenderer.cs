@@ -34,7 +34,6 @@ namespace Misbah.Core.Services
             var lines = (content ?? string.Empty).Replace("\r\n", "\n").Replace("\r", "\n").Split('\n');
             var htmlLines = new List<string>();
             taskLineNumbers = new List<int>();
-            bool inList = false;
             bool inCodeBlock = false;
             var pipeline = new MarkdownPipelineBuilder().UseAdvancedExtensions().Build();
             bool lastWasBlank = false;
@@ -68,11 +67,6 @@ namespace Misbah.Core.Services
 
                 if (isTableLine)
                 {
-                    if (inList)
-                    {
-                        htmlLines.Add("</ul>");
-                        inList = false;
-                    }
                     tableBuffer.Add(line);
                     lastWasBlank = false;
                     continue;
@@ -88,24 +82,16 @@ namespace Misbah.Core.Services
                     }
                     continue;
                 }
-                if (IsTaskListLine(line))
+                var trimmedLine = line.TrimStart();
+                if (TryParseListLine(trimmedLine) is ListLineInfo)
                 {
-                    TryRenderTaskList(line, i, htmlLines, taskLineNumbers, ref inList);
+                    var listHtml = RenderListBlock(lines, ref i, taskLineNumbers);
+                    if (!string.IsNullOrEmpty(listHtml))
+                    {
+                        htmlLines.Add(listHtml);
+                    }
                     lastWasBlank = false;
                     continue;
-                }
-                if (IsNormalListLine(line))
-                {
-                    if (!inList) { htmlLines.Add("<ul>"); inList = true; }
-                    var listContent = ProcessInlineText(line.Substring(2).Trim());
-                    htmlLines.Add($"<li>{listContent}</li>");
-                    lastWasBlank = false;
-                    continue;
-                }
-                else if (inList)
-                {
-                    htmlLines.Add("</ul>");
-                    inList = false;
                 }
 
                 if (TryRenderHeadingLine(line, htmlLines))
@@ -125,7 +111,6 @@ namespace Misbah.Core.Services
             {
                 lastWasBlank = false;
             }
-            if (inList) htmlLines.Add("</ul>");
             if (inCodeBlock) htmlLines.Add("</code></pre>");
             var html = string.Join("\n", htmlLines);
             html = ReplaceWikiLinks(html);
@@ -160,17 +145,33 @@ namespace Misbah.Core.Services
         }
 
         // --- Private helpers ---
-        // Helper to detect if a line is a normal (non-task) list item
-        private bool IsNormalListLine(string line)
+        private ListLineInfo? TryParseListLine(string line)
         {
-            // Match lines like "- item" but not "- [ ] item" or "- [x] item"
-            return Regex.IsMatch(line, "^- (?!\\[[ xX]\\]).+", RegexOptions.IgnoreCase);
-        }
-        // (removed duplicate IsNormalListLine)
-        // Helper to detect if a line is a task list item
-        private bool IsTaskListLine(string line)
-        {
-            return Regex.IsMatch(line, @"^- \[( |x)\] (.*)$", RegexOptions.IgnoreCase);
+            if (string.IsNullOrWhiteSpace(line))
+            {
+                return null;
+            }
+
+            var taskMatch = Regex.Match(line, @"^[-*+]\s+\[([ xX])\]\s+(.*)$");
+            if (taskMatch.Success)
+            {
+                bool isChecked = string.Equals(taskMatch.Groups[1].Value, "x", StringComparison.OrdinalIgnoreCase);
+                return new ListLineInfo(isOrdered: false, isTaskList: true, isChecked: isChecked, content: taskMatch.Groups[2].Value.Trim());
+            }
+
+            var unorderedMatch = Regex.Match(line, @"^[-*+]\s+(.*)$");
+            if (unorderedMatch.Success)
+            {
+                return new ListLineInfo(isOrdered: false, isTaskList: false, isChecked: false, content: unorderedMatch.Groups[1].Value.Trim());
+            }
+
+            var orderedMatch = Regex.Match(line, @"^\d+\.\s+(.*)$");
+            if (orderedMatch.Success)
+            {
+                return new ListLineInfo(isOrdered: true, isTaskList: false, isChecked: false, content: orderedMatch.Groups[1].Value.Trim());
+            }
+
+            return null;
         }
         private bool IsCodeBlockDelimiter(string line)
         {
@@ -191,20 +192,170 @@ namespace Misbah.Core.Services
             }
         }
 
-        private bool TryRenderTaskList(string line, int lineNumber, List<string> htmlLines, List<int> taskLineNumbers, ref bool inList)
+        private string RenderListBlock(string[] lines, ref int index, List<int> taskLineNumbers)
         {
-            var match = Regex.Match(line, @"^- \[( |x)\] (.*)$", RegexOptions.IgnoreCase);
-            if (match.Success)
+            var sb = new StringBuilder();
+            var listStack = new Stack<ListLevel>();
+            bool processedAny = false;
+
+            int lineIndex = index;
+            for (; lineIndex < lines.Length; lineIndex++)
             {
-                if (!inList) { htmlLines.Add("<ul>"); inList = true; }
-                bool isChecked = match.Groups[1].Value.ToLower() == "x";
-                string taskText = RemoveMarkdownEscapes(match.Groups[2].Value);
-                string checkbox = $"<input type='checkbox' class='md-task' data-line='{lineNumber}' {(isChecked ? "checked" : "")} onclick=\"window.dispatchEvent(new CustomEvent('misbah-task-toggle',{{detail:{{line:{lineNumber}}}}}));\">";
-                htmlLines.Add($"<li>{checkbox} {System.Net.WebUtility.HtmlEncode(taskText)}</li>");
-                taskLineNumbers.Add(lineNumber);
-                return true;
+                var rawLine = lines[lineIndex];
+                if (string.IsNullOrWhiteSpace(rawLine))
+                {
+                    break;
+                }
+
+                var trimmed = rawLine.TrimStart();
+                var info = TryParseListLine(trimmed);
+                if (info is null)
+                {
+                    break;
+                }
+
+                processedAny = true;
+                int indent = rawLine.Length - trimmed.Length;
+                AdjustListStack(sb, listStack, indent, info.Value);
+
+                var currentLevel = listStack.Peek();
+                sb.Append("<li>");
+                sb.Append(BuildListItemContent(info.Value, lineIndex, taskLineNumbers));
+                currentLevel.HasOpenItem = true;
             }
-            return false;
+
+            while (listStack.Count > 0)
+            {
+                var level = listStack.Pop();
+                if (level.HasOpenItem)
+                {
+                    sb.Append("</li>");
+                    level.HasOpenItem = false;
+                }
+                sb.Append(level.IsOrdered ? "</ol>" : "</ul>");
+            }
+
+            if (processedAny)
+            {
+                index = lineIndex - 1;
+                return sb.ToString();
+            }
+
+            return string.Empty;
+        }
+
+        private void AdjustListStack(StringBuilder sb, Stack<ListLevel> listStack, int indent, ListLineInfo info)
+        {
+            while (listStack.Count > 0 && indent < listStack.Peek().Indent)
+            {
+                CloseListLevel(sb, listStack.Pop());
+            }
+
+            if (listStack.Count == 0)
+            {
+                OpenNewList(sb, listStack, indent, info);
+                return;
+            }
+
+            var current = listStack.Peek();
+
+            if (indent > current.Indent)
+            {
+                OpenNewList(sb, listStack, indent, info);
+                return;
+            }
+
+            if (indent == current.Indent)
+            {
+                if (current.IsOrdered != info.IsOrdered || current.IsTaskList != info.IsTaskList)
+                {
+                    CloseListLevel(sb, listStack.Pop());
+                    OpenNewList(sb, listStack, indent, info);
+                }
+                else if (current.HasOpenItem)
+                {
+                    sb.Append("</li>");
+                    current.HasOpenItem = false;
+                }
+            }
+            else
+            {
+                // indent fell between existing levels; open a new list for this indent
+                OpenNewList(sb, listStack, indent, info);
+            }
+        }
+
+        private void OpenNewList(StringBuilder sb, Stack<ListLevel> listStack, int indent, ListLineInfo info)
+        {
+            if (info.IsOrdered)
+            {
+                sb.Append("<ol>");
+            }
+            else if (info.IsTaskList)
+            {
+                sb.Append("<ul class='task-list'>");
+            }
+            else
+            {
+                sb.Append("<ul>");
+            }
+
+            listStack.Push(new ListLevel(indent, info.IsOrdered, info.IsTaskList));
+        }
+
+        private void CloseListLevel(StringBuilder sb, ListLevel level)
+        {
+            if (level.HasOpenItem)
+            {
+                sb.Append("</li>");
+                level.HasOpenItem = false;
+            }
+
+            sb.Append(level.IsOrdered ? "</ol>" : "</ul>");
+        }
+
+        private string BuildListItemContent(ListLineInfo info, int lineNumber, List<int> taskLineNumbers)
+        {
+            if (info.IsTaskList)
+            {
+                taskLineNumbers.Add(lineNumber);
+                string taskText = RemoveMarkdownEscapes(info.Content);
+                string checkbox = $"<input type='checkbox' class='md-task' data-line='{lineNumber}' {(info.IsChecked ? "checked" : string.Empty)} onclick=\"window.dispatchEvent(new CustomEvent('misbah-task-toggle',{{detail:{{line:{lineNumber}}}}}));\">";
+                return $"{checkbox} {System.Net.WebUtility.HtmlEncode(taskText)}";
+            }
+
+            return ProcessInlineText(info.Content);
+        }
+
+        private readonly struct ListLineInfo
+        {
+            public ListLineInfo(bool isOrdered, bool isTaskList, bool isChecked, string content)
+            {
+                IsOrdered = isOrdered;
+                IsTaskList = isTaskList;
+                IsChecked = isChecked;
+                Content = content;
+            }
+
+            public bool IsOrdered { get; }
+            public bool IsTaskList { get; }
+            public bool IsChecked { get; }
+            public string Content { get; }
+        }
+
+        private sealed class ListLevel
+        {
+            public ListLevel(int indent, bool isOrdered, bool isTaskList)
+            {
+                Indent = indent;
+                IsOrdered = isOrdered;
+                IsTaskList = isTaskList;
+            }
+
+            public int Indent { get; }
+            public bool IsOrdered { get; }
+            public bool IsTaskList { get; }
+            public bool HasOpenItem { get; set; }
         }
 
         private string RenderInlineCode(string line)

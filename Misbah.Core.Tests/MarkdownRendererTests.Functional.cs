@@ -67,6 +67,29 @@ namespace Misbah.Core.Tests
         }
 
         [Test]
+        public void Renders_Nested_List()
+        {
+            var renderer = new MarkdownRenderer();
+            var md = "- parent\n  - child\n    - grandchild\n- sibling";
+            var html = renderer.Render(md, out _);
+
+            Assert.That(html, Does.Contain("<li>parent<ul><li>child<ul><li>grandchild</li></ul></li></ul></li>"));
+            Assert.That(html, Does.Contain("</ul></li><li>sibling</li></ul>"));
+        }
+
+        [Test]
+        public void Renders_Nested_Task_List()
+        {
+            var renderer = new MarkdownRenderer();
+            var md = "- [ ] parent\n  - [x] child";
+            var html = renderer.Render(md, out var lines);
+
+            Assert.That(html, Does.Contain("<ul class='task-list'><li><input type='checkbox' class='md-task' data-line='0'"));
+            Assert.That(html, Does.Contain("<ul class='task-list'><li><input type='checkbox' class='md-task' data-line='1' checked"));
+            Assert.That(lines, Is.EquivalentTo(new List<int> { 0, 1 }));
+        }
+
+        [Test]
         public void Renders_Wiki_Links()
         {
             var renderer = new MarkdownRenderer();

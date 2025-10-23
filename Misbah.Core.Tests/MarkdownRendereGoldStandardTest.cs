@@ -97,19 +97,11 @@ Wiki link with display text: <a href='CSharp' target='_blank'>C# Programming</a>
 <h2>Lists</h2>
 <br>
 <h3>Task Lists</h3>
-<ul>
-<li><input type='checkbox' class='md-task' data-line='15'  onclick=""window.dispatchEvent(new CustomEvent('misbah-task-toggle',{detail:{line:15}}));""> Incomplete task</li>
-<li><input type='checkbox' class='md-task' data-line='16' checked onclick=""window.dispatchEvent(new CustomEvent('misbah-task-toggle',{detail:{line:16}}));""> Completed task</li>
-<li><input type='checkbox' class='md-task' data-line='17'  onclick=""window.dispatchEvent(new CustomEvent('misbah-task-toggle',{detail:{line:17}}));""> Another incomplete task</li>
+<ul class='task-list'><li><input type='checkbox' class='md-task' data-line='15'  onclick=""window.dispatchEvent(new CustomEvent('misbah-task-toggle',{detail:{line:15}}));""> Incomplete task</li><li><input type='checkbox' class='md-task' data-line='16' checked onclick=""window.dispatchEvent(new CustomEvent('misbah-task-toggle',{detail:{line:16}}));""> Completed task</li><li><input type='checkbox' class='md-task' data-line='17'  onclick=""window.dispatchEvent(new CustomEvent('misbah-task-toggle',{detail:{line:17}}));""> Another incomplete task</li></ul>
 <br>
-</ul>
 <h3>Regular Lists</h3>
-<ul>
-<li>Item one</li>
-<li>Item two</li>
-<li>Item three</li>
+<ul><li>Item one</li><li>Item two</li><li>Item three</li></ul>
 <br>
-</ul>
 <h2>Code Blocks</h2>
 <br>
 <pre class='misbah-code'><code class='misbah-code'>
