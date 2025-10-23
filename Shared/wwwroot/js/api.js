@@ -171,8 +171,9 @@ window.misbah.api.toast = {
             setTimeout(() => {
                 toast.classList.remove('toast-show');
                 setTimeout(() => {
-                    if (toast.parentNode) {
-                        toast.parentNode.removeChild(toast);
+                    const parent = toast.parentNode;
+                    if (parent && typeof parent.removeChild === 'function') {
+                        parent.removeChild(toast);
                     }
                 }, 300);
             }, duration);
@@ -267,8 +268,11 @@ window.misbah.api.registerDesktopSaveInterop = function(dotNetRef) {
             const result = await dotNetRef.invokeMethodAsync('SaveContent', saveData);
             console.log('✅ [BlazorDesktop] Save result:', result);
             
-            // Show success toast
-            window.misbah.api.toast.success('💾 Saved successfully!');
+            // Show success toast (prefer message returned from .NET when available)
+            const toastMessage = typeof result === 'string' && result.length > 0
+                ? result
+                : '💾 Saved successfully!';
+            window.misbah.api.toast.success(toastMessage);
             
             return result;
         } catch (error) {

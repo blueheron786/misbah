@@ -69,6 +69,19 @@ Normal text with `inline` code.";
         }
 
         [Test]
+        public void Nested_Unordered_Lists_RenderWithIndentStyles()
+        {
+            var renderer = new MarkdownRenderer();
+            var md = "- Parent\n  - Child\n    - Grandchild";
+
+            var html = renderer.Render(md, out _);
+
+            Assert.That(html, Does.Contain("<li>Parent</li>"));
+            Assert.That(html, Does.Contain("<li style='margin-left:20px'>Child</li>"));
+            Assert.That(html, Does.Contain("<li style='margin-left:40px'>Grandchild</li>"));
+        }
+
+        [Test]
         public void RenderFull_RendersListsAndHighlightsCorrectly()
         {
             // Arrange
