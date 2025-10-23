@@ -171,9 +171,8 @@ window.misbah.api.toast = {
             setTimeout(() => {
                 toast.classList.remove('toast-show');
                 setTimeout(() => {
-                    const parent = toast.parentNode;
-                    if (parent && typeof parent.removeChild === 'function') {
-                        parent.removeChild(toast);
+                    if (toast.parentNode) {
+                        toast.parentNode.removeChild(toast);
                     }
                 }, 300);
             }, duration);

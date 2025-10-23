@@ -10,8 +10,6 @@ namespace Misbah.Core.Services
 {
     public class MarkdownRenderer
     {
-    private static readonly Regex TaskListRegex = new Regex(@"^\s*-\s\[( |x)\]\s(.*)$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
-    private static readonly Regex NormalListRegex = new Regex(@"^\s*-\s(?!\[(?: |x)\]\s)(?<content>.*)$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
         /// <summary>
         /// Adds 🌐 emoji to external links in the HTML.
         /// </summary>
@@ -90,20 +88,17 @@ namespace Misbah.Core.Services
                     }
                     continue;
                 }
-                var taskMatch = TaskListRegex.Match(line);
-                if (taskMatch.Success)
+                if (IsTaskListLine(line))
                 {
-                    RenderTaskList(line, i, taskMatch, htmlLines, taskLineNumbers, ref inList);
+                    TryRenderTaskList(line, i, htmlLines, taskLineNumbers, ref inList);
                     lastWasBlank = false;
                     continue;
                 }
-                var normalMatch = NormalListRegex.Match(line);
-                if (normalMatch.Success)
+                if (IsNormalListLine(line))
                 {
                     if (!inList) { htmlLines.Add("<ul>"); inList = true; }
-                    var indentAttr = GetListItemIndentAttribute(line);
-                    var listContent = ProcessInlineText(normalMatch.Groups["content"].Value.Trim());
-                    htmlLines.Add($"<li{indentAttr}>{listContent}</li>");
+                    var listContent = ProcessInlineText(line.Substring(2).Trim());
+                    htmlLines.Add($"<li>{listContent}</li>");
                     lastWasBlank = false;
                     continue;
                 }
@@ -165,6 +160,18 @@ namespace Misbah.Core.Services
         }
 
         // --- Private helpers ---
+        // Helper to detect if a line is a normal (non-task) list item
+        private bool IsNormalListLine(string line)
+        {
+            // Match lines like "- item" but not "- [ ] item" or "- [x] item"
+            return Regex.IsMatch(line, "^- (?!\\[[ xX]\\]).+", RegexOptions.IgnoreCase);
+        }
+        // (removed duplicate IsNormalListLine)
+        // Helper to detect if a line is a task list item
+        private bool IsTaskListLine(string line)
+        {
+            return Regex.IsMatch(line, @"^- \[( |x)\] (.*)$", RegexOptions.IgnoreCase);
+        }
         private bool IsCodeBlockDelimiter(string line)
         {
             return line.TrimStart().StartsWith("```");
@@ -184,16 +191,20 @@ namespace Misbah.Core.Services
             }
         }
 
-        private void RenderTaskList(string line, int lineNumber, Match match, List<string> htmlLines, List<int> taskLineNumbers, ref bool inList)
+        private bool TryRenderTaskList(string line, int lineNumber, List<string> htmlLines, List<int> taskLineNumbers, ref bool inList)
         {
-            if (!inList) { htmlLines.Add("<ul>"); inList = true; }
-            bool isChecked = string.Equals(match.Groups[1].Value, "x", StringComparison.OrdinalIgnoreCase);
-            string taskTextRaw = match.Groups[2].Value;
-            string taskText = RemoveMarkdownEscapes(taskTextRaw.Trim());
-            string indentAttr = GetListItemIndentAttribute(line);
-            string checkbox = $"<input type='checkbox' class='md-task' data-line='{lineNumber}' {(isChecked ? "checked" : "")} onclick=\"window.dispatchEvent(new CustomEvent('misbah-task-toggle',{{detail:{{line:{lineNumber}}}}}));\">";
-            htmlLines.Add($"<li{indentAttr}>{checkbox} {System.Net.WebUtility.HtmlEncode(taskText)}</li>");
-            taskLineNumbers.Add(lineNumber);
+            var match = Regex.Match(line, @"^- \[( |x)\] (.*)$", RegexOptions.IgnoreCase);
+            if (match.Success)
+            {
+                if (!inList) { htmlLines.Add("<ul>"); inList = true; }
+                bool isChecked = match.Groups[1].Value.ToLower() == "x";
+                string taskText = RemoveMarkdownEscapes(match.Groups[2].Value);
+                string checkbox = $"<input type='checkbox' class='md-task' data-line='{lineNumber}' {(isChecked ? "checked" : "")} onclick=\"window.dispatchEvent(new CustomEvent('misbah-task-toggle',{{detail:{{line:{lineNumber}}}}}));\">";
+                htmlLines.Add($"<li>{checkbox} {System.Net.WebUtility.HtmlEncode(taskText)}</li>");
+                taskLineNumbers.Add(lineNumber);
+                return true;
+            }
+            return false;
         }
 
         private string RenderInlineCode(string line)
@@ -231,41 +242,6 @@ namespace Misbah.Core.Services
         private string RemoveMarkdownEscapes(string text)
         {
             return Regex.Replace(text, @"\\([\\`*_{}\[\]()#+\-.!|>])", "$1");
-        }
-
-        private string GetListItemIndentAttribute(string line)
-        {
-            int indentSpaces = GetIndentationSpaces(line);
-            if (indentSpaces <= 0)
-            {
-                return string.Empty;
-            }
-
-            int indentLevel = Math.Max(1, (indentSpaces + 1) / 2);
-            int margin = indentLevel * 20;
-            return $" style='margin-left:{margin}px'";
-        }
-
-        private int GetIndentationSpaces(string line)
-        {
-            int count = 0;
-            foreach (var ch in line)
-            {
-                if (ch == ' ')
-                {
-                    count++;
-                }
-                else if (ch == '\t')
-                {
-                    count += 4;
-                }
-                else
-                {
-                    break;
-                }
-            }
-
-            return count;
         }
 
         private bool IsTableLine(string line)

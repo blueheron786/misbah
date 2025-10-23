@@ -244,10 +244,7 @@
             await NoteService.SaveNoteAsync(note);
 
             Console.WriteLine($"💾 [SaveInterop] Successfully saved via NoteService to: {targetFilePath}");
-            var displayName = string.IsNullOrWhiteSpace(note.Title)
-                ? Path.GetFileName(targetFilePath)
-                : note.Title;
-            return $"💾 Saved {displayName}";
+            return $"Saved to: {targetFilePath}";
         }
         catch (Exception ex)
         {
